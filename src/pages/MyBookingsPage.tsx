@@ -555,78 +555,79 @@ const MyBookingsPage: React.FC = () => {
                     {/* Booking Cards */}
                     <div className="space-y-6">
                         {filteredOrders.length > 0 ? (
-                            filteredOrders.map(order => (
-                                <div key={order.id} id={`booking-card-${order.id}`} className="transition-all duration-500">
-                                {order.orderRooms?.map(room => (
-                                    <div key={room.id}  className="bg-white rounded-xl shadow-md border border-gray-200 p-6">
+                        filteredOrders.map(order => (
+                            <div key={order.id} id={`booking-card-${order.id}`} className="transition-all duration-500">
+                                {/* ✅ Added order?. check */}
+                                {order?.orderRooms?.map(room => (
+                                    <div key={room.id} className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
                                         <div className="flex items-center gap-2 mb-4">
-                                            <BookingStatusPill status={order.status} /> 
-                                            <span className='text-gray-500 text-sm'>• Out: {formatDayAndDate(room.checkOut)}</span>
+                                            <BookingStatusPill status={order.status || 'Pending'} /> 
+                                            <span className='text-gray-500 text-sm'>• Out: {formatDayAndDate(room?.checkOut)}</span>
                                         </div>
-
+                    
                                         <div className="flex gap-5 border-b pb-5">
-                                            {/* Robust Image Logic */}
                                             <img
-                                                src={room.property.images?.[0]?.image || "https://placehold.co/400x400?text=No+Image"}
+                                                // ✅ Added optional chaining for property images
+                                                src={room?.property?.images?.[0]?.image || "https://placehold.co/400x400?text=No+Image"}
                                                 alt="Hotel"
                                                 className="w-28 h-28 object-cover rounded-xl"
                                                 onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x400?text=Hotel" }}
                                             />
-
+                    
                                             <div className="flex-1">
-    <h3 className="text-xl font-bold">{room.property.name}</h3>
-    <p className="text-sm text-gray-500">{room.property.city}</p>
-    
-    {/* Yahan grid ki jagah flex-col use kiya hai taaki items upar-neeche aayein */}
-    <div className="mt-3 flex flex-col gap-1 text-sm">
-        <p>Room: <span className='font-semibold'>{room.roomType.room_type}</span></p>
-        <p>Guests: <span className='font-semibold'>{room.adults} Adults</span></p>
-        <p className='text-[#D2A256] font-bold mt-1'>
-            {formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}
-        </p>
-    </div>
-</div>
+                                                {/* ✅ Added safety for property name and city */}
+                                                <h3 className="text-xl font-bold">{room?.property?.name || 'Unknown Hotel'}</h3>
+                                                <p className="text-sm text-gray-500">{room?.property?.city || 'Location N/A'}</p>
+                                                
+                                                <div className="mt-3 flex flex-col gap-1 text-sm">
+                                                    {/* ✅ YAHAN CRASH HO RAHA THA: Added safety for room_type */}
+                                                    <p>Room: <span className='font-semibold'>{room?.roomType?.room_type || 'Standard Room'}</span></p>
+                                                    <p>Guests: <span className='font-semibold'>{room?.adults || 0} Adults</span></p>
+                                                    <p className='text-[#D2A256] font-bold mt-1'>
+                                                        {formatShortDate(room?.checkIn)} - {formatShortDate(room?.checkOut)}
+                                                    </p>
+                                                </div>
+                                            </div>
                                         </div>
                                         
-                                        {/* Buttons */}
+                                        {/* Buttons Section */}
                                         <div className='pt-4 flex flex-wrap gap-3'>
                                             <button 
-    onClick={() => {
-        const hotelId = room.property.id; // Jaise tumhare example mein 27 ya 34 hai
-        
-        // Saare params ko ek object mein dalo
-        const params = new URLSearchParams({
-            location: room.property.city,
-            checkIn: room.checkIn,
-            checkOut: room.checkOut,
-            adults: String(room.adults),
-            children: String(room.children),
-            propertyId: String(hotelId) // Ye tumhare URL mein extra tha, toh hum bhi bhej rahe hain
-        }).toString();
-        
-        // 🟢 Asli fix: Path ko "/room-booking/" karo
-        navigate(`/room-booking/${hotelId}?${params}`);
-    }}
-    
-    className="flex-1 bg-white border border-[#D2A256] text-[#D2A256] py-2 rounded-lg text-sm font-bold hover:bg-yellow-50"
->
-    Book Again
-</button>
+                                                onClick={() => {
+                                                    // ✅ Safe ID access
+                                                    const hotelId = room?.property?.id;
+                                                    if(!hotelId) return;
+                    
+                                                    const params = new URLSearchParams({
+                                                        location: room?.property?.city || '',
+                                                        checkIn: room?.checkIn || '',
+                                                        checkOut: room?.checkOut || '',
+                                                        adults: String(room?.adults || 2),
+                                                        children: String(room?.children || 0),
+                                                        propertyId: String(hotelId)
+                                                    }).toString();
+                                                    
+                                                    navigate(`/room-booking/${hotelId}?${params}`);
+                                                }}
+                                                className="flex-1 bg-white border border-[#D2A256] text-[#D2A256] py-2 rounded-lg text-sm font-bold hover:bg-yellow-50"
+                                            >
+                                                Book Again
+                                            </button>
                                             <button 
-    onClick={() => openDetails(order, room)}
-    className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100"
->
-    View Details
-</button>
+                                                onClick={() => openDetails(order, room)}
+                                                className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100"
+                                            >
+                                                View Details
+                                            </button>
                                             <button className="flex-1 border border-gray-300 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
                                                 <FileText className='w-4 h-4'/> Invoice
                                             </button>
                                         </div>
                                     </div>
                                 ))}
-                                </div>
-                            ))
-                        ) : (
+                            </div>
+                        ))
+                    ) : (
                             <div className="text-center p-20 bg-white rounded-xl border-2 border-dashed">
                                 <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                                 <p className="text-gray-500 font-medium">No bookings found for this category.</p>

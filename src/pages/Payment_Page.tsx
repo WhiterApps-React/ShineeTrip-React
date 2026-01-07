@@ -85,6 +85,7 @@ const BookingPage: React.FC = () => {
     const CREATE_ORDER_URL = `${API_BASE}/order/book-now`;
     const VERIFY_URL = `${API_BASE}/order/success`;
     const FAILURE_URL = `${API_BASE}/order/failure`;
+    const INVOICE_URL = `${API_BASE}/invoices`;
     CREATE_ORDER_URL.trim();
 
     console.log("Using API Base:", API_BASE);
@@ -295,7 +296,7 @@ console.log("Customer ID check before API:", customerId);
                 description: `Room Booking: ${roomName}`,
                 order_id: razorpayOrderId,
                 handler: async function (response: any) {
-                    await verifyPayment(response, razorpayOrderId);
+                    await verifyPayment(response, razorpayOrderId , backendId);
                 },
                 prefill: {
                     name: formData.firstName + ' ' + formData.lastName,
@@ -342,56 +343,43 @@ console.log("Customer ID check before API:", customerId);
     };
     
     // Step 3: Verify Payment Success
-    const verifyPayment = async (razorpayResponse: any, orderId: string) => {
+    const verifyPayment = async (razorpayResponse: any, orderId: string, backendId: number) => {
     setIsProcessing(true); 
-    try {
-        const verificationPayload = {
-            razorpayOrderId: orderId,
-            razorpayPaymentId: razorpayResponse.razorpay_payment_id,
-            razorpaySignature: razorpayResponse.razorpay_signature,
-        };
-        
-        console.log("1. Sending Verification Payload:", verificationPayload);
+try {
+            const verificationPayload = {
+                razorpayOrderId: orderId,
+                razorpayPaymentId: razorpayResponse.razorpay_payment_id,
+                razorpaySignature: razorpayResponse.razorpay_signature,
+            };
+            
+            const verifyResponse = await fetch(VERIFY_URL, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(verificationPayload),
+            });
 
-        const verifyResponse = await fetch(VERIFY_URL, {
-            method: 'POST',
-            headers: { 
-                'Authorization': `Bearer ${token}`, 
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify(verificationPayload),
-        });
-        
-        const verificationText = await verifyResponse.text();
+            if (verifyResponse.ok) {
+                // ✅ LOGIC CLEANUP: Successful block
+                console.log("3. Payment Verified! Creating Invoice for:", backendId);
+                await createInvoiceAfterPayment(backendId);
 
-        // FAIL CHECK
-        if (!verifyResponse.ok) {
-            console.error("2. Backend Verification FAILED:", verificationText);
-            throw new Error(`Payment verification failed on server.`);
+                paymentCompletedRef.current = true;
+                if (paymentTimeoutRef.current) clearTimeout(paymentTimeoutRef.current);
+
+                setPaymentMessage('Booking successful! Invoice Generated.');
+                setSuccessOrderId(orderId);
+                setIsBookingSuccessful(true);
+            } else {
+                const text = await verifyResponse.text();
+                throw new Error(text || 'Verification failed');
+            }
+        } catch (error) {
+            console.error("Verification Catch Error:", error);
+            setPaymentMessage('Payment verification failed.');
+        } finally {
+            setIsProcessing(false);
         }
-        
-        // SUCCESS BLOCK - Yahan tabhi aayega jab response.ok true hoga
-        console.log("3. Payment Successfully Verified by Backend!");
-
-        if (dbOrderId) {
-            console.log("4. DB Order ID found:", dbOrderId, ". Now creating invoice...");
-            await createInvoiceAfterPayment(dbOrderId);
-        } else {
-            console.warn("4. WARNING: dbOrderId is missing/null, cannot create invoice.");
-        }
-
-        // Baki success logic (modal open, success card etc.)
-        paymentCompletedRef.current = true;
-        setPaymentMessage('Booking successful!');
-        setSuccessOrderId(orderId);
-        setIsBookingSuccessful(true);
-
-    } catch (error) {
-        console.error("CATCH ERROR:", error);
-    } finally {
-        setIsProcessing(false);
-    }
-};
+    };
     const createInvoiceAfterPayment = async (backendOrderId: number) => {
     // Validation: Address check
     if (!formData.address) {
