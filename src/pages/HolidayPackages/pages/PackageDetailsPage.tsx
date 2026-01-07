@@ -12,7 +12,7 @@ const PackageDetailsPage = () => {
   const { id } = useParams(); 
   const [activeTab, setActiveTab] = useState('itineraries');
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  
+  const [persons, setPersons] = useState(1);
   const [itineraryData, setItineraryData] = useState<any>(null);
   const [summaryData, setSummaryData] = useState<any>(null);
   const [priceData, setPriceData] = useState<any>(null);
@@ -98,7 +98,11 @@ const PackageDetailsPage = () => {
   return (
     <div className="min-h-screen bg-[#FDFDFD] font-opensans animate-in fade-in duration-700">
       <div className="pt-30"> 
-        <HolidaySearch isDetailsPage={true} />
+        <HolidaySearch 
+        isDetailsPage={true}
+        persons={persons} 
+        setPersons={setPersons}
+        />
       </div>
 
       <PackageGallery 
@@ -152,6 +156,7 @@ const PackageDetailsPage = () => {
                priceData={priceData || holiday?.price} 
                calculatedSummary={summaryData}
                defaultOption={userPreference} 
+               persons={persons}
             />
           </div>
 

@@ -5,9 +5,10 @@ interface PricingSidebarProps {
   priceData: any;
   calculatedSummary: any;
   defaultOption?: 'flight' | 'land'; // Modal se 'flight' ya 'land' aa raha hai
+  persons: number;
 }
 
-export const PricingSidebar = ({ priceData, calculatedSummary, defaultOption = 'flight' }: PricingSidebarProps) => {
+export const PricingSidebar = ({ priceData, calculatedSummary, defaultOption = 'flight', persons }: PricingSidebarProps) => {
   // 1. Local state taaki user detail page par bhi toggle kar sake
   const [selection, setSelection] = useState<'flight' | 'land'>(defaultOption);
   const navigate = useNavigate();
@@ -30,17 +31,19 @@ export const PricingSidebar = ({ priceData, calculatedSummary, defaultOption = '
     );
   }
 
-  // 2. Data Mapping (Backend keys ke according)
+  // 2. Extracting necessary price components (Per Person)
   const baseFare = Number(priceData?.base_fare || 0);
   const flightPrice = Number(priceData?.flight_logistics || priceData?.flight_price || 0);
   const tax = Number(priceData?.tax || 0);
   const discount = Number(calculatedSummary?.discount || priceData?.discount || 0);
 
-  // 3. MAIN TOGGLE LOGIC
-  // Agar 'flight' selected hai toh sab add hoga, agar 'land' hai toh sirf base + tax
-  const totalAmount = selection === 'flight' 
+  // 3. MAIN TOGGLE & MULTIPLICATION LOGIC
+  // Sabhi components ko 'persons' se multiply kar rahe hain
+  const perPersonTotal = selection === 'flight' 
     ? (baseFare + flightPrice + tax - discount)
     : (baseFare + tax - discount);
+
+  const totalAmount = perPersonTotal * persons;
 
   const formatPrice = (val: any) => {
     return Math.round(val).toLocaleString('en-IN');
@@ -74,15 +77,15 @@ export const PricingSidebar = ({ priceData, calculatedSummary, defaultOption = '
           {selection === 'flight' ? "Full Experience" : "Ground Services Only"}
         </span>
         <span className="bg-green-50 text-green-600 text-[9px] font-black px-2 py-1 rounded-md uppercase">
-          Live Price
+          {persons} {persons > 1 ? 'Persons' : 'Person'}
         </span>
       </div>
 
       <button 
         onClick={() => {
-          // Navigating to the booking page with data
+          // Navigating to the booking page with dynamic total and persons
           navigate(
-            `/package-booking?packageId=${id}&amount=${totalAmount}&adults=2`, 
+            `/package-booking?packageId=${id}&amount=${totalAmount}&adults=${persons}`, 
             { state: { type: selection } }
           );
         }}
@@ -93,27 +96,27 @@ export const PricingSidebar = ({ priceData, calculatedSummary, defaultOption = '
 
       <div className="space-y-4 mb-6">
         <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-500 font-medium">Base Fare (Land)</span>
-          <span className="text-gray-900 font-bold">₹{formatPrice(baseFare)}</span>
+          <span className="text-gray-500 font-medium">Base Fare ({persons}x)</span>
+          <span className="text-gray-900 font-bold">₹{formatPrice(baseFare * persons)}</span>
         </div>
         
         {/* Dynamic Flight Row */}
         {selection === 'flight' && (
           <div className="flex justify-between items-center text-sm animate-in slide-in-from-left-2 duration-300">
-            <span className="text-gray-500 font-medium">Flight & Logistics</span>
-            <span className="text-gray-900 font-bold">+ ₹{formatPrice(flightPrice)}</span>
+            <span className="text-gray-500 font-medium">Flights ({persons}x)</span>
+            <span className="text-gray-900 font-bold">+ ₹{formatPrice(flightPrice * persons)}</span>
           </div>
         )}
 
         <div className="flex justify-between items-center text-sm">
           <span className="text-gray-500 font-medium">Taxes & Fees</span>
-          <span className="text-gray-900 font-bold">₹{formatPrice(tax)}</span>
+          <span className="text-gray-900 font-bold">₹{formatPrice(tax * persons)}</span>
         </div>
 
         {discount > 0 && (
           <div className="flex justify-between items-center text-sm text-green-600">
             <span className="font-medium">Special Discount</span>
-            <span className="font-bold">- ₹{formatPrice(discount)}</span>
+            <span className="font-bold">- ₹{formatPrice(discount * persons)}</span>
           </div>
         )}
       </div>
@@ -121,7 +124,9 @@ export const PricingSidebar = ({ priceData, calculatedSummary, defaultOption = '
       <div className="border-t border-dashed pt-4 flex justify-between items-center">
         <div className="flex flex-col">
           <span className="font-bold text-gray-800">Total Amount</span>
-          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">*Per adult on twin sharing</span>
+          <span className="text-[9px] text-gray-400 font-bold uppercase tracking-tighter">
+            *Total for {persons} {persons > 1 ? 'travelers' : 'traveler'}
+          </span>
         </div>
         <span className="text-2xl font-extrabold text-[#2C4A5E]">
           ₹{formatPrice(totalAmount)}

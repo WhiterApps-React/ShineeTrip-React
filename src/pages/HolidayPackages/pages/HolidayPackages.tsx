@@ -20,9 +20,9 @@ useEffect(() => {
 
       const queryParams = new URLSearchParams();
       queryParams.append("page", "1");
-      queryParams.append("limit", "10");
+      queryParams.append("limit", "50"); // Limit thodi badha di hai taaki filtering sahi se ho sake
       
-      // Backend ko city bhej rahe hain query mein
+      // Backend ko city aur date bhej rahe hain query mein (as per original code)
       if (city) queryParams.append("city", city); 
       if (date) queryParams.append("departureDate", date);
 
@@ -37,28 +37,33 @@ useEffect(() => {
       });
 
       const result: any = await response.json();
-      
       let finalData = result.data || result || [];
 
-      // --- SMART FILTER LOGIC FOR INCLUDED_CITIES ---
-      if (city) {
-        const searchCity = city.toLowerCase().trim();
-        
-        const filtered = finalData.filter((pkg: any) => {
-          // 1. Check title
-          const matchTitle = pkg.title?.toLowerCase().includes(searchCity);
-          
-          // 2. Check included_cities (ARRAY CHECK) - Ye sabse important hai
-          const matchIncludedCities = Array.isArray(pkg.included_cities) && 
-            pkg.included_cities.some((c: string) => c.toLowerCase().includes(searchCity));
-          
-          // 3. Check direct city field (Backup)
-          const matchCityField = pkg.city?.toLowerCase().includes(searchCity);
+      // --- UPDATED SMART FILTER LOGIC (Supports City OR Date) ---
+      // Agar city ya date mein se kuch bhi search params mein hai, toh filter chalega
+      if (city || date) {
+        const searchCity = city ? city.toLowerCase().trim() : "";
+        const searchDate = date; // YYYY-MM-DD format
 
-          return matchTitle || matchIncludedCities || matchCityField;
+        const filtered = finalData.filter((pkg: any) => {
+          // 1. City Match Logic (Sirf tab chalega jab city search ki ho)
+          const matchCity = searchCity ? (
+            pkg.title?.toLowerCase().includes(searchCity) ||
+            (Array.isArray(pkg.included_cities) && pkg.included_cities.some((c: string) => c.toLowerCase().includes(searchCity))) ||
+            pkg.city?.toLowerCase().includes(searchCity)
+          ) : true; // Agar city nahi hai, toh ise true maano taaki date filter ho sake
+
+          // 2. Date Match Logic (Sirf tab chalega jab date search ki ho)
+          // Itinerary ke andar startDate se match kar rahe hain
+          const matchDate = searchDate ? (
+            pkg.itinerary?.startDate === searchDate
+          ) : true; // Agar date nahi hai, toh ise true maano taaki city filter ho sake
+
+          // Dono conditions satisfy honi chahiye (AND logic)
+          return matchCity && matchDate;
         });
 
-        console.log(`Search Results for ${city}:`, filtered);
+        console.log(`Search Results for City: ${city || 'Any'}, Date: ${date || 'Any'}:`, filtered);
         setPackages(filtered);
       } else {
         setPackages(finalData);

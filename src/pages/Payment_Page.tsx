@@ -30,6 +30,7 @@ const BookingPage: React.FC = () => {
         firstName: '',
         lastName: '',
         gstNumber: '',
+        address: '',
         specialRequests: '',
         agreePolicy: false
     });
@@ -44,6 +45,7 @@ const BookingPage: React.FC = () => {
     const [showAuthErrorModal, setShowAuthErrorModal] = useState(false);
     const paymentTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const paymentCompletedRef = React.useRef(false);
+    const [dbOrderId, setDbOrderId] = useState<number | null>(null);
 
 
     
@@ -123,6 +125,11 @@ const validateForm = () => {
         errors.email = "Email is required.";
     } else if (!emailRegex.test(formData.email.trim())) {
         errors.email = "Please enter a valid email address.";
+    }
+    
+    // Validation mein ye line add karo
+    if (!formData.address.trim()) {
+        errors.address = "Billing address is required for invoice.";
     }
 
     // 3. Title Validation (Required)
@@ -269,6 +276,9 @@ console.log("Customer ID check before API:", customerId);
             
             const orderData = JSON.parse(responseText);
             const razorpayOrderId = orderData.razorpayOrderId;
+            const backendId = orderData.orderId;
+            console.log("Backend Response:", orderData);
+            setDbOrderId(backendId);
             
             setPaymentMessage(`Order ID ${razorpayOrderId} generated. Opening payment gateway...`);
             
@@ -333,53 +343,94 @@ console.log("Customer ID check before API:", customerId);
     
     // Step 3: Verify Payment Success
     const verifyPayment = async (razorpayResponse: any, orderId: string) => {
-        setIsProcessing(true); 
-        try {
-            // ✅ CRITICAL FIX: Convert snake_case response fields to camelCase for the backend API
-            const verificationPayload = {
-                razorpayOrderId: orderId, // Already camelCase from 'orderId' variable
-                razorpayPaymentId: razorpayResponse.razorpay_payment_id, // FIX: Change to camelCase
-                razorpaySignature: razorpayResponse.razorpay_signature, // FIX: Change to camelCase
-            };
-            
-            console.log("Verification Payload Sent:", verificationPayload); // DEBUG
+    setIsProcessing(true); 
+    try {
+        const verificationPayload = {
+            razorpayOrderId: orderId,
+            razorpayPaymentId: razorpayResponse.razorpay_payment_id,
+            razorpaySignature: razorpayResponse.razorpay_signature,
+        };
+        
+        console.log("1. Sending Verification Payload:", verificationPayload);
 
-            const verifyResponse = await fetch(VERIFY_URL, {
-                method: 'POST',
-                headers: { 
-                    'Authorization': `Bearer ${token}`, 
-                    'Content-Type': 'application/json' 
-                },
-                body: JSON.stringify(verificationPayload),
-            });
-            
-            const verificationText = await verifyResponse.text(); // Get full response text for debug
+        const verifyResponse = await fetch(VERIFY_URL, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(verificationPayload),
+        });
+        
+        const verificationText = await verifyResponse.text();
 
-            if (!verifyResponse.ok) {
-                // Log the full server response for debugging by backend team
-                console.error("Verification Server Response (400/500):", verificationText); // DEBUG
-                throw new Error(`Payment verification failed on server. Status: ${verifyResponse.status}. Details: ${verificationText}`); // Include details in error message
-            }
-            
-            paymentCompletedRef.current = true;
-            // 🛑 STOP ALL TIMEOUT / ERROR WATCHDOGS
-            if (paymentTimeoutRef.current) {
-              clearTimeout(paymentTimeoutRef.current);
-              paymentTimeoutRef.current = null;
-            }
-
-            // ✅ SUCCESS STATE CHANGE (Stop automatic navigation)
-            setPaymentMessage('Booking successful! Payment successfully verified.');
-            setSuccessOrderId(orderId); // Store the final Order ID
-            setIsBookingSuccessful(true); // Open the success card
-
-        } catch (error) {
-            setPaymentMessage('Payment verification failed. Please contact support. Error: ' + (error instanceof Error ? error.message : 'Unknown verification error.'));
-            console.error("Verification Error:", error);
-        } finally {
-            setIsProcessing(false);
+        // FAIL CHECK
+        if (!verifyResponse.ok) {
+            console.error("2. Backend Verification FAILED:", verificationText);
+            throw new Error(`Payment verification failed on server.`);
         }
+        
+        // SUCCESS BLOCK - Yahan tabhi aayega jab response.ok true hoga
+        console.log("3. Payment Successfully Verified by Backend!");
+
+        if (dbOrderId) {
+            console.log("4. DB Order ID found:", dbOrderId, ". Now creating invoice...");
+            await createInvoiceAfterPayment(dbOrderId);
+        } else {
+            console.warn("4. WARNING: dbOrderId is missing/null, cannot create invoice.");
+        }
+
+        // Baki success logic (modal open, success card etc.)
+        paymentCompletedRef.current = true;
+        setPaymentMessage('Booking successful!');
+        setSuccessOrderId(orderId);
+        setIsBookingSuccessful(true);
+
+    } catch (error) {
+        console.error("CATCH ERROR:", error);
+    } finally {
+        setIsProcessing(false);
+    }
+};
+    const createInvoiceAfterPayment = async (backendOrderId: number) => {
+    // Validation: Address check
+    if (!formData.address) {
+        console.error("Address is required for Invoice");
+        return;
+    }
+
+    const invoicePayload = {
+        orderId: backendOrderId, 
+        invoiceDate: new Date().toISOString().split('T')[0],
+        dueDate: new Date().toISOString().split('T')[0],
+        notes: formData.specialRequests || "Booking Invoice",
+        billingName: `${formData.firstName} ${formData.lastName}`,
+        billingEmail: formData.email,
+        billingPhone: `${formData.phoneCode}${formData.phone}`,
+        billingAddress: formData.address, // User ka real address
+        taxIdentifier: formData.gstNumber || "" // User ka GST number
     };
+
+    try {
+        const response = await fetch(`${API_BASE}/invoices`, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(invoicePayload),
+        });
+
+        if (response.ok) {
+            console.log("Invoice created successfully!");
+        } else {
+            const errorData = await response.json();
+            console.error("Invoice API Error:", errorData);
+        }
+    } catch (err) {
+        console.error("Network Error calling Invoice API:", err);
+    }
+};
 
 
     
@@ -648,6 +699,22 @@ console.log("Customer ID check before API:", customerId);
                                     className="w-full px-4 py-2.5 border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
                                     disabled={isProcessing}
                                 />
+
+                                {/* Billing Address Field */}
+                                <div className="flex flex-col gap-1">
+                                    <textarea
+                                        name="address"
+                                        placeholder="Billing Address (Required for Invoice)*"
+                                        value={formData.address}
+                                        onChange={handleInputChange}
+                                        rows={2}
+                                        className={`w-full px-4 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none ${
+                                            formErrors.address ? 'border-red-500' : 'border-gray-300'
+                                        }`}
+                                        disabled={isProcessing}
+                                    />
+                                    {formErrors.address && <span className="text-red-500 text-xs pl-2">{formErrors.address}</span>}
+                                </div>
 
                                 {/* Special Requests */}
                                 <textarea
