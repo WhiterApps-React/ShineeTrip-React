@@ -6,7 +6,9 @@ import {
     CheckCircle, Clock, ArrowLeft, Star, FileText,
     User, XCircle,
     Phone,
-    Users
+    Users,
+    MapPin,
+    Calendar
 } from 'lucide-react';
 import { format } from 'date-fns'; 
 import InvoicePDF from '@/components/ui/InvoicePDF';
@@ -45,7 +47,17 @@ interface Order {
     totalPrice: number;
     currency: string;
     createdAt: string;
-    orderRooms: OrderRoomDetail[];
+    orderRooms?: OrderRoomDetail[];
+    startDate?: string;
+    endDate?: string;
+    adults?: number;
+    children?: number;
+    holidayPackage?: {
+        id: number;
+        title: string;
+        hero_image: string;
+        included_cities: string[];
+    };
 }
 
 // --- Helper Functions ---
@@ -430,208 +442,178 @@ const handleDownloadPDF = (order: Order, room: OrderRoomDetail) => {
 const MyBookingsPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const [bookingType, setBookingType] = useState<'hotel' | 'package'>('hotel');
     const [orders, setOrders] = useState<Order[]>([]);
+    const [packageOrders, setPackageOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     const [filterStatus, setFilterStatus] = useState('all'); 
     const [selectedBooking, setSelectedBooking] = useState<{order: Order, room: OrderRoomDetail} | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
+    // 1. Naye state (jahan selectedBooking pehle se hai)
+const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+const [selectedPackageOrder, setSelectedPackageOrder] = useState<any>(null);
+
+// 2. Open function
+const openPackageDetails = (order: any) => {
+    setSelectedPackageOrder(order);
+    setIsPackageModalOpen(true);
+};
+
+    const customerDbId = sessionStorage.getItem('shineetrip_db_customer_id');
+    const token = sessionStorage.getItem('shineetrip_token');
+    const API_BASE = 'http://46.62.160.188:3000';
+
     const openDetails = (order: Order, room: OrderRoomDetail) => {
         setSelectedBooking({ order, room });
         setIsModalOpen(true);
     };
-    
-    const customerDbId = sessionStorage.getItem('shineetrip_db_customer_id');
-    const token = sessionStorage.getItem('shineetrip_token');
-    const API_BASE = 'http://46.62.160.188:3000';
-    const highlightId = searchParams.get('highlight');
 
-    const fetchOrders = useCallback(async () => {
-        if (!customerDbId || !token) {
-            setError("Authorization required. Please log in.");
-            setLoading(false);
-            return;
-        }
-
+    const fetchAllData = useCallback(async () => {
+        if (!customerDbId || !token) { setLoading(false); return; }
         setLoading(true);
-        setError(null);
-        
         try {
-            const apiUrl = `${API_BASE}/order/search?customerId=${customerDbId}`;
-            const response = await fetch(apiUrl, {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-            });
+            const headers = { "Authorization": `Bearer ${token}` };
+            const [hotelRes, pkgRes] = await Promise.all([
+                fetch(`${API_BASE}/order/search?customerId=${customerDbId}`, { headers }),
+                fetch(`${API_BASE}/holiday-package-orders?customerId=${customerDbId}`, { headers })
+            ]);
+            const hData = await hotelRes.json();
+            const pData = await pkgRes.json();
+            setOrders(Array.isArray(hData) ? hData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []);
+            setPackageOrders(pData.data || pData || []);
+        } catch (err) { console.error(err); } finally { setLoading(false); }
+    }, [customerDbId, token]);
 
-            if (!response.ok) {
-                if (response.status === 401) { navigate('/'); return; }
-                throw new Error("Failed to fetch bookings.");
-            }
+    useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
-            const data: Order[] = await response.json();
-            const sortedData = data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-            setOrders(sortedData); 
-
-        } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to load bookings.');
-        } finally {
-            setLoading(false);
-        }
-    }, [customerDbId, token, navigate]); 
-
-    useEffect(() => {
-        fetchOrders();
-    }, [fetchOrders]);
-
-    useEffect(() => {
-        if (highlightId && !loading && orders.length > 0) {
-            const timer = setTimeout(() => {
-                const element = document.getElementById(`booking-card-${highlightId}`);
-                if (element) {
-                    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                    element.classList.add('ring-4', 'ring-[#D2A256]', 'ring-offset-2', 'rounded-xl');
-                }
-            }, 800);
-            return () => clearTimeout(timer);
-        }
-    }, [highlightId, loading, orders]);
-
-    const handleGetInvoice = async (orderId: number) => {
-        try {
-            const token = sessionStorage.getItem('shineetrip_token');
-            const response = await fetch(`http://46.62.160.188:3000/invoices?orderId=${orderId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const result = await response.json();
-
-            if (result.data && result.data.length > 0) {
-                setSelectedInvoice(result.data[0]);
-            } else {
-                alert("Invoice not generated yet for this order.");
-            }
-        } catch (err) {
-            console.error("Error:", err);
-            alert("Failed to fetch invoice.");
-        }
+    const getFilteredData = () => {
+        const currentList = bookingType === 'hotel' ? orders : packageOrders;
+        return currentList.filter(order => {
+            if (filterStatus === 'all') return true;
+            const s = order.status.toLowerCase();
+            if (filterStatus === 'confirmed') return s.includes('complete') || s.includes('received');
+            if (filterStatus === 'awaiting payment') return s.includes('awaiting');
+            return s.includes(filterStatus.toLowerCase());
+        });
     };
-
-    const filteredOrders = orders.filter(order => {
-        if (filterStatus === 'all') return true;
-        if (filterStatus === 'confirmed') return order.status.toLowerCase().includes('complete') || order.status.toLowerCase().includes('received');
-        if (filterStatus === 'awaiting payment') return order.status.toLowerCase().includes('awaiting');
-        return order.status.toLowerCase().includes(filterStatus.toLowerCase());
-    });
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
             <Loader2 className="w-8 h-8 animate-spin text-[#D2A256]" />
-            <p className="ml-3">Loading your bookings...</p>
+            <p className="ml-3 font-bold text-gray-400">Loading your bookings...</p>
         </div>
     );
 
     return (
         <div className="min-h-screen bg-gray-50 pt-24 pb-12">
-            {/* ✅ ADD THIS STYLE: To prevent overlap during print */}
-            <style dangerouslySetInnerHTML={{ __html: `
-                @media print {
-                    body { background: white !important; }
-                    .no-print-main { display: none !important; }
-                    .print-only-invoice { display: block !important; position: absolute; top: 0; left: 0; width: 100%; z-index: 9999; }
-                }
-            `}} />
+            <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print-main { display: none !important; } .print-only-invoice { display: block !important; position: absolute; top: 0; left: 0; width: 100%; z-index: 9999; } }`}} />
 
-            {/* ✅ WRAP EVERYTHING IN no-print-main */}
             <div className={`no-print-main ${selectedInvoice ? 'hidden' : ''}`}>
                 <div className="max-w-7xl mt-16 mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-xl shadow-sm border p-6">
+                        <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-32">
                             <h3 className="text-xl font-bold mb-4 border-b pb-2">Profile</h3>
                             <div className="space-y-1">
                                 <ProfileNavItem icon={User} label="About me" onClick={() => navigate('/profile')} />
-                                <ProfileNavItem icon={ShoppingBag} label="My booking" active={true} onClick={() => navigate('/mybooking')} />
+                                <ProfileNavItem icon={ShoppingBag} label="My booking" active={true} onClick={() => {}} />
                             </div>
                         </div>
                     </div>
 
                     {/* Main Content */}
                     <div className="lg:col-span-3 space-y-6">
-                        <h1 className="text-3xl font-extrabold flex items-center gap-2">
-                            My Bookings <ShoppingBag className="w-7 h-7 text-[#D2A256]" />
-                        </h1>
-                        
-                        {/* Filters */}
-                        <div className="flex items-center bg-white p-4 rounded-xl shadow-sm border gap-3">
-                            {['all', 'awaiting payment', 'confirmed', 'cancelled'].map(status => (
-                                <button
-                                    key={status}
-                                    onClick={() => setFilterStatus(status)}
-                                    className={`px-4 py-2 rounded-lg text-sm font-medium border transition-all ${
-                                        filterStatus === status 
-                                        ? 'bg-[#D2A256] text-white border-[#D2A256]' 
-                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                    }`}
-                                >
-                                    {status.toUpperCase()}
-                                </button>
-                            ))}
-                            <Search className="w-5 h-5 text-gray-400 ml-auto" />
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <h1 className="text-3xl font-extrabold flex items-center gap-2">My Bookings <ShoppingBag className="w-7 h-7 text-[#D2A256]" /></h1>
+                            <div className="flex p-1 bg-white shadow-sm rounded-2xl border border-gray-200 w-full max-w-[360px]">
+                                <button onClick={() => setBookingType('hotel')} className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all ${bookingType === 'hotel' ? 'bg-[#D2A256] text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}>HOTEL BOOKINGS</button>
+                                <button onClick={() => setBookingType('package')} className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all ${bookingType === 'package' ? 'bg-[#D2A256] text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}>PACKAGE BOOKINGS</button>
+                            </div>
                         </div>
 
-                        {/* Booking Cards */}
+                        {/* Filters */}
+                        <div className="flex items-center bg-white p-4 rounded-xl shadow-sm border gap-3 overflow-x-auto">
+                            {['all', 'awaiting payment', 'confirmed', 'cancelled'].map(status => (
+                                <button key={status} onClick={() => setFilterStatus(status)} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all ${filterStatus === status ? 'bg-[#D2A256] text-white' : 'bg-gray-50 text-gray-500'}`}>{status.toUpperCase()}</button>
+                            ))}
+                            <Search className="w-5 h-5 text-gray-300 ml-auto hidden sm:block" />
+                        </div>
+
+                        {/* Booking Listing */}
                         <div className="space-y-6">
-                            {filteredOrders.length > 0 ? (
-                            filteredOrders.map(order => (
-                                <div key={order.id} id={`booking-card-${order.id}`} className="transition-all duration-500">
-                                    {order?.orderRooms?.map(room => (
+                            {getFilteredData().length > 0 ? getFilteredData().map(order => (
+                                <div key={order.id} className="transition-all animate-in fade-in slide-in-from-bottom-2">
+                                    {bookingType === 'hotel' && order.orderRooms?.map(room => (
                                         <div key={room.id} className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
                                             <div className="flex items-center gap-2 mb-4">
-                                                <BookingStatusPill status={order.status || 'Pending'} /> 
-                                                <span className='text-gray-500 text-sm'>• Out: {formatDayAndDate(room?.checkOut)}</span>
+                                                <BookingStatusPill status={order.status} /> 
+                                                <span className='text-gray-400 text-sm'>• Out: {formatDayAndDate(room.checkOut)}</span>
                                             </div>
-                        
                                             <div className="flex gap-5 border-b pb-5">
-                                                <img
-                                                    src={room?.property?.images?.[0]?.image || "https://placehold.co/400x400?text=No+Image"}
-                                                    alt="Hotel"
-                                                    className="w-28 h-28 object-cover rounded-xl"
-                                                    onError={(e) => { (e.target as HTMLImageElement).src = "https://placehold.co/400x400?text=Hotel" }}
-                                                />
-                        
+                                                <img src={room.property?.images?.[0]?.image || "https://placehold.co/400x400?text=Hotel"} className="w-28 h-28 object-cover rounded-xl border" />
                                                 <div className="flex-1">
-                                                    <h3 className="text-xl font-bold">{room?.property?.name || 'Unknown Hotel'}</h3>
-                                                    <p className="text-sm text-gray-500">{room?.property?.city || 'Location N/A'}</p>
-                                                    <div className="mt-3 flex flex-col gap-1 text-sm">
-                                                        <p>Room: <span className='font-semibold'>{room?.roomType?.room_type || 'Standard Room'}</span></p>
-                                                        <p>Guests: <span className='font-semibold'>{room?.adults || 0} Adults</span></p>
-                                                        <p className='text-[#D2A256] font-bold mt-1'>
-                                                            {formatShortDate(room?.checkIn)} - {formatShortDate(room?.checkOut)}
-                                                        </p>
-                                                    </div>
+                                                    <h3 className="text-xl font-bold">{room.property?.name}</h3>
+                                                    <p className="text-sm text-gray-500">{room.property?.city}</p>
+                                                    <div className="mt-3 text-sm"><p>Room: <span className='font-bold'>{room.roomType?.room_type}</span></p><p className='text-[#D2A256] font-extrabold'>{formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}</p></div>
                                                 </div>
                                             </div>
-                                            
-                                            <div className='pt-4 flex flex-wrap gap-3'>
-                                                <button onClick={() => navigate(`/room-booking/${room?.property?.id}`)} className="flex-1 bg-white border border-[#D2A256] text-[#D2A256] py-2 rounded-lg text-sm font-bold hover:bg-yellow-50">Book Again</button>
+                                            <div className='pt-4 flex gap-3'>
+                                                {/* ✅ VIEW DETAILS BUTTON RESTORED */}
                                                 <button onClick={() => openDetails(order, room)} className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100">View Details</button>
-                                                <button onClick={() => handleGetInvoice(order.id)} className="flex-1 border border-gray-300 py-2 rounded-lg text-sm font-bold flex items-center justify-center gap-2 hover:bg-gray-50">
-                                                    <FileText className='w-4 h-4'/> Invoice
-                                                </button>
+                                                <button onClick={() => setSelectedInvoice(order)} className="flex-1 border border-gray-200 py-2.5 rounded-lg text-xs font-black uppercase text-gray-500">Invoice</button>
+                                                <button onClick={() => navigate(`/room-booking/${room.property.id}`)} className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase">Book Again</button>
                                             </div>
                                         </div>
                                     ))}
+
+                                    {/* PACKAGE VIEW */}
+{bookingType === 'package' && (
+    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
+        <div className="flex items-center gap-2 mb-4">
+            <CheckCircle className="w-4 h-4 text-green-500" />
+            <span className="text-sm font-bold text-gray-700">{order.status}</span>
+            <span className='text-gray-400 text-sm'>• ID: #{order.id}</span>
+        </div>
+        
+        <div className="flex gap-6 border-b pb-5">
+            <img src={order.holidayPackage?.hero_image} className="w-28 h-28 object-cover rounded-xl border bg-gray-100" />
+            <div className="flex-1">
+                <h3 className="text-xl font-black text-gray-900">{order.holidayPackage?.title}</h3>
+                <p className="text-xs text-gray-500 flex items-center gap-1 font-bold mt-1 uppercase tracking-tighter">
+                    <MapPin size={12} className="text-[#D2A256]" /> {order.holidayPackage?.included_cities?.join(" • ")}
+                </p>
+                <div className="mt-4 flex flex-wrap gap-4 text-xs font-bold">
+                    <div className="flex items-center gap-1.5"><Calendar size={14} className="text-gray-400" /> {formatShortDate(order.startDate)} - {formatShortDate(order.endDate)}</div>
+                    <div className="flex items-center gap-1.5"><Users size={14} className="text-gray-400" /> {order.adults} Persons</div>
+                </div>
+            </div>
+        </div>
+
+        {/* ✅ UPDATED BUTTONS FOR PACKAGE */}
+        <div className='pt-4 flex gap-3'>
+            {/* View Details - Filhal alert de sakte ho ya alag modal bana sakte ho */}
+            <button 
+                onClick={() => openPackageDetails(order)} 
+                className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all"
+            >
+                View Details
+            </button>
+
+            {/* Book Again - Redirect to the package detail page */}
+            <button 
+                onClick={() => navigate(`/package-detail/${order.holidayPackage?.id}`)}
+                className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-md hover:bg-[#b38842] transition-all"
+            >
+                Book Again
+            </button>
+        </div>
+    </div>
+)}
                                 </div>
-                            ))
-                            ) : (
-                                <div className="text-center p-20 bg-white rounded-xl border-2 border-dashed">
-                                    <ShoppingBag className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                                    <p className="text-gray-500 font-medium">No bookings found for this category.</p>
-                                </div>
+                            )) : (
+                                <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed"><ShoppingBag className="w-12 h-12 text-gray-200 mx-auto mb-4" /><p className="text-gray-400 font-bold uppercase text-[10px]">No {bookingType} bookings found.</p></div>
                             )}
                         </div>
                     </div>
@@ -639,24 +621,79 @@ const MyBookingsPage: React.FC = () => {
             </div>
 
             <BookingDetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} data={selectedBooking} />
+                <PackageDetailModal 
+    isOpen={isPackageModalOpen} 
+    onClose={() => setIsPackageModalOpen(false)} 
+    order={selectedPackageOrder} 
+/>
 
-            {/* ✅ UPDATED: Invoice View with z-[200] and print class */}
             {selectedInvoice && (
                 <div className="fixed inset-0 z-[200] bg-white overflow-auto print-only-invoice">
-                    {/* Back Button Container */}
                     <div className="max-w-[800px] mx-auto p-4 flex items-center no-print border-b mb-4">
-                        <button 
-                            onClick={() => setSelectedInvoice(null)}
-                            className="bg-black text-white px-4 py-2 rounded-full flex items-center gap-2 font-bold hover:bg-gray-800 transition-all shadow-md"
-                        >
-                            <ArrowLeft size={16} /> Back to My Bookings
-                        </button>
+                        <button onClick={() => setSelectedInvoice(null)} className="bg-black text-white px-4 py-2 rounded-full flex items-center gap-2 font-bold shadow-md"><ArrowLeft size={16} /> Back</button>
                     </div>
-                    
-                    {/* Component Rendering */}
                     <InvoicePDF invoiceData={selectedInvoice} />
                 </div>
             )}
+        </div>
+    );
+};
+
+const PackageDetailModal = ({ isOpen, onClose, order }: { isOpen: boolean, onClose: () => void, order: any }) => {
+    if (!isOpen || !order) return null;
+
+    const pkg = order.holidayPackage;
+    
+    return (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+            <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-200">
+                {/* Header */}
+                <div className="bg-[#263238] p-6 text-white flex justify-between items-start">
+                    <div>
+                        <p className="text-yellow-400 text-[10px] font-bold uppercase tracking-widest mb-1">Package Confirmation</p>
+                        <h2 className="text-2xl font-black">Order ID: #{order.id}</h2>
+                    </div>
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-full transition-all"><XCircle className="w-6 h-6" /></button>
+                </div>
+
+                <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto bg-gray-50/30">
+                    {/* Package Info */}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex gap-4">
+                        <img src={pkg?.hero_image} className="w-24 h-24 rounded-2xl object-cover" alt="package" />
+                        <div>
+                            <h3 className="font-black text-xl text-gray-900">{pkg?.title}</h3>
+                            <p className="text-sm text-gray-500 mt-1">{pkg?.included_cities?.join(" • ")}</p>
+                        </div>
+                    </div>
+
+                    {/* Stay & Guests */}
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Duration</p>
+                            <p className="text-sm font-black text-gray-800 mt-1">{formatShortDate(order.startDate)} - {formatShortDate(order.endDate)}</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm">
+                            <p className="text-[10px] text-gray-400 font-bold uppercase">Travelers</p>
+                            <p className="text-sm font-black text-gray-800 mt-1">{order.adults} Adults, {order.children || 0} Children</p>
+                        </div>
+                    </div>
+
+                    {/* Payment Info */}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                        <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Billing Summary</h4>
+                        <div className="flex justify-between items-center pt-3 border-t border-dashed">
+                            <span className="font-bold text-gray-800 text-lg">Amount Paid</span>
+                            <span className="text-2xl font-black text-green-600">₹{order.totalPrice.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6 bg-white border-t border-gray-100">
+                    <button className="w-full bg-[#D2A256] text-white py-4 rounded-2xl text-sm font-black hover:bg-[#b88d45] transition-all shadow-lg uppercase tracking-widest">
+                        Download Package Voucher
+                    </button>
+                </div>
+            </div>
         </div>
     );
 };
