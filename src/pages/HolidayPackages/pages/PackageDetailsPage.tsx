@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useParams } from "react-router-dom"; 
+import { useLocation, useParams , useSearchParams } from "react-router-dom"; 
 import { PackageGallery } from "../components/PackageGallery";
 import { PricingSidebar } from "../components/PricingSidebar";
 import { PackageTabs } from "../components/PackageTabs";
@@ -12,13 +12,13 @@ const PackageDetailsPage = () => {
   const { id } = useParams(); 
   const [activeTab, setActiveTab] = useState('itineraries');
   const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-  const [persons, setPersons] = useState(1);
   const [itineraryData, setItineraryData] = useState<any>(null);
   const [summaryData, setSummaryData] = useState<any>(null);
   const [priceData, setPriceData] = useState<any>(null);
   const [galleryData, setGalleryData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  const [searchParams] = useSearchParams();
+  const [persons, setPersons] = useState(Number(searchParams.get("persons")) || 1);
   const location = useLocation();
 
   // FIX: Modal se 'flight' ya 'land' aa raha hai (Variable name: type)

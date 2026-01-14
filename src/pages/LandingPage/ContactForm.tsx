@@ -197,19 +197,19 @@ export default function ContactForm() {
             
             <button 
               className="w-full bg-black text-white py-4 mt-[30px] rounded-md font-semibold text-base hover:bg-black transition-colors"
-              onClick={() => window.open('https://g.page/r/YOUR_GOOGLE_REVIEW_LINK/review', '_blank')}
+              // onClick={() => window.open('https://g.page/r/YOUR_GOOGLE_REVIEW_LINK/review', '_blank')}
             >
               Write a Review
             </button>
           </div>
 
           {/* Right Column - Form with Error Messaging */}
-          <div className="relative">
-            <div className="absolute -top-4 -right-1.5 w-20 h-20 border-t-4 border-r-4 border-[#C9A86A]"></div>
+          <div className="relative ">
+            <div className="absolute -top-4  -right-1.5 w-20 h-20 border-t-4 border-r-4 border-[#C9A86A]"></div>
             <div className="absolute bottom-0 -left-2 w-20 h-20 border-b-4 border-l-4 border-[#C9A86A]"></div>
             
-            <form onSubmit={handleSubmit} className="bg-white px-6 py-9 shadow-lg relative" noValidate>
-              <div className="space-y-[20px]">
+            <form onSubmit={handleSubmit} className="bg-white px-6  py-9 shadow-lg relative" noValidate>
+              <div className="space-y-[30px] ">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-gray-700 text-sm font-medium mb-2 uppercase tracking-wide">

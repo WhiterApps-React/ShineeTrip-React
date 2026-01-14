@@ -12,7 +12,7 @@ interface Destination {
   id: number;
   name: string;
   index: number;
-  img_url: string;
+  image: string | null;
   redirect_url: string; 
   categoryId: number;
 }
@@ -24,6 +24,8 @@ interface Category {
   index: number;
   destinations: Destination[]; 
 }
+
+
 
 export default function HeroSection() {
   const [activeTab, setActiveTab] = useState<string>("");
@@ -363,7 +365,7 @@ const handleSearch = () => {
              sessionStorage.removeItem("shineetrip_token"); 
         }
         
-        setErrorPopup("Your session has expired. Please log in again to perform a search."); 
+        
         setShowLoginPopup(true);
         return;
     }
@@ -393,7 +395,7 @@ const handleDestinationClick = (destination: Destination) => {
             sessionStorage.removeItem("shineetrip_token"); 
         }
         
-        setErrorPopup("Your session has expired. Please log in again to explore destinations."); 
+        
         setShowLoginPopup(true);
         return; 
     }
@@ -538,86 +540,83 @@ const handleDestinationClick = (destination: Destination) => {
               {/* Inputs Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                 {/* Location */}
-                <div className="space-y-2 relative" ref={wrapperRef}>
-                  <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
-                    <MapPin size={14} className="text-[#D2A256]" />
-                    NAME OF LOCATION
-                  </div>
-                  <div className="relative">
-                    <input 
-                      type="text" 
-                      value={location}
-                      onFocus={() => setShowSuggestions(true)}
-                      onChange={(e) => setLocation(e.target.value)}
-                      placeholder="Enter the location"
-                      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#C9A961] transition-colors"
-                    />
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-                  </div>
-                  
-                  {/* Autocomplete Dropdown */}
-                  {/* Autocomplete Dropdown - Redesigned */}
-{/* Autocomplete Dropdown - Theme Matched */}
-{showSuggestions && filteredLocations.length > 0 && (
-  <div 
-    className="absolute z-[100] w-full rounded-2xl mt-2 shadow-2xl overflow-hidden border animate-in slide-in-from-top-2 duration-200 backdrop-blur-2xl"
-    style={{ 
-      background: 'rgba(30, 30, 30, 0.85)', // Darker theme matching the search widget
-      borderColor: 'rgba(210, 162, 86, 0.3)' // Subtle golden border
-    }}
-  >
-    {/* Header with Golden Accent */}
-    <div className="px-4 py-2 text-[10px] font-bold text-[#EFD08D] uppercase tracking-widest border-b border-white/10 bg-white/5">
-      Suggested Locations
-    </div>
-
-    <ul className="max-h-72 overflow-y-auto custom-scrollbar">
-      {filteredLocations.map((loc, index) => {
-        const [cityName, countryName] = loc.split(', ');
-        return (
-          <li 
-            key={index}
-            onClick={() => {
-              setLocation(loc);
-              setShowSuggestions(false);
-            }}
-            className="group flex items-center gap-4 px-4 py-3 hover:bg-white/5 cursor-pointer transition-all border-b border-white/5 last:border-0"
-          >
-            {/* Location Icon - Matching Search Bar Icon Style */}
-            <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-[#AB7E29] group-hover:to-[#EFD08D] transition-all duration-300">
-              <MapPin size={18} className="text-[#D2A256] group-hover:text-white" />
-            </div>
-            
-            {/* Location Text */}
-            <div className="flex flex-col overflow-hidden">
-              <span className="text-sm font-bold text-white group-hover:text-[#EFD08D] transition-colors truncate tracking-wide">
-                {cityName}
-              </span>
-              <span className="text-[11px] text-gray-400 font-medium uppercase tracking-tighter group-hover:text-gray-300">
-                {countryName}
-              </span>
-            </div>
-
-            {/* "Select" badge - Exact Golden Gradient Match */}
-            <div className="ml-auto opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
-               <span 
-                 className="text-[10px] font-black text-white px-3 py-1 rounded-lg shadow-lg"
-                 style={{ background: 'linear-gradient(180.95deg, #AB7E29 0.87%, #EFD08D 217.04%)' }}
-                >
-                  SELECT
-                </span>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
-    
-    {/* Bottom Accent Line */}
-    <div className="h-1 bg-gradient-to-r from-transparent via-[#AB7E29] to-transparent opacity-50" />
+                {/* Location */}
+<div className="space-y-2 relative" ref={wrapperRef}>
+  <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
+    <MapPin size={14} className="text-[#D2A256]" />
+    NAME OF LOCATION
   </div>
-)}
-                </div>
+  
+  {/* ✅ INPUT CONTAINER (Dropdown ko iske andar move kiya hai) */}
+  <div className="relative">
+    <input 
+      type="text" 
+      value={location}
+      onFocus={() => setShowSuggestions(true)}
+      onChange={(e) => setLocation(e.target.value)}
+      placeholder="Enter the location"
+      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:border-[#C9A961] transition-colors"
+    />
+    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
 
+    {/* ✅ DROPDOWN MOVED HERE & ADDED 'top-full' */}
+    {showSuggestions && filteredLocations.length > 0 && (
+      <div 
+        className="absolute top-full z-[100] w-full rounded-2xl mt-2 shadow-2xl overflow-hidden border animate-in slide-in-from-top-2 duration-200 backdrop-blur-2xl"
+        style={{ 
+          background: 'rgba(30, 30, 30, 0.85)',
+          borderColor: 'rgba(210, 162, 86, 0.3)'
+        }}
+      >
+        {/* Header with Golden Accent */}
+        <div className="px-4 py-2 text-[10px] font-bold text-[#EFD08D] uppercase tracking-widest border-b border-white/10 bg-white/5">
+          Suggested Locations
+        </div>
+
+        <ul className="max-h-72 overflow-y-auto custom-scrollbar">
+          {filteredLocations.map((loc, index) => {
+            const [cityName, countryName] = loc.split(', ');
+            return (
+              <li 
+                key={index}
+                onClick={() => {
+                  setLocation(loc);
+                  setShowSuggestions(false);
+                }}
+                className="group flex items-center gap-4 px-4 py-3 hover:bg-white/5 cursor-pointer transition-all border-b border-white/5 last:border-0"
+              >
+                <div className="flex-shrink-0 w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center group-hover:bg-gradient-to-br group-hover:from-[#AB7E29] group-hover:to-[#EFD08D] transition-all duration-300">
+                  <MapPin size={18} className="text-[#D2A256] group-hover:text-white" />
+                </div>
+                
+                <div className="flex flex-col overflow-hidden">
+                  <span className="text-sm font-bold text-white group-hover:text-[#EFD08D] transition-colors truncate tracking-wide">
+                    {cityName}
+                  </span>
+                  <span className="text-[11px] text-gray-400 font-medium uppercase tracking-tighter group-hover:text-gray-300">
+                    {countryName}
+                  </span>
+                </div>
+
+                <div className="ml-auto opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300">
+                   <span 
+                     className="text-[10px] font-black text-white px-3 py-1 rounded-lg shadow-lg"
+                     style={{ background: 'linear-gradient(180.95deg, #AB7E29 0.87%, #EFD08D 217.04%)' }}
+                    >
+                     SELECT
+                   </span>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+        
+        {/* Bottom Accent Line */}
+        <div className="h-1 bg-gradient-to-r from-transparent via-[#AB7E29] to-transparent opacity-50" />
+      </div>
+    )}
+  </div>
+</div>
                 {/* Check In */}
                 <div className="space-y-2">
                   <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
@@ -819,7 +818,7 @@ const handleDestinationClick = (destination: Destination) => {
                   >
                     <div className="relative overflow-hidden rounded-3xl aspect-[4/3.5] mb-2 shadow-sm">
                       <img
-                        src={dest.img_url}
+                        src={dest.image}
                         alt={dest.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />

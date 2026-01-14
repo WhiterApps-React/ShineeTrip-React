@@ -10,6 +10,8 @@ const HolidayPackages = () => {
   const [packages, setPackages] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [persons, setPersons] = useState(Number(searchParams.get("persons")) || 1);
+
 useEffect(() => {
   const fetchPackages = async () => {
     setLoading(true);
@@ -87,7 +89,11 @@ useEffect(() => {
           Find Your Perfect Holiday
         </h1>
       </div>
-      <HolidaySearch />
+      <HolidaySearch 
+      isDetailsPage={false} 
+      persons={persons}      
+      setPersons={setPersons} 
+    />
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-8">
@@ -106,7 +112,8 @@ useEffect(() => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
             {packages.length > 0 ? (
               packages.map((pkg: any) => (
-                <PackageCard key={pkg.id} data={pkg} />
+                <PackageCard key={pkg.id} data={pkg} 
+                persons={persons} />
               ))
             ) : (
               <div className="col-span-full text-center py-24 bg-white rounded-[32px] border-2 border-dashed border-gray-100">

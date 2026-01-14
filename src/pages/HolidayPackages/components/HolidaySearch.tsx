@@ -17,6 +17,7 @@ export const HolidaySearch = ({ isDetailsPage = false , persons = 1 , setPersons
   // States sync with URL
   const [city, setCity] = useState(searchParams.get("city") || "");
   const [date, setDate] = useState(searchParams.get("departureDate") || "");
+  
 
   // --- AUTOCOMPLETE STATES ---
   const [availableCities, setAvailableCities] = useState<string[]>([]);
@@ -78,18 +79,17 @@ export const HolidaySearch = ({ isDetailsPage = false , persons = 1 , setPersons
       return;
     }
 
-    // Ab hum alert nahi dikhayenge agar city khali hai
-    // Kyunki user sirf date se bhi search kar sakta hai
+
     const params: any = {
       page: "1",
       limit: "10"
     };
 
-    // Agar city hai toh add karo, warna skip
     if (city.trim()) params.city = city.trim();
     
-    // Agar date hai toh add karo, warna default empty string
+    
     if (date) params.departureDate = date;
+    params.persons = persons.toString();
 
     // URL update hoga, HolidayPackages.tsx isey pick kar lega
     setSearchParams(params);

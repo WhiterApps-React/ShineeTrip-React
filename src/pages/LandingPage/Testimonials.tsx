@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card"
 import { Star } from "lucide-react"
 
-// Testimonial ka data fetch karne ke liye API URL
+// API URL (Updated IP based on your curl)
 const API_URL = 'http://46.62.160.188:3000/testimonials';
 
-// --- TYPE DEFINITIONS (TypeScript ka main part) ---
+// --- TYPE DEFINITIONS ---
 
-// 1. API se aane wala Raw Data structure
+// 1. API Response Structure
 interface ApiTestimonial {
   id: number;
   rating: number;
@@ -17,12 +17,12 @@ interface ApiTestimonial {
   review: string;
   cu_name: string;
   cu_addr: string;
-  cu_img: string;
+  cu_img: string | null; // API might return null sometimes
   created_at: string;
   updated_at: string;
 }
 
-// 2. Component mein use hone wala Formatted Data structure
+// 2. Component View Structure
 interface FormattedTestimonial {
   id: number;
   name: string;
@@ -34,25 +34,18 @@ interface FormattedTestimonial {
   number: string;
 }
 
-// --- UTILITY FUNCTION ---
-
-// Function to format the index number with a leading zero (e.g., 1 -> "01")
+// --- UTILITY ---
 const formatNumber = (index: number): string => {
   return (index + 1).toString().padStart(2, '0');
 }
 
-// --- COMPONENT START ---
-
 export default function Testimonials() {
-  // 1. State ko FormattedTestimonial type ke saath initialize kiya gaya hai
   const [testimonials, setTestimonials] = useState<FormattedTestimonial[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null); // Error ya toh string hoga ya null
+  const [error, setError] = useState<string | null>(null);
 
-  // 2. useEffect hook to fetch data when the component mounts
   useEffect(() => {
-    // Return type ko 'void' rakha gaya hai
-    const fetchTestimonials = async (): Promise<void> => {
+    const fetchTestimonials = async () => {
       try {
         const response = await fetch(API_URL);
 
@@ -60,28 +53,30 @@ export default function Testimonials() {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        // Response data ko ApiTestimonial array type diya gaya hai
         const data: ApiTestimonial[] = await response.json();
 
-        // 3. Map the fetched API data to match the required structure
-        const formattedTestimonials: FormattedTestimonial[] = data.map((item, index) => ({
+        // Data Mapping Logic
+        const formattedData: FormattedTestimonial[] = data.map((item, index) => ({
           id: item.id,
-          name: item.cu_name || "Anonymous Traveler", 
-          location: item.cu_addr || "Global", 
-          // API mein 'title' ko 'package' mein map kiya
-          package: item.title || "TRAVEL PACKAGE", 
-          content: item.review || "No review content provided.", 
+        
+          name: item.cu_name || "Happy Traveler", 
+          location: item.cu_addr || "India", 
+        
+          package: item.title ? item.title.substring(0, 20) : "LUXURY STAY", 
+          content: item.review || "An unforgettable experience!", 
           rating: item.rating || 5, 
-          image: item.cu_img || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=100&q=80",
+          // Default Avatar agar image na ho
+          image: item.cu_img || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80",
           number: formatNumber(index),
         }));
 
-        setTestimonials(formattedTestimonials); // setTestimonials ko FormattedTestimonial[] mil raha hai
+
+        setTestimonials(formattedData);
         setError(null);
 
-      } catch (err: any) { // Error ko 'any' type de sakte hain ya 'unknown' se handle kar sakte hain
+      } catch (err: any) {
         console.error("Failed to fetch testimonials:", err);
-        setError("Failed to load testimonials. Please try again later.");
+        setError("Failed to load testimonials.");
       } finally {
         setIsLoading(false);
       }
@@ -90,110 +85,117 @@ export default function Testimonials() {
     fetchTestimonials();
   }, []);
 
-  // Optional: Loading aur Error states ko handle karna
   if (isLoading) {
     return (
       <div className="pt-12 bg-white">
-        <section className="py-16 bg-[#2C3C3C] text-white text-center">
-          <p className="text-xl">Loading testimonials...</p>
+        <section className="py-20 bg-[#2C3C3C] text-white text-center min-h-[400px] flex items-center justify-center">
+          <div className="animate-pulse flex flex-col items-center">
+             <div className="h-4 w-32 bg-gray-600 rounded mb-4"></div>
+             <div className="h-8 w-64 bg-gray-600 rounded"></div>
+          </div>
         </section>
       </div>
     );
   }
 
   if (error) {
-    return (
-      <div className="pt-12 bg-white">
-        <section className="py-16 bg-[#2C3C3C] text-white text-center">
-          <p className="text-xl text-red-400">Error: {error}</p>
-        </section>
-      </div>
-    );
+   
+    return null; 
   }
 
-  // Final Render
   return (
     <div className="pt-12 bg-white">
       <section className="py-16 bg-[#2C3C3C] font-opensans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* ... (Header component is the same) ... */}
+          
+          {/* Header Section */}
           <div className="text-center mb-16">
             <div className="flex items-center justify-center gap-3 mb-4">
               <div className="flex-1 max-w-[180px] h-[1px] bg-[#D4A76A]"></div>
-              <p className="text-[#D4A76A] font-medium tracking-[0.2em] text-[11px] uppercase font-opensans">
+              <p className="text-[#D4A76A] font-medium tracking-[0.2em] text-[11px] uppercase">
                 CLIENT STORIES
               </p>
               <div className="flex-1 max-w-[180px] h-[1px] bg-[#D4A76A]"></div>
             </div>
-            <h2 className="text-5xl font-bold mb-0 text-white leading-tight font-opensans">Traveler</h2>
-            <p className="text-5xl text-[#D4A76A] font-light italic mb-5 font-opensans" style={{ fontFamily: 'serif' }}>
+            <h2 className="text-5xl font-bold mb-0 text-white leading-tight">Traveler</h2>
+            <p className="text-5xl text-[#D4A76A] font-light italic mb-5" style={{ fontFamily: 'serif' }}>
               Testimonials
             </p>
-            <p className="text-white text-[15px] max-w-2xl mx-auto leading-relaxed font-opensans">
+            <p className="text-white text-[15px] max-w-2xl mx-auto leading-relaxed opacity-90">
               Discover why thousands of travelers trust us to create their most<br />
-              cherished memories across the Himalayas.
+              cherished memories across the world.
             </p>
           </div>
 
-          {/* Testimonials Grid (Mapping is the same, but TypeScript errors are resolved) */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Dynamic Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {testimonials.length > 0 ? (
               testimonials.map((testimonial) => (
                 <Card
                   key={testimonial.id}
-                  className="relative bg-[#425656] border-0 p-8 overflow-hidden group hover:shadow-xl transition-shadow duration-300 rounded-none"
+                  className="relative bg-[#425656] border-0 p-8 overflow-hidden group hover:-translate-y-1 transition-all duration-300 rounded-sm shadow-lg hover:shadow-2xl"
                 >
-                  {/* Background Number */}
-                  <div className="absolute top-4 right-6 text-[#4A5E5E] text-[120px] font-bold leading-none pointer-events-none opacity-50 font-opensans">
+                  {/* Background Number Watermark */}
+                  <div className="absolute top-2 right-4 text-[#4A5E5E] text-[100px] font-bold leading-none pointer-events-none opacity-40 font-serif select-none">
                     {testimonial.number}
                   </div>
 
-                  {/* Stars */}
-                  <div className="flex gap-1 relative z-10">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      // rating ek number hai, isliye yahaan error nahi aayega
-                      <Star key={i} size={18} className="fill-[#D4A76A] text-[#D4A76A]" />
-                    ))}
-                  </div>
+                  <div className="relative z-10 flex flex-col h-full">
+                      {/* Rating Stars */}
+                      <div className="flex gap-1 mb-4">
+                        {[...Array(5)].map((_, i) => (
+                          <Star 
+                            key={i} 
+                            size={16} 
+                            className={`${i < testimonial.rating ? "fill-[#D4A76A] text-[#D4A76A]" : "fill-gray-600 text-gray-600"}`} 
+                          />
+                        ))}
+                      </div>
 
-                  {/* Package Badge */}
-                  <div className="bg-[#8B7355] border border-[#A5865F] px-4 py-2 inline-block relative z-10 rounded-sm">
-                    <p className="text-[#D4A76A] text-[11px] font-semibold tracking-[0.15em] font-opensans">
-                      {testimonial.package}
-                    </p>
-                  </div>
+                      {/* Title Badge */}
+                      <div className="mb-4">
+                        <span className="bg-[#8B7355]/30 border border-[#A5865F]/50 px-3 py-1.5 rounded-sm text-[#D4A76A] text-[10px] font-bold tracking-[0.15em] uppercase">
+                          {testimonial.package}
+                        </span>
+                      </div>
 
-                  {/* Testimonial Text */}
-                  <p className="text-white mb-2 leading-relaxed relative z-10 text-[14px] font-opensans">
-                    "{testimonial.content}"
-                  </p>
-
-                  {/* Author Info */}
-                  <div className="flex items-center gap-4 relative z-10">
-                    <div className="w-12 h-12 rounded-full overflow-hidden flex-shrink-0">
-                      <img 
-                        src={testimonial.image} 
-                        alt={testimonial.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div>
-                      {/* Name */}
-                      <p className="font-bold text-white text-[13px] leading-tight font-opensans">
-                        {testimonial.name}
+                      {/* Review Text */}
+                      <p className="text-gray-200 mb-6 leading-relaxed text-[14px] flex-grow italic">
+                        "{testimonial.content}"
                       </p>
-                      {/* Location */}
-                      <p className="text-white text-[12px] mt-0.5 font-opensans">
-                        {testimonial.location}
-                      </p>
-                    </div>
+
+                      {/* User Info Footer */}
+                      <div className="flex items-center gap-4 mt-auto border-t border-white/10 pt-4">
+                        <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-[#D4A76A]/50">
+                          <img 
+                            src={testimonial.image} 
+                            alt={testimonial.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                                // Fallback image logic
+                                e.currentTarget.src = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80";
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <p className="font-bold text-white text-[13px] leading-tight">
+                            {testimonial.name}
+                          </p>
+                          <p className="text-[#D4A76A] text-[11px] mt-0.5 font-light">
+                            {testimonial.location}
+                          </p>
+                        </div>
+                      </div>
                   </div>
                 </Card>
               ))
             ) : (
-                <p className="col-span-3 text-center text-white text-lg">No testimonials found.</p>
+                <div className="col-span-3 text-center py-10 text-gray-400">
+                    <p>No stories available yet.</p>
+                </div>
             )}
           </div>
+
         </div>
       </section>
     </div>

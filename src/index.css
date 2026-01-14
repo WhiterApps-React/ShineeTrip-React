@@ -41,6 +41,9 @@
   --sidebar-border: oklch(0.88 0 0);
   --sidebar-ring: oklch(0.72 0.2 40);
 }
+*{
+  font-family: "Open Sans", sans-serif;
+}
 
 .dark {
   --background: oklch(0.12 0 0);

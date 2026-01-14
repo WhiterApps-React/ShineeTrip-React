@@ -5,9 +5,10 @@ interface PackageSelectionModalProps {
   isOpen: boolean;
   onClose: () => void;
   data: any; // API se aane wala holiday package data
+  persons: number;
 }
 
-export const PackageSelectionModal = ({ isOpen, onClose, data }: PackageSelectionModalProps) => {
+export const PackageSelectionModal = ({ isOpen, onClose, data, persons }: PackageSelectionModalProps) => {
   const navigate = useNavigate();
 
   if (!isOpen) return null;
@@ -17,7 +18,9 @@ export const PackageSelectionModal = ({ isOpen, onClose, data }: PackageSelectio
     onClose(); // Pehle modal band karein
     // Detail page par navigate karein dynamic ID ke saath
     // Saath mein state bhej rahe hain taaki details page ko pata ho kya select kiya tha
-    navigate(`/package-detail/${data.id}`, { state: { type: selectionType } });
+    navigate(`/package-detail/${data.id}?persons=${persons}`, { 
+      state: { type: selectionType } 
+    });
   };
 
   // Price formatting helper

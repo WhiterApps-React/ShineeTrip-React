@@ -8,6 +8,7 @@ import TrainIcon from "../assets/Train Streamline Sharp Line - Material Symbols.
 import PackageIcon from "../assets/Package Streamline Phosphor Regular.png";
 import EventIcon from "../assets/Event Streamline Carbon.png";
 import { LoginModal } from "./Login/Loginpage";
+import { getAuth, signOut } from "firebase/auth";
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -62,21 +63,26 @@ export const Navbar = () => {
   };
 
  
-const handleLogout = () => {
+const handleLogout = async () => {
+    const auth = getAuth();
+    try {
+      await signOut(auth);
+      
+      sessionStorage.clear();
+      localStorage.clear();
+      
+      // 3. UI Reset
+      setIsLoggedIn(false);
+      setShowUserMenu(false);
+      
+      // 4. Redirect & Refresh
+      navigate("/");
+      window.location.reload(); 
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
+  };
   
-  sessionStorage.removeItem("shineetrip_token");
-  sessionStorage.removeItem("shineetrip_uid");
-  sessionStorage.removeItem("shineetrip_name");
-  sessionStorage.removeItem("shineetrip_email");
-  sessionStorage.removeItem("shineetrip_db_customer_id");
-  
-  setIsLoggedIn(false);
-  setUserInitial("U");
-  setShowUserMenu(false);
-  navigate("/");
-  window.location.reload(); 
-};
-
   const handleLoginSuccess = () => {
     setIsModalOpen(false);
     const token = sessionStorage.getItem("shineetrip_token");

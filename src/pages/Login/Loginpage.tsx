@@ -77,9 +77,7 @@ if (searchResponse.ok) {
         phone: "", 
         // 🚨 FIX: Add a unique placeholder password using Firebase UID 
         password: `FB_LOGIN_${user.uid}_TEMP`, 
-        // Agar backend ko 'dob' (Date of Birth) bhi chahiye, toh yahan ek dummy value daalni padegi.
-        // Agar dob mandatory hai aur error aata hai, toh is line ko uncomment kar dena:
-        // dob: "1900-01-01", 
+
         firebase_uid: user.uid,
         enabled: true,
         default_group: 3
@@ -167,7 +165,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
    window.location.reload();
 } catch (error) {
   
-   sessionStorage.clear();
+  
    console.error("Login sequence failed");
 }
 
@@ -272,7 +270,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
               Continue with email
             </button>
 
-            <button
+{/*             <button
               onClick={handleFacebookLogin}
               disabled={!!socialLoading}
               className="w-full h-14 border-2 border-gray-900 rounded-lg flex items-center justify-start px-4 gap-3 hover:bg-gray-50 transition-colors font-semibold text-gray-900 disabled:opacity-50"
@@ -283,7 +281,7 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
                 <FacebookLogo />
               )}
               Continue with Facebook
-            </button>
+            </button> */}
           </div>
         </div>
       </DialogContent>
