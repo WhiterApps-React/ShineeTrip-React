@@ -736,7 +736,7 @@ const handleDestinationClick = (destination: Destination) => {
                 <button 
                   // ✅ FIX: Using the unified click handler
                   onClick={handleButtonClick}
-                  className="text-white font-bold transition-all transform hover:scale-105 flex items-center gap-2"
+                  className="text-white font-medium transition-all transform hover:scale-105 flex items-center gap-2"
                   style={{
                     borderRadius: '15px',
                     padding: '12px 40px',
@@ -744,8 +744,8 @@ const handleDestinationClick = (destination: Destination) => {
                     boxShadow: '0px 2px 6px 2px rgba(0, 0, 0, 0.15), 0px 1px 2px 0px rgba(0, 0, 0, 0.3)',
                   }}
                 >
-                  {isFormFilled ? 'Search' : 'View All Hotels'}
                   {isFormFilled && <Search size={20} />}
+                  {isFormFilled ? 'Search' : 'View All Hotels'}
                 </button>
               </div>
               </>
@@ -782,7 +782,7 @@ const handleDestinationClick = (destination: Destination) => {
             </div>
           
           {/* Tabs */}
-          <div className="flex justify-center mb-4 border-b border-gray-200 relative z-10">
+          <div className="flex justify-center mb-4   relative z-10">
             <div className="flex gap-8 overflow-x-auto no-scrollbar pb-1">
               {categories.map((cat) => (
                   <button

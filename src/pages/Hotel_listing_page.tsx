@@ -156,6 +156,9 @@ const newSearchParams = new URLSearchParams({
     if (currentUrlChl) queryParams.append("children", currentUrlChl);
     queryParams.append("rooms", currentUrlRms);
 
+    queryParams.append("page", "1");
+queryParams.append("limit", limit.toString());
+
       const apiUrl = `http://46.62.160.188:3000/properties/search?${queryParams.toString()}`;
 
       const response = await fetch(apiUrl, {
@@ -179,7 +182,9 @@ const newSearchParams = new URLSearchParams({
 
       const responseData = await response.json(); 
       const data = responseData.data || [];
-      const meta = responseData.meta || {}; // Meta data fetch kiya
+      const meta = responseData.meta || {}; 
+console.log("META FROM API:", meta);
+
 
       // FIX 1: Map function is now generating an array of Promises for parallel fetching
       const hotelPromises = (Array.isArray(data) ? data : [])
@@ -515,11 +520,13 @@ const SearchBar = (
         <div className="
              flex flex-col sm:flex-row items-stretch sm:items-center 
              justify-center gap-0 mb-4 rounded-lg overflow-hidden 
-             border border-gray-300 bg-gray-200
+             border border-gray-300 bg-[#F4F1EC]/20
+             rounded-tl-[24px] rounded-bl-[24px] 
+             rounded-tr-[24px] rounded-br-[24px] 
         ">
           
           {/* Location Field */}
-          <div className="flex-1 w-full sm:max-w-[250px] bg-gray-200 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+          <div className="flex-1 w-full sm:max-w-[250px] bg-[#F4F1EC]/20 px-4 py-3 rounded-tl-[24px] rounded-bl-[24px]  sm:border-r sm:border-b-0 border-gray-300">
             <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
               CITY, AREA OR PROPERTY
             </div>
@@ -536,7 +543,7 @@ const SearchBar = (
           </div>
 
           {/* Check-in Field */}
-          <div className="flex-1 w-full sm:max-w-[200px] bg-gray-200 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+          <div className="flex-1 w-full sm:max-w-[200px] bg-[#F4F1EC]/20  px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
             <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">CHECK-IN</div>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#D2A256]" />
@@ -550,7 +557,7 @@ const SearchBar = (
           </div>
 
           {/* Check-out Field */}
-          <div className="flex-1 w-full sm:max-w-[200px] bg-gray-200 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+          <div className="flex-1 w-full sm:max-w-[200px] bg-[#F4F1EC]/20 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
             <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">CHECK-OUT</div>
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-[#D2A256]" />
@@ -566,7 +573,7 @@ const SearchBar = (
           {/* Room & Guest Field */}
           {/* Note: Isme right border sirf sm:screen par chahiye, mobile par nahi, isliye border-r hataya */}
         {/* 🟢 UPDATED: ROOMS & GUESTS (With Rooms and Better Design) */}
-<div className="flex-1 w-full sm:max-w-[320px] bg-gray-200 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+<div className="flex-1 w-full sm:max-w-[320px] bg-[#F4F1EC]/20 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
   <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
     ROOMS & GUESTS
   </div>
@@ -636,10 +643,10 @@ const SearchBar = (
 </div>
 
           {/* Search Button - Yellow/Gold color as in Figma */}
-          <div className="flex-shrink-0 p-2">
+          <div className="bg-[#F4F1EC]/20 flex-shrink-0 p-2">
             <button
               onClick={handleSearchClick}
-              className="bg-[#D2A256] text-white p-3 rounded-full hover:bg-[#c2934b] transition-colors shadow-lg"
+              className="bg-black text-white p-3 rounded-full hover:bg-[#c2934b] transition-colors shadow-lg"
             >
               <Search className="w-5 h-5" />
             </button>
@@ -647,42 +654,48 @@ const SearchBar = (
         </div>
 
         {/* Sort Options / Mobile Filter Toggle */}
-        <div className="flex items-center justify-between flex-wrap mt-2">
-          
-          {/* 1. Sort Label (Desktop Only) */}
-          <div className="hidden sm:flex items-center gap-2 text-gray-900 font-semibold text-sm">
-            <SlidersHorizontal className="w-4 h-4 text-[#D2A256]" />
-            <span>Sort By:</span>
-          </div>
+        {/* OUTER WRAPPER → poora block center */}
+<div className="flex justify-center mt-2">
+  
+  {/* INNER WRAPPER → equal spacing + alignment */}
+  <div className="flex items-center gap-6 flex-wrap justify-center">
+    
+    {/* 1. Sort Label (Desktop Only) */}
+    <div className="hidden sm:flex items-center gap-2 text-gray-900 font-semibold text-sm">
+      <SlidersHorizontal className="w-4 h-4 text-[#D2A256]" />
+      <span>Sort By:</span>
+    </div>
 
-          {/* 2. Sort Options Buttons (Desktop Only) */}
-          <div className="hidden sm:flex gap-3 flex-wrap">
-            {sortOptions.map((option) => (
-              <button
-                key={option}
-                onClick={() => setSortBy(option)}
-                className={`px-3 py-1.5 rounded-full text-xs transition-all font-medium border ${
-                  sortBy === option
-                    ? "bg-[#D2A256] text-white border-[#D2A256]"
-                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
-                }`}
-              >
-                {option}
-              </button>
-            ))}
-          </div>
-          
-          {/* 3. Mobile Filter/Sort Button (Mobile Only) */}
-          {/* Ye button Side Bar ko open karega */}
-          <button
-              onClick={() => setIsSideBarOpen(true)}
-              className="sm:hidden flex items-center gap-2 px-4 py-2 bg-[#D2A256] text-white rounded-lg font-semibold"
-          >
-              <SlidersHorizontal className="w-4 h-4" />
-              Sort & Filter
-          </button>
-          
-        </div>
+    {/* 2. Sort Options Buttons (Desktop Only) */}
+    <div className="hidden sm:flex gap-4 flex-wrap justify-center">
+      {sortOptions.map((option) => (
+        <button
+  key={option}
+  onClick={() => setSortBy(option)}
+  className="
+    px-4 py-1.5 rounded-full text-xs font-medium border
+    bg-[#F4F1EC]/20 text-gray-700 border-[#E0DACF]
+    hover:bg-[#D2A256] hover:text-white hover:border-[#D2A256]
+    transition-all duration-200
+  "
+>
+  {option}
+</button>
+      ))}
+    </div>
+
+    {/* 3. Mobile Filter/Sort Button (Mobile Only) */}
+    <button
+      onClick={() => setIsSideBarOpen(true)}
+      className="sm:hidden flex items-center gap-2 px-5 py-2 bg-[#D2A256] text-white rounded-lg font-semibold"
+    >
+      <SlidersHorizontal className="w-4 h-4" />
+      Sort & Filter
+    </button>
+
+  </div>
+</div>
+
         
         {/* Temporary Button for Figma Style (Hata diya gaya hai jaisa aapne pichle response mein suggest kiya tha) */}
       </div>
@@ -765,44 +778,49 @@ if (loading) {
                 onClick={() => handleHotelClick(hotel.id)}
                 className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden hover:shadow-xl transition-shadow cursor-pointer"
               >
-                <div className="flex flex-col md:flex-row">
+                <div className="flex flex-col  md:flex-row">
                   {/* Image Section */}
-                  <div className="md:w-[380px] flex-shrink-0">
-                    <div className="relative h-[240px] md:h-full">
-                      <img
-                        src={hotel.images[currentImageIndex] || "https://placehold.co/550x320/cccccc/333333?text=No+Image"}
-                        alt={hotel.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute bottom-4 left-4 flex gap-2">
-                        {hotel.images.slice(0, 4).map((img, imgIndex) => (
-                          <button
-                            key={imgIndex}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleImageSelect(index, imgIndex);
-                            }}
-                            className={`w-12 h-12 rounded-lg overflow-hidden border-2 transition-all ${
-                              currentImageIndex === imgIndex
-                                ? "border-white scale-105"
-                                : "border-transparent opacity-70 hover:opacity-100"
-                            }`}
-                          >
-                            {imgIndex < 3 ? (
-                              <img
-                                src={img}
-                                alt={`Thumbnail ${imgIndex + 1}`}
-                              />
-                            ) : (
-                              <div className="w-full h-full bg-gray-800 bg-opacity-70 flex items-center justify-center text-white text-xs font-semibold">
-                                View All
-                              </div>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+<div className="md:w-[380px] flex-shrink-0 p-4">
+  
+  {/* Main Image */}
+  <div className="relative h-[240px] md:h-[260px] rounded-xl overflow-hidden mb-3 group">
+    <img
+      src={
+        hotel.images[currentImageIndex] ||
+        "https://placehold.co/550x320/cccccc/333333?text=No+Image"
+      }
+      alt={hotel.name}
+      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+    />
+  </div>
+
+  {/* Thumbnails BELOW main image */}
+  {hotel.images.length > 1 && (
+    <div className="flex gap-2 overflow-x-auto items-center scrollbar-hide">
+      {hotel.images.slice(0, 6).map((img, imgIndex) => (
+        <button
+          key={imgIndex}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleImageSelect(index, imgIndex);
+          }}
+          className={`w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+            currentImageIndex === imgIndex
+              ? "border-[#22C55E] opacity-100"
+              : "border-transparent opacity-60 hover:opacity-100"
+          }`}
+        >
+          <img
+            src={img}
+            alt={`Thumbnail ${imgIndex + 1}`}
+            className="w-full h-full object-cover block"
+          />
+        </button>
+      ))}
+    </div>
+  )}
+</div>
+
 
                   {/* Content Section - EXACT FIGMA STRUCTURE */}
                   <div className="flex-1 p-6">
@@ -839,29 +857,19 @@ if (loading) {
                         </div>
 
                         {/* Amenities - Simple checkboxes like Figma */}
-                        <div className="flex flex-wrap gap-3 mb-6">
-                          {hotel.amenities.slice(0, 3).map((amenity, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200"
-                            >
-                              <div className="w-3 h-3 border border-gray-400 rounded-sm flex items-center justify-center">
-                                {amenity === "Gym" || amenity === "Restaurant" ? (
-                                  <Check className="w-2 h-2 text-gray-600" />
-                                ) : null}
-                              </div>
-                              <span className="text-sm text-gray-700">{amenity}</span>
-                            </div>
-                          ))}
-                        </div>
+  <div className="flex flex-wrap gap-3 mb-6">
+    {hotel.amenities.slice(0, 3).map((amenity, idx) => (
+      <div
+        key={idx}
+        className="px-4 py-1.5 text-sm text-gray-700 rounded-full border border-gray-300 bg-white"
+      >
+        {amenity}
+      </div>
+    ))}
+  </div>
 
                         {/* Features List - EXACT FIGMA STYLE */}
                         <div className="space-y-3">
-                          {/* Free WiFi */}
-                          <div className="flex items-center gap-3">
-                            <Wifi className="w-5 h-5 text-gray-700" />
-                            <span className="text-gray-700">Free WiFi</span>
-                          </div>
 
                           {/* Couple Friendly */}
                           <div className="flex items-center gap-3">
@@ -869,16 +877,33 @@ if (loading) {
                             <span className="text-gray-700">Couple Friendly</span>
                           </div>
 
-                          {/* Free Cancellations */}
-                          <div className="flex items-center gap-3">
-                            <Check className="w-5 h-5 text-green-600" />
-                            <span className="text-gray-700 font-medium">Free Cancellations</span>
-                          </div>
 
                           {/* Additional features from API if available */}
                           {hotel.amenities.slice(3, 6).map((amenity, idx) => (
                             <div key={idx} className="flex items-center gap-3">
-                              <Check className="w-5 h-5 text-gray-500" />
+                              <svg
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="none"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <circle
+    cx="12"
+    cy="12"
+    r="11"
+    stroke="#22C55E"
+    strokeWidth="2"
+  />
+  <path
+    d="M7 12.5L10.5 16L17 9"
+    stroke="#22C55E"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  />
+</svg>
+
                               <span className="text-gray-700">{amenity}</span>
                             </div>
                           ))}
@@ -888,62 +913,91 @@ if (loading) {
                       {/* Right Column: Price and Booking - EXACT FIGMA STYLE */}
                       <div className="lg:w-[300px] border-l flex flex-col justify-between h-full border-gray-200 pl-6">
                         {/* Coupon Section - RED BADGE LIKE FIGMA */}
-                        <div className="mb-4">
-                          <div className="inline-flex items-center bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full mb-2">
-                            <span>Discount</span>
-                            <span className="ml-1 bg-white text-red-500 px-1 rounded">₹{discountAmount}</span>
-                          </div>
-                          <p className="text-xs text-gray-500 leading-relaxed">
-                            Pay using Canara Bank Credit Cards EMI to avail the offer with No Cost EMI
-                          </p>
-                        </div>
+<div className="mb-6">
+  {/* Coupons Heading */}
+  <h3 className="text-sm font-semibold text-gray-900 mb-3">
+    Coupons
+  </h3>
+
+  {/* Coupon Card */}
+  <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
+    
+    {/* Top Row: Discount chip + amount */}
+    <div className="flex items-center justify-between mb-2">
+      
+      {/* Discount Chip */}
+      <div className="inline-flex items-center gap-2 bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-800">
+        <svg
+  width="20"
+  height="20"
+  viewBox="0 0 24 24"
+  fill="#EF4444"
+  xmlns="http://www.w3.org/2000/svg"
+>
+  <path d="M3 12.5V7a2 2 0 0 1 2-2h5.5a2 2 0 0 1 1.4.6l7.5 7.5a2 2 0 0 1 0 2.8l-4.2 4.2a2 2 0 0 1-2.8 0l-7.5-7.5a2 2 0 0 1-.6-1.4z"/>
+  <circle cx="8" cy="9" r="1.5" fill="white"/>
+</svg>
+
+        <span>Discount</span>
+      </div>
+
+      {/* Discount Amount */}
+      <span className="text-green-500 font-semibold text-sm">
+        ₹ {discountAmount} OFF
+      </span>
+    </div>
+
+    {/* Coupon Description */}
+    <p className="text-sm text-gray-600 leading-relaxed">
+      Pay using  Credit Cards EMI to avail the offer with No Cost EMI
+    </p>
+  </div>
+</div>
+
 
                         {/* Price Section */}
-                        <div className="mt-6 mb-0">
-                          {/* Tax Info */}
-                          <div className="text-right mb-3">
-                            <span className="text-xs text-gray-500">
-                              + ₹{hotel.taxes} taxes & fees per night
-                            </span>
-                          </div>
+<div className="mt-6">
 
-                          {/* Prices */}
-                          <div className="flex items-end justify-between mb-4">
-                            <div className="text-left">
-                              <div className="text-lg text-gray-400 line-through">
-                                ₹{hotel.originalPrice.toLocaleString()}
-                              </div>
-                            </div>
-                            <div className="text-right">
-                              <button className="bg-[#22C55E] hover:bg-green-600 text-white px-5 py-3 rounded-lg font-bold text-xl shadow-md transition-colors">
-                                ₹{hotel.price.toLocaleString()}
-                              </button>
-                            </div>
-                          </div>
+  {/* Tax Info */}
+  <div className="text-right mb-2">
+    <span className="text-xs text-gray-400">
+      + ₹{hotel.taxes} taxes & fees per night
+    </span>
+  </div>
 
-                          {/* Additional Info */}
-                          <div className="text-xs text-gray-500 space-y-1 mb-4">
-                            <div className="flex items-center gap-2">
-                              <Check className="w-3 h-3 text-green-600" />
-                              <span>Book @ 0 available</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <Check className="w-3 h-3 text-green-600" />
-                              <span>Breakfast available at extra cost</span>
-                            </div>
-                          </div>
+  {/* Prices */}
+  <div className="flex flex-col items-end mb-4">
+    {/* Original Price */}
+    <div className="text-sm text-gray-400 line-through">
+      ₹{hotel.originalPrice.toLocaleString()}
+    </div>
 
-                          {/* Book Now Button - BLACK BUTTON */}
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleHotelClick(hotel.id);
-                            }}
-                            className="w-full bg-black text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-colors text-sm"
-                          >
-                            Book Now
-                          </button>
-                        </div>
+    {/* Discounted Price */}
+    <div className="text-2xl font-bold text-green-500">
+      ₹{hotel.price.toLocaleString()}
+    </div>
+  </div>
+
+  {/* Additional Info */}
+  <div className="text-xs text-gray-500 space-y-1 mb-4">
+    <div className="flex items-center gap-1 justify-end">
+      <Check className="w-3 h-2 text-green-600" />
+      <span>Book @ 0 available</span>
+    </div>
+  </div>
+
+  {/* Book Now Button */}
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      handleHotelClick(hotel.id);
+    }}
+    className="w-full bg-black text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-800 transition-colors text-sm"
+  >
+    Book Now
+  </button>
+</div>
+
                       </div>
                     </div>
                   </div>

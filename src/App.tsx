@@ -25,28 +25,29 @@ const AuthObserver = () => {
   const auth = getAuth();
 
   useEffect(() => {
-    // onIdTokenChanged har baar call hota hai jab token naya banta hai ya user login/logout hota hai
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       if (user) {
+        // ✅ OLD PROBLEM REMOVED: Humne wo strict check hata diya jo logout kar raha tha.
+        
         try {
-          console.log("🔄 User detected, refreshing token...");
-          // Force refresh to ensure token is valid
+          console.log("🔄 User detected, syncing token...");
+          // Token generate karo
           const newToken = await user.getIdToken(true);
           
-          // Token ko wapis session me daal do (Sync rakhne ke liye)
+          // Chupchap token save kar do (Refresh hone par bhi ye chalega aur token wapis aa jayega)
           sessionStorage.setItem("shineetrip_token", newToken);
           sessionStorage.setItem("shineetrip_uid", user.uid);
           
-          console.log("✅ Session Synced with Firebase!");
+          console.log("✅ Session Restored!");
         } catch (error) {
           console.error("❌ Token sync failed:", error);
         }
-      } 
-      
-      // ❌ YAHAN SE 'ELSE' BLOCK HATA DIYA HAI
-      // Pehle yahan 'sessionStorage.clear()' tha, jo page reload hote hi sab uda raha tha.
-      // Ab hum sirf tabhi clear karenge jab user khud 'Logout' button dabayega.
-      
+      } else {
+        // Agar user sach mein logout ho gaya hai (Firebase se), tabhi safai karo
+        console.log("🔒 No user found. Clearing storage.");
+        sessionStorage.clear();
+        localStorage.clear();
+      }
     });
 
     return () => unsubscribe();

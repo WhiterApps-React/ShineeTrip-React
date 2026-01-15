@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { GalleryModal } from "./HeroGalleryModal"; 
+import { GalleryModal } from "./HeroGalleryModal"; // Ensure path is correct
 // ✅ 1. Import LoginModal
 import { LoginModal } from "../Login/Loginpage"; 
 
@@ -33,9 +33,8 @@ export default function PopularDestinations() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // ✅ 2. Add Login Modal State
+  // ✅ 2. Login Modal State
   const [showLoginPopup, setShowLoginPopup] = useState(false);
-  
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // ✅ 3. Helper to Check Token Validity
@@ -52,13 +51,13 @@ export default function PopularDestinations() {
     }
   };
 
-  // ✅ 4. Updated Auth Check (No Alert, Open Login Modal)
+  // ✅ 4. Auth Check Logic
   const checkAuth = () => {
     const token = sessionStorage.getItem("shineetrip_token");
     
     // Agar token nahi hai ya expired hai
     if (!token || isTokenExpired(token)) {
-        // Alert ki jagah ab Login Modal khulega
+        // 🔥 Ye popup open karega agar login nahi hai
         setShowLoginPopup(true); 
         return false;
     }
@@ -92,16 +91,18 @@ export default function PopularDestinations() {
 
   // --- Click Handlers ---
 
-  // 1. Explore All Button Click
+  // 1. Explore All Button Click (Ispe usually login nahi mangte, par maanga hai to laga diya)
   const handleExploreAllClick = () => {
-    // Agar tum chahte ho ki Explore All pe bhi login mange, to ye uncomment karo:
-    // if (!checkAuth()) return;
+    // Agar tum chahte ho ki Explore All pe login na mange, to niche wali line comment kar do
+    // if (!checkAuth()) return; 
+    
     setIsModalOpen(true);
   };
 
-  // 2. Normal Card Click (On Grid)
+  // 2. Normal Card Click (On Grid) - Yaha Login zaroori hai
   const handleClick = (dest: Destination) => {
-    if (!checkAuth()) return; // Agar login nahi hai, Modal khulega aur ye function ruk jayega
+    // ✅ Check Auth First
+    if (!checkAuth()) return; 
 
     if (dest.redirect_url) {
         const separator = dest.redirect_url.includes('?') ? '&' : '?';
@@ -119,17 +120,16 @@ export default function PopularDestinations() {
     }
   };
 
-  // 3. Gallery Modal Image Click
+  // 3. Gallery Modal Image Click - Yaha bhi Login zaroori hai
   const handleModalImageClick = (imgData: any) => {
-    // Sabse pehle Auth Check karo
+    // ✅ Check Auth First
     if (!checkAuth()) {
         // Agar auth fail hua, to checkAuth() khud Login Modal open kar dega.
-        // Humein Gallery Modal band nahi karna chahiye abhi, taaki user wapis wahin aaye.
-        // Lekin Login Modal z-index high hota hai to wo upar dikhega.
+        // Gallery modal khula rehne do, login ke baad user wapis try karega.
         return; 
     }
 
-    // Agar Login hai, to aage badho
+    // Login successful hai, ab aage badho
     setIsModalOpen(false);
 
     if (imgData.redirect_url) {
@@ -148,7 +148,6 @@ export default function PopularDestinations() {
     }
   };
 
-  // Data transformation for Modal
   const modalData = [{
       id: "popular-1",
       title: "Popular Collections",
