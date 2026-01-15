@@ -174,8 +174,8 @@ useEffect(() => {
                                         <span>{occupancy.max_occ} Guests</span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <Maximize2 className="w-4 h-4" />
-                                        <span>200sqft</span>
+{/*                                         <Maximize2 className="w-4 h-4" />
+                                        <span>200sqft</span> */}
                                     </div>
                                 </div>
                              </div>
@@ -185,7 +185,7 @@ useEffect(() => {
                                 <span className="text-xs text-gray-500 block mb-1">+ ₹ {taxAmount} taxes & fees per night</span>
                                 <div className="flex items-center gap-2 justify-start md:justify-end">
                                     <span className="text-gray-400 line-through text-lg">₹ {Math.round(basePrice * 1.5).toLocaleString()}</span>
-                                    <div className="bg-[#1AB64F] text-white px-5 py-1 rounded-lg text-2xl font-bold">
+                                    <div className="bg-[#1AB64F] text-white px-5 py-1 rounded-lg text-2xl ">
                                         ₹ {basePrice.toLocaleString()}
                                     </div>
                                 </div>
@@ -233,7 +233,7 @@ useEffect(() => {
                 </div>
                 <div>
                     <div className="flex items-baseline gap-2">
-                        <span className="text-green-600 font-bold text-lg">INR {Math.round(basePrice).toLocaleString()}</span>
+                        <span className="text-green-600  text-lg">INR {Math.round(basePrice).toLocaleString()}</span>
                         <span className="text-gray-400 line-through text-xs">INR {Math.round(basePrice * 1.5).toLocaleString()}</span>
                     </div>
                     <div className="text-[10px] text-gray-500 mt-1">(for 1 night) Incl. of taxes & fees</div>
@@ -277,7 +277,7 @@ useEffect(() => {
                             </div>
                             <div>
                                 <div className="flex items-baseline gap-2">
-                                    <span className="text-green-600 font-bold text-lg">INR {Math.round(totalPrice).toLocaleString()}</span>
+                                    <span className="text-green-600  text-lg">INR {Math.round(totalPrice).toLocaleString()}</span>
                                     <span className="text-gray-400 line-through text-xs">INR {Math.round(totalRack).toLocaleString()}</span>
                                 </div>
                                 <div className="text-[10px] text-gray-500 mt-1">Room + {service.name}</div>

@@ -259,141 +259,169 @@ useEffect(() => {
             <div className="bg-white border-b border-gray-200 pt-6 sticky top-[90px] z-20 shadow-sm">
                 <div className="max-w-7xl mx-auto px-6 py-3">
                     {/* Search Fields (Now Editable) */}
-                    <div className="flex items-center justify-center gap-0 mb-4">
-                        {/* Location Field */}
-                        <div className="flex-1 max-w-[250px] bg-gray-200 px-6 py-2 border-r border-gray-300">
-                            <div className="text-xs h-8 items-center flex font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                                CITY, AREA OR PROPERTY
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <MapPin className="w-4 h-4 text-[#D2A256]" />
-                                {/* ✅ Editable Input */}
-                                <input 
-                                    type="text" 
-                                    value={currentLocation}
-                                    onChange={(e) => setCurrentLocation(e.target.value)}
-                                    className="text-base font-normal text-gray-900 bg-transparent w-full focus:outline-none"
-                                    placeholder="Enter location"
-                                />
-                            </div>
-                        </div>
+                    <div
+      className="
+        flex flex-col sm:flex-row items-stretch sm:items-center 
+        justify-center gap-0 mb-4 overflow-hidden
+        border border-gray-300 bg-[#F4F1EC]/20
+        rounded-[24px]
+      "
+    >
 
-                        {/* Check-in Field */}
-                        <div className="flex-1 max-w-[200px] bg-gray-200 px-6 py-2 border-r border-gray-300">
-                            <div className="text-xs h-8 items-center flex font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                                CHECK-IN
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-[#D2A256]" />
-                                {/* ✅ Editable Input (Date type for consistency) */}
-                                <input 
-                                    type="date" 
-                                    value={currentCheckIn} 
-                                    onChange={(e) => setCurrentCheckIn(e.target.value)}
-                                    className="text-base font-normal text-gray-900 bg-transparent w-full focus:outline-none"
-                                />
-                            </div>
-                        </div>
-        
-                        {/* Check-out Field */}
-                        <div className="flex-1 max-w-[200px] bg-gray-200 px-6 py-2 border-r border-gray-300">
-                            <div className="text-xs h-8 items-center flex font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                                CHECK-OUT
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Calendar className="w-4 h-4 text-[#D2A256]" />
-                                {/* ✅ Editable Input (Date type for consistency) */}
-                                <input 
-                                    type="date" 
-                                    value={currentCheckOut} 
-                                    onChange={(e) => setCurrentCheckOut(e.target.value)}
-                                    className="text-base font-normal text-gray-900 bg-transparent w-full focus:outline-none"
-                                />
-                            </div>
-                        </div>
-        
-                        {/* Room & Guest Field & Search Button */}
-                        {/* Search Bar UI section mein ye change karo */}
-{/* 🟢 UPDATED COMPLETE: ROOMS, ADULTS & CHILDREN (Exactly matched with Listing Page) */}
-<div className="flex-1 w-full sm:max-w-[350px] bg-gray-200 px-4 py-3 border-r border-gray-300">
-  <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
-    ROOMS & GUESTS
-  </div>
-  <div className="flex items-center gap-3">
-    <Users className="w-4 h-4 text-[#D2A256]" />
-    
-    <div className="flex items-center gap-2 text-gray-900 font-bold text-sm">
-      {/* Rooms Section */}
-      <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
-        <button 
-          onClick={(e) => { e.preventDefault(); setCurrentRooms(String(Math.max(1, parseInt(currentRooms) - 1))) }}
-          className="hover:text-[#D2A256] transition-colors"
-        >
-          <Minus size={12} />
-        </button>
-        <span className="min-w-[15px] text-center">{currentRooms || 1}</span>
-        <button 
-          onClick={(e) => { e.preventDefault(); setCurrentRooms(String(parseInt(currentRooms) + 1)) }}
-          className="hover:text-[#D2A256] transition-colors"
-        >
-          <Plus size={12} />
-        </button>
-        <span className="text-[9px] text-gray-500 font-normal">Rm</span>
+      {/* Location Field */}
+      <div className="flex-1 w-full sm:max-w-[250px] px-4 py-3 sm:border-r border-gray-300">
+        <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
+          CITY, AREA OR PROPERTY
+        </div>
+        <div className="flex items-center gap-2">
+          <MapPin className="w-4 h-4 text-[#D2A256]" />
+          <input
+            type="text"
+            value={currentLocation}
+            onChange={(e) => setCurrentLocation(e.target.value)}
+            className="text-base font-medium text-gray-900 bg-transparent w-full focus:outline-none"
+            placeholder="Enter location"
+          />
+        </div>
       </div>
 
-      <span className="text-gray-400 font-normal">|</span>
-
-      {/* Adults Section */}
-      <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
-        <button 
-          onClick={(e) => { e.preventDefault(); setCurrentAdults(String(Math.max(1, parseInt(currentAdults) - 1))) }}
-          className="hover:text-[#D2A256] transition-colors"
-        >
-          <Minus size={12} />
-        </button>
-        <span className="min-w-[15px] text-center">{currentAdults}</span>
-        <button 
-          onClick={(e) => { e.preventDefault(); setCurrentAdults(String(parseInt(currentAdults) + 1)) }}
-          className="hover:text-[#D2A256] transition-colors"
-        >
-          <Plus size={12} />
-        </button>
-        <span className="text-[9px] text-gray-500 font-normal">Ad</span>
+      {/* Check-in Field */}
+      <div className="flex-1 w-full sm:max-w-[200px] px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+        <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
+          CHECK-IN
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-[#D2A256]" />
+          <input
+            type="date"
+            value={currentCheckIn}
+            onChange={(e) => setCurrentCheckIn(e.target.value)}
+            className="text-base font-medium text-gray-900 bg-transparent w-full focus:outline-none"
+          />
+        </div>
       </div>
 
-      <span className="text-gray-400 font-normal">|</span>
-
-      {/* Children Section - AB YE BHI HAI ✅ */}
-      <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
-        <button 
-          onClick={(e) => { e.preventDefault(); setCurrentChildren(String(Math.max(0, parseInt(currentChildren) - 1))) }}
-          className="hover:text-[#D2A256] transition-colors"
-        >
-          <Minus size={12} />
-        </button>
-        <span className="min-w-[15px] text-center">{currentChildren}</span>
-        <button 
-          onClick={(e) => { e.preventDefault(); setCurrentChildren(String(parseInt(currentChildren) + 1)) }}
-          className="hover:text-[#D2A256] transition-colors"
-        >
-          <Plus size={12} />
-        </button>
-        <span className="text-[9px] text-gray-500 font-normal">Ch</span>
+      {/* Check-out Field */}
+      <div className="flex-1 w-full sm:max-w-[200px] px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+        <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
+          CHECK-OUT
+        </div>
+        <div className="flex items-center gap-2">
+          <Calendar className="w-4 h-4 text-[#D2A256]" />
+          <input
+            type="date"
+            value={currentCheckOut}
+            onChange={(e) => setCurrentCheckOut(e.target.value)}
+            className="text-base font-medium text-gray-900 bg-transparent w-full focus:outline-none"
+          />
+        </div>
       </div>
+
+      {/* Rooms & Guests */}
+      <div className="flex-1 w-full sm:max-w-[320px] px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+        <div className="text-xs font-semibold text-gray-500 mb-1 uppercase tracking-wide">
+          ROOMS & GUESTS
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Users className="w-4 h-4 text-[#D2A256]" />
+
+          <div className="flex items-center gap-2 text-gray-900 font-bold text-sm">
+
+            {/* Rooms */}
+            <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentRooms(String(Math.max(1, parseInt(currentRooms) - 1)));
+                }}
+                className="hover:text-[#D2A256]"
+              >
+                <Minus size={12} />
+              </button>
+              <span className="min-w-[20px] text-center">{currentRooms}</span>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentRooms(String(parseInt(currentRooms) + 1));
+                }}
+                className="hover:text-[#D2A256]"
+              >
+                <Plus size={12} />
+              </button>
+              <span className="text-[10px] text-gray-500">Rm</span>
+            </div>
+
+            <span className="text-gray-400">|</span>
+
+            {/* Adults */}
+            <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentAdults(String(Math.max(1, parseInt(currentAdults) - 1)));
+                }}
+                className="hover:text-[#D2A256]"
+              >
+                <Minus size={12} />
+              </button>
+              <span className="min-w-[20px] text-center">{currentAdults}</span>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentAdults(String(parseInt(currentAdults) + 1));
+                }}
+                className="hover:text-[#D2A256]"
+              >
+                <Plus size={12} />
+              </button>
+              <span className="text-[10px] text-gray-500">Ad</span>
+            </div>
+
+            <span className="text-gray-400">|</span>
+
+            {/* Children */}
+            <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
+              <button
+  onClick={(e) => {
+    e.preventDefault();
+    setCurrentChildren(String(parseInt(currentChildren) + 1));
+  }}
+  className="hover:text-[#D2A256]"
+>
+  <Plus size={12} />
+</button>
+
+              <span className="min-w-[20px] text-center">{currentChildren}</span>
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  setCurrentChildren(String(parseInt(currentChildren) + 1));
+                }}
+                className="hover:text-[#D2A256]"
+              >
+                <Plus size={12} />
+              </button>
+              <span className="text-[10px] text-gray-500">Ch</span>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      {/* Search Button */}
+      <div className="flex-shrink-0 p-2">
+        <button
+          onClick={handleSearch}
+          className="bg-black text-white p-3 rounded-full hover:bg-gray-800 transition-colors shadow-lg"
+        >
+          <Search className="w-5 h-5" />
+        </button>
+      </div>
+
     </div>
 
-    {/* Search Button */}
-    <div className="flex-shrink-0 ml-auto">
-      <button
-        onClick={handleSearch}
-        className="bg-[#D2A256] text-white p-2.5 rounded-full hover:bg-[#c2934b] transition-all shadow-md"
-      >
-        <Search className="w-4 h-4" />
-      </button>
-    </div>
-  </div>
-</div>
-                    </div>
+
                     {/* Progress Steps */}
                     <div className="flex items-center justify-center gap-4">
                         <div className="flex items-center gap-2">
@@ -409,6 +437,7 @@ useEffect(() => {
                 </div>
             </div>
 
+
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-6 pb-8">
                 {/* Hotel Header */}
@@ -421,12 +450,12 @@ useEffect(() => {
                     </div>
                 </div>
                 
-                <button 
+                {/* <button 
                   onClick={handleOpenPolicyModal}
                   className="mb-6 bg-gray-100 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-200 transition-colors"
                   >
                   View Hotel Policies & Rules
-                  </button>
+                  </button> */}
 
                 {/* Room Types - Using imported RoomCard */}
                 <div className="mb-8">
