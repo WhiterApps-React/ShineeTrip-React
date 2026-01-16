@@ -35,7 +35,7 @@ const WriteBrandReview: React.FC = () => {
   useEffect(() => {
   const fetchCustomerData = async () => {
     if (!customerDbId || !token) {
-      toast.error("Please login  again");
+      toast.error("Please login again");
       return;
     }
 
