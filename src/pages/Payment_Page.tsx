@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, X, Phone, Mail, Award, Shield, Clock, Edit2, Loader2 } from 'lucide-react';
+import { AlertCircle,ArrowLeft,Trash2, X, Phone, Mail, Award, Shield, Clock, Edit2, Loader2, ArrowRight, Plus } from 'lucide-react';
 import { useSearchParams, useNavigate, useParams } from 'react-router-dom'; // ✅ FIX 1: useNavigate import kiya
 import BookingSuccessCard from '../components/ui/BookingSuccessCard'; // ✅ NEW: Success Card Import
+import BookingOrderSummary from '../components/ui/BookingOrderSummary';
 
 // Define global Razorpay object for TypeScript compiler
 declare global {
@@ -46,6 +47,31 @@ const BookingPage: React.FC = () => {
     const paymentTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const paymentCompletedRef = React.useRef(false);
     const [dbOrderId, setDbOrderId] = useState<number | null>(null);
+    const [showValidationModal, setShowValidationModal] = useState(false); // ✅ New State for Validation Popup
+    
+
+    // 1. Extra Guests ke liye State
+const [guestList, setGuestList] = useState<{ title: string; firstName: string; lastName: string }[]>([]);
+
+// 2. Add Guest Button ka Function
+const handleAddGuest = () => {
+    setGuestList([...guestList, { title: '', firstName: '', lastName: '' }]);
+};
+
+// 3. Remove Guest Button ka Function
+const handleRemoveGuest = (index: number) => {
+    const updatedList = [...guestList];
+    updatedList.splice(index, 1);
+    setGuestList(updatedList);
+};
+
+// 4. Input Change Handler for Guests
+const handleGuestChange = (index: number, field: string, value: string) => {
+    const updatedList = [...guestList];
+    // @ts-ignore (TypeScript strictness handle karne ke liye simple fix)
+    updatedList[index][field] = value;
+    setGuestList(updatedList);
+};
 
 
     
@@ -160,6 +186,30 @@ const validateForm = () => {
     setFormErrors(errors);
     return Object.keys(errors).length === 0; // Return true if no errors
 };
+
+
+
+const [showPolicyModal, setShowPolicyModal] = useState(false); // Popup kholne ke liye
+const [policyText, setPolicyText] = useState(""); // Policy ka HTML text store karne ke liye
+
+// ✅ API se Policy Fetch karne ke liye (Ye useEffect add karo)
+useEffect(() => {
+    const fetchPolicy = async () => {
+        if (!propertyId) return;
+        try {
+            // Token optional rakha hai taaki public data aa jaye
+            const res = await fetch(`http://46.62.160.188:3000/properties/${propertyId}`);
+            if (res.ok) {
+                const data = await res.json();
+                // API se 'policies' field utha rahe hain
+                setPolicyText(data.policies || "<p>No specific privacy policy available.</p>");
+            }
+        } catch (err) {
+            console.error("Failed to fetch policies", err);
+        }
+    };
+    fetchPolicy();
+}, [propertyId]);
     
     // --- Core Razorpay Logic ---
     const handlePayment = async (e: React.FormEvent) => {
@@ -167,15 +217,17 @@ const validateForm = () => {
         setPaymentMessage('');
         setFormErrors({});
         setIsRazorpayOpen(false);
-
-
+        
+        
         if (!validateForm()) {
         // Validation fail hone par, error message set karo
+            setShowValidationModal(true);
         setPaymentMessage('Please check your details. All required fields must be valid.'); 
         return; // Execution yahan ruk jayega
     }
 
         if (!formData.agreePolicy) {
+            setShowValidationModal(true);
             setPaymentMessage('You must agree to the privacy policy.');
             return;
         }
@@ -491,6 +543,96 @@ try {
     </div>
 )}
 
+{/* ✅ PRIVACY POLICY MODAL */}
+{showPolicyModal && (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 animate-in fade-in duration-300">
+        {/* Backdrop */}
+        <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+            onClick={() => setShowPolicyModal(false)} 
+        />
+
+        {/* Modal Content */}
+        <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6 max-h-[80vh] flex flex-col">
+            
+            {/* Header */}
+            <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-4">
+                <h3 className="text-xl font-bold text-gray-900">Privacy & Booking Policy</h3>
+                <button 
+                    onClick={() => setShowPolicyModal(false)}
+                    className="text-gray-400 hover:text-gray-800 transition-colors bg-gray-100 p-2 rounded-full"
+                >
+                    <X size={20} />
+                </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="overflow-y-auto pr-2 custom-scrollbar">
+                <div 
+                    className="prose prose-sm max-w-none text-gray-600 [&>p]:mb-3 [&>ul]:list-disc [&>ul]:pl-5 [&>li]:mb-1"
+                    dangerouslySetInnerHTML={{ __html: policyText }} 
+                />
+            </div>
+
+            {/* Footer Button */}
+            <div className="mt-6 pt-4 border-t border-gray-100">
+                <button
+                    onClick={() => setShowPolicyModal(false)}
+                    className="w-full bg-[#B98E45] text-white font-bold py-3 rounded-xl hover:bg-[#a37d3b] transition-colors"
+                >
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+)}
+
+{/* ✅ VALIDATION ERROR MODAL */}
+{showValidationModal && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-300">
+        {/* Backdrop */}
+        <div 
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
+            onClick={() => setShowValidationModal(false)} // Bahar click karne par close ho jaye
+        />
+
+        {/* Popup Card */}
+        <div 
+            className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 duration-300"
+            style={{ border: "2px solid #ef4444" }} // Red border for error attention
+        >
+            {/* Close Button */}
+            <button 
+                onClick={() => setShowValidationModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-800 transition-colors"
+            >
+                <X size={20} />
+            </button>
+            
+            {/* Icon */}
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <AlertCircle size={32} className="text-red-600" />
+            </div>
+            
+            {/* Heading */}
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Missing Details</h3>
+            
+            {/* Message */}
+            <p className="text-gray-600 text-sm leading-relaxed mb-6">
+                Please fill in all the required fields correctly to proceed with your booking.
+            </p>
+
+            {/* OK Button */}
+            <button
+                onClick={() => setShowValidationModal(false)}
+                className="w-full bg-red-600 text-white font-bold py-3 rounded-xl hover:bg-red-700 transition-colors shadow-lg"
+            >
+                OK, I'll Fix It
+            </button>
+        </div>
+    </div>
+)}
+
 {/* ✅ NEW: Authorization/Token Expired Modal */}
 {showAuthErrorModal && (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 animate-in fade-in duration-300">
@@ -543,311 +685,514 @@ try {
                     </div>
                     <div className="w-32 h-px bg-gray-300"></div>
                     <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-gray-200 text-gray-600 rounded-full flex items-center justify-center font-medium">2</div>
+                        <div className="w-8 h-8 bg-black text-white rounded-full flex items-center justify-center font-medium">2</div>
                         <span className="text-gray-500">Reservation</span>
                     </div>
                 </div>
             </div>
+
+            
 
             {/* Main Content */}
             <div className="max-w-7xl mx-auto px-6 pb-12">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left Section - Guest Details Form */}
                     <div className="lg:col-span-2">
-                        <div className="bg-white rounded-lg shadow-sm p-8">
-                            <h2 className="text-2xl font-semibold mb-6">Guest Details</h2>
+                        {/* Right Section - Booking Summary */}
+<div className="lg:col-span-1 space-y-6">
 
-                            <form onSubmit={handlePayment} className="space-y-4"> {/* ✅ Form tag added with onSubmit */}
-                                {/* Phone and Email Row */}
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {/* ===== PHONE NUMBER FIELD (Updated) ===== */}
-                                    <div className="flex flex-col gap-1"> 
-                                        <div className="flex gap-2">
-                                            <select
-                                              name="phoneCode"
-                                              value={formData.phoneCode}
-                                              onChange={(e) => {
-                                                setFormData(prev => ({
-                                                  ...prev,
-                                                  phoneCode: e.target.value,
-                                                  phone: ''          // 🔥 reset
-                                                }));
-                                                setFormErrors(prev => ({ ...prev, phone: '' }));
-                                              }}
-                                            >
+    {/* 1. ✅ New Design Component (Image wala) */}
+    <BookingOrderSummary 
+        propertyId={propertyId || ''}
+        checkIn={checkInStr}
+        checkOut={checkOutStr}
+        adults={searchParams.get('adults') || '2'}
+        children={searchParams.get('children') || '0'}
+        roomName={roomName}
+        roomCount={'1'} // Abhi ke liye 1 hardcoded hai, ya logic se nikalo agar hai
+    />
 
-                                                <option>+91</option>
-                                                <option>+1</option>
-                                                <option>+44</option>
-                                            </select>
-                                        <input
-  type="tel"
-  name="phone"
-  value={formData.phone}
-  onChange={(e) => {
-    const onlyDigits = e.target.value.replace(/\D/g, '');
-    const limitedDigits = onlyDigits.slice(0, phoneLimit);
-
-    setFormData(prev => ({
-      ...prev,
-      phone: limitedDigits
-    }));
-  }}
-  maxLength={phoneLimit}
-  placeholder="Phone Number"
-  className={`flex-1 px-4 py-2.5 border rounded ${
-    formErrors.phone ? 'border-red-500' : 'border-gray-300'
-  }`}
-  disabled={isProcessing}
-/>
-
-                                        </div>
-                                        {/* ✅ Error Display for Phone */}
-                                        {formErrors.phone && <span className="text-red-500 text-xs pl-2">{formErrors.phone}</span>} 
-                                    </div>
-                                    
-                                    {/* ===== EMAIL FIELD (Added wrapper) ===== */}
-                                    <div className="flex flex-col gap-1">
-                                        <input
-                                            type="email"
-                                            name="email"
-                                            placeholder="Email"
-                                            value={formData.email}
-                                            onChange={handleInputChange}
-                                            className={`px-4 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500 ${formErrors.email ? 'border-red-500' : 'border-gray-300'}`} // Conditional border
-                                            disabled={isProcessing}
-                                            required
-                                        />
-
-                                        {/* ✅ Error Display for Email */}
-                                        {formErrors.email && <span className="text-red-500 text-xs pl-2">{formErrors.email}</span>}
-                                    </div>
-                                </div>
-
-                                {/* Title and Names Row */}
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    {/* ===== TITLE SELECT (Wrapped) ===== */}
-                                    <div className="flex flex-col gap-1">
-                                        <select
-                                            name="title"
-                                            value={formData.title}
-                                            onChange={handleInputChange}
-                                            className={`px-4 py-2.5 border rounded bg-white text-sm focus:outline-none focus:ring-2 focus:ring-yellow-500 text-gray-500 ${formErrors.title ? 'border-red-500' : 'border-gray-300'}`} // Conditional border
-                                            disabled={isProcessing}
-                                        >
-                                            <option value="">Select Title*</option>
-                                            <option>Mr.</option>
-                                            <option>Mrs.</option>
-                                            <option>Ms.</option>
-                                        </select>
-                                        {/* ✅ Error Display for Title */}
-                                        {formErrors.title && <span className="text-red-500 text-xs pl-2">{formErrors.title}</span>}
-                                    </div>
-                                    
-                                    {/* ===== FIRST NAME INPUT (Wrapped) ===== */}
-                                    <div className="flex flex-col gap-1">
-                                        <input
-                                            type="text"
-                                            name="firstName"
-                                            placeholder="First Name"
-                                            value={formData.firstName}
-                                            onChange={handleInputChange}
-                                            className={`px-4 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500 ${formErrors.firstName ? 'border-red-500' : 'border-gray-300'}`} // Conditional border
-                                            disabled={isProcessing}
-                                            required
-                                        />
-                                        {/* ✅ Error Display for First Name */}
-                                        {formErrors.firstName && <span className="text-red-500 text-xs pl-2">{formErrors.firstName}</span>}
-                                    </div>
-                                    
-                                    {/* ===== LAST NAME INPUT (Wrapped) ===== */}
-                                    <div className="flex flex-col gap-1">
-                                        <input
-                                            type="text"
-                                            name="lastName"
-                                            placeholder="Last Name"
-                                            value={formData.lastName}
-                                            onChange={handleInputChange}
-                                            className={`px-4 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500 ${formErrors.lastName ? 'border-red-500' : 'border-gray-300'}`} // Conditional border
-                                            disabled={isProcessing}
-                                            required
-                                        />
-                                        {/* ✅ Error Display for Last Name */}
-                                        {formErrors.lastName && <span className="text-red-500 text-xs pl-2">{formErrors.lastName}</span>}
-                                    </div>
-                                </div>
-
-                                {/* GST Number */}
-                                <input
-                                    type="text"
-                                    name="gstNumber"
-                                    placeholder="GST Number (Optional)"
-                                    value={formData.gstNumber}
-                                    onChange={handleInputChange}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded bg-white focus:outline-none focus:ring-2 focus:ring-yellow-500"
-                                    disabled={isProcessing}
-                                />
-
-                                {/* Billing Address Field */}
-                                <div className="flex flex-col gap-1">
-                                    <textarea
-                                        name="address"
-                                        placeholder="Billing Address (Required for Invoice)*"
-                                        value={formData.address}
-                                        onChange={handleInputChange}
-                                        rows={2}
-                                        className={`w-full px-4 py-2.5 border rounded focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none ${
-                                            formErrors.address ? 'border-red-500' : 'border-gray-300'
-                                        }`}
-                                        disabled={isProcessing}
-                                    />
-                                    {formErrors.address && <span className="text-red-500 text-xs pl-2">{formErrors.address}</span>}
-                                </div>
-
-                                {/* Special Requests */}
-                                <textarea
-                                    name="specialRequests"
-                                    placeholder="Special Requests (Optional)"
-                                    value={formData.specialRequests}
-                                    onChange={handleInputChange}
-                                    rows={4}
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-yellow-500 resize-none"
-                                    disabled={isProcessing}
-                                />
-
-                                {/* Privacy Policy Checkbox */}
-                                <div className="flex items-start gap-2 pt-2">
-                                    <input
-                                        type="checkbox"
-                                        name="agreePolicy"
-                                        checked={formData.agreePolicy}
-                                        onChange={handleInputChange}
-                                        className="mt-1 w-4 h-4 accent-yellow-600"
-                                        disabled={isProcessing}
-                                    />
-                                    <label className="text-sm text-gray-709">
-                                        I agree to the <a href="#" className="text-blue-600 hover:underline">privacy policy</a>
-                                    </label>
-                                </div>
-                                
-                                {/* Payment Message/Error Display */}
-                                {paymentMessage && (
-                                    <div className={`p-3 rounded-lg text-sm font-medium ${paymentMessage.includes('Success') || paymentMessage.includes('successful') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                        {paymentMessage}
-                                    </div>
-                                )}
+    {/* 2. Price Breakdown Card (Isko neeche retain kar sakte ho agar chahiye, ya hata do) */}
+    {/* <div className="bg-white rounded-lg shadow-sm p-6">
+         <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Price Summary</h2>
+         </div>
+         
+         <div className="space-y-2 pb-4 border-b border-gray-200">
+              <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Room Price</span>
+                  <span className="font-medium">INR {retailPrice.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Taxes & Fees</span>
+                  <span className="font-medium">INR {(finalTotal - retailPrice).toFixed(0)}</span>
+              </div>
+         </div>
+         <div className="flex justify-between items-center pt-4">
+              <span className="text-lg font-semibold">Total Amount</span>
+              <span className="text-xl font-bold text-green-600">INR {finalTotal.toLocaleString()}</span>
+         </div>
+    </div> */}
+</div>
 
 
-                                {/* Submit Button */}
-                                <button 
-                                    type="submit"
-                                    className={`w-full bg-yellow-600 text-white font-semibold py-3.5 rounded-lg mt-4 transition-colors flex items-center justify-center gap-2 
-                                        ${isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'hover:bg-yellow-700'}`}
-                                    disabled={isProcessing || !formData.agreePolicy}
-                                >
-                                    {isProcessing && <Loader2 className="w-5 h-5 animate-spin" />}
-                                    {isProcessing ? 'Processing Payment...' : 'Confirm & Pay'}
-                                </button>
+{/* ... inside your component ... */}
 
+<div className="bg-white mt-4 rounded-xl shadow-sm p-6 md:p-8">
+    
+    {/* Header with Add Guest Button */}
+    <div className="flex justify-between items-center mb-8">
+        <h2 className="text-2xl font-bold text-gray-900">Guest Details</h2>
+<button 
+    type="button" 
+    onClick={handleAddGuest} // 👈 Ye add kiya
+    className="bg-[#0085FF] hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-colors"
+>
+    <Plus size={18} /> Add Guest
+</button>
+    </div>
 
-                                {/* Trust Badges */}
-                                <div className="grid grid-cols-3 gap-4 pt-4 text-sm text-gray-600">
-                                    <div className="flex items-center gap-2">
-                                        <Award size={20} />
-                                        <span>Best Price guaranteed</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Shield size={20} />
-                                        <span>100% secure payment</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <Clock size={20} />
-                                        <span>Instant Confirmation</span>
-                                    </div>
-                                </div>
+    <form id="booking-form" onSubmit={handlePayment} className="space-y-6"> 
+        
+        {/* ROW 1: Names (Title, First Name, Last Name) - Reordered per image */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-                                {/* Payment Methods */}
-                                <div className="flex justify-center gap-3 pt-6">
-                                    <div className="bg-blue-600 text-white px-4 py-2 rounded font-medium text-sm">VISA</div>
-                                    <div className="bg-blue-700 text-white px-4 py-2 rounded font-medium text-sm">AMEX</div>
-                                    <div className="bg-red-600 text-white px-4 py-2 rounded font-medium text-sm">MC</div>
-                                    <div className="bg-orange-500 text-white px-4 py-2 rounded font-medium text-sm">DISC</div>
-                                </div>
-                            </form>
+            
+            {/* Left Col: Title + First Name */}
+            <div>
+                <div className="flex gap-4 mb-1">
+                    <label className="text-xs font-bold text-gray-500 uppercase">Title</label>
+                    <label className="text-xs font-bold text-gray-500 uppercase flex-1">First Name</label>
+                </div>
+                <div className="flex gap-3">
+                    {/* Title Select */}
+                    <div className="relative min-w-[80px]">
+                        <select
+                            name="title"
+                            value={formData.title}
+                            onChange={handleInputChange}
+                            className={`w-full appearance-none bg-gray-100 text-gray-900 font-medium px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.title ? 'ring-2 ring-red-500 bg-red-50' : ''}`}
+                            disabled={isProcessing}
+                        >
+                            <option value="">Mr</option>
+                            <option value="Mr.">Mr</option>
+                            <option value="Mrs.">Mrs</option>
+                            <option value="Ms.">Ms</option>
+                        </select>
+                        {/* Custom Arrow for select to match image style */}
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
                         </div>
+                    </div>
+
+                    {/* First Name Input */}
+                    <input
+                        type="text"
+                        name="firstName"
+                        placeholder="First Name"
+                        value={formData.firstName}
+                        onChange={handleInputChange}
+                        className={`flex-1 bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.firstName ? 'ring-2 ring-red-500 bg-red-50' : ''}`}
+                        disabled={isProcessing}
+                        required
+                    />
+                </div>
+                {/* Errors */}
+                <div className="flex gap-3 mt-1">
+                     <div className="min-w-[80px]">{formErrors.title && <span className="text-red-500 text-[10px]">{formErrors.title}</span>}</div>
+                     <div>{formErrors.firstName && <span className="text-red-500 text-[10px]">{formErrors.firstName}</span>}</div>
+                </div>
+            </div>
+
+            {/* Right Col: Last Name */}
+            <div>
+                 <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Last Name</label>
+                 <input
+                    type="text"
+                    name="lastName"
+                    placeholder="Last Name"
+                    value={formData.lastName}
+                    onChange={handleInputChange}
+                    className={`w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.lastName ? 'ring-2 ring-red-500 bg-red-50' : ''}`}
+                    disabled={isProcessing}
+                    required
+                />
+                {formErrors.lastName && <span className="text-red-500 text-[10px] mt-1 block">{formErrors.lastName}</span>}
+            </div>
+        </div>
+
+        {/* ✅ DYNAMIC GUEST LIST RENDER */}
+{guestList.map((guest, index) => (
+    <div key={index} className="animate-in fade-in slide-in-from-top-4 duration-300">
+        
+        {/* Header for Guest X */}
+        <div className="flex justify-between items-center mb-2 mt-4 border-t border-gray-100 pt-4">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Guest {index + 2} Details {/* Index 0 means Guest 2 */}
+            </span>
+            <button
+                type="button"
+                onClick={() => handleRemoveGuest(index)}
+                className="text-red-500 hover:text-red-700 text-xs flex items-center gap-1 font-medium transition-colors"
+            >
+                <Trash2 size={14} /> Remove
+            </button>
+        </div>
+
+        {/* Guest Input Fields (Same Design as Primary) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Title + First Name */}
+            <div>
+                <div className="flex gap-3">
+                    {/* Title */}
+                    <div className="relative min-w-[80px]">
+                        <select
+                            value={guest.title}
+                            onChange={(e) => handleGuestChange(index, 'title', e.target.value)}
+                            className="w-full appearance-none bg-gray-100 text-gray-900 font-medium px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Title</option>
+                            <option value="Mr.">Mr</option>
+                            <option value="Mrs.">Mrs</option>
+                            <option value="Ms.">Ms</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+
+                    {/* First Name */}
+                    <input
+                        type="text"
+                        placeholder="First Name"
+                        value={guest.firstName}
+                        onChange={(e) => handleGuestChange(index, 'firstName', e.target.value)}
+                        className="flex-1 bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required // Agar additional guest add kiya hai to naam dena zaroori hai
+                    />
+                </div>
+            </div>
+
+            {/* Last Name */}
+            <div>
+                 <input
+                    type="text"
+                    placeholder="Last Name"
+                    value={guest.lastName}
+                    onChange={(e) => handleGuestChange(index, 'lastName', e.target.value)}
+                    className="w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                />
+            </div>
+        </div>
+    </div>
+))}
+
+        {/* ROW 2: Contact (Email & Mobile) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Email Field */}
+            <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                <input
+                    type="email"
+                    name="email"
+                    placeholder="Email ID"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className={`w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.email ? 'ring-2 ring-red-500 bg-red-50' : ''}`}
+                    disabled={isProcessing}
+                    required
+                />
+                {formErrors.email && <span className="text-red-500 text-[10px] mt-1 block">{formErrors.email}</span>}
+            </div>
+
+            {/* Mobile Number Field */}
+            <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Mobile Numbers</label>
+                <div className={`flex bg-gray-100 rounded-xl overflow-hidden ${formErrors.phone ? 'ring-2 ring-red-500 bg-red-50' : 'focus-within:ring-2 focus-within:ring-blue-500'}`}>
+                    
+                    {/* Code Select */}
+                    <div className="relative border-r border-gray-300">
+                        <select
+                            name="phoneCode"
+                            value={formData.phoneCode}
+                            onChange={(e) => {
+                                setFormData(prev => ({ ...prev, phoneCode: e.target.value, phone: '' }));
+                                setFormErrors(prev => ({ ...prev, phone: '' }));
+                            }}
+                            className="appearance-none bg-transparent text-gray-900 font-bold px-4 py-3 pr-8 focus:outline-none h-full cursor-pointer"
+                        >
+                            <option>+91</option>
+                            <option>+1</option>
+                            <option>+44</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+
+                    {/* Phone Input */}
+                    <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={(e) => {
+                            const onlyDigits = e.target.value.replace(/\D/g, '');
+                            const limitedDigits = onlyDigits.slice(0, phoneLimit);
+                            setFormData(prev => ({ ...prev, phone: limitedDigits }));
+                        }}
+                        maxLength={phoneLimit}
+                        placeholder="Contact Number"
+                        className="flex-1 bg-transparent text-gray-900 font-medium placeholder-gray-500 px-4 py-3 focus:outline-none"
+                        disabled={isProcessing}
+                    />
+                </div>
+                {formErrors.phone && <span className="text-red-500 text-[10px] mt-1 block">{formErrors.phone}</span>}
+            </div>
+        </div>
+
+        {/* GST Toggle / Header (Optional visual separator) */}
+        <div className="flex justify-end">
+             <span className="text-sm font-bold text-gray-900 cursor-pointer hover:underline">Enter GST Details</span>
+        </div>
+
+        {/* GST Number */}
+        <div>
+            <input
+                type="text"
+                name="gstNumber"
+                placeholder="GST Number (Optional)"
+                value={formData.gstNumber}
+                onChange={handleInputChange}
+                className="w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isProcessing}
+            />
+        </div>
+
+        {/* Billing Address (Matching Style) */}
+        <div>
+            <textarea
+                name="address"
+                placeholder="Billing Address (Required for Invoice)*"
+                value={formData.address}
+                onChange={handleInputChange}
+                rows={2}
+                className={`w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.address ? 'ring-2 ring-red-500 bg-red-50' : ''}`}
+                disabled={isProcessing}
+            />
+            {formErrors.address && <span className="text-red-500 text-[10px] mt-1 pl-1">{formErrors.address}</span>}
+        </div>
+
+        {/* Special Requests (Matching Style) */}
+        <div>
+            <textarea
+                name="specialRequests"
+                placeholder="Special Requests (Optional)"
+                value={formData.specialRequests}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                disabled={isProcessing}
+            />
+        </div>
+
+        {/* Privacy Policy Checkbox */}
+<div className="flex items-start gap-3 pt-2">
+    <div className="relative flex items-center">
+        <input
+            type="checkbox"
+            name="agreePolicy"
+            checked={formData.agreePolicy}
+            onChange={handleInputChange}
+            className="peer h-5 w-5 cursor-pointer appearance-none rounded-md border border-gray-300 transition-all checked:border-[#B98E45] checked:bg-[#B98E45]"
+            disabled={isProcessing}
+        />
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white opacity-0 peer-checked:opacity-100">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+        </div>
+    </div>
+    <label className="text-sm text-gray-600 mt-[1px]">
+        I agree to the{' '}
+        <button
+            type="button" // Important: Button type button rakho taaki form submit na ho
+            onClick={(e) => {
+                e.preventDefault();
+                setShowPolicyModal(true); // Popup open karega
+            }}
+            className="text-blue-600 font-medium hover:underline focus:outline-none"
+        >
+            privacy policy
+        </button>
+    </label>
+</div>
+        
+{/* Payment Message/Error Display */}
+{paymentMessage && (
+    <div className={`p-4 rounded-xl text-sm font-medium mb-4 
+        ${paymentMessage.toLowerCase().includes('success') 
+            ? 'bg-green-100 text-green-700'  // Success = Green
+            : paymentMessage.includes('generated') || paymentMessage.includes('Opening') 
+            ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' // Progress = Yellow
+            : 'bg-red-50 text-red-600 border border-red-200' // Error = Red
+        }`}
+    >
+        {paymentMessage}
+    </div>
+)}
+
+        {/* Submit Button - Kept the Yellow Brand Color for Action */}
+        {/* <button 
+            type="submit"
+            className={`w-full bg-[#B98E45] hover:bg-[#a37d3b] text-white font-bold text-lg py-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 
+                ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={isProcessing}
+        >
+            {isProcessing && <Loader2 className="w-5 h-5 animate-spin" />}
+            {isProcessing ? 'Processing Payment...' : 'Confirm & Pay'}
+        </button> */}
+
+        {/* Trust Badges */}
+        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-gray-100 text-xs text-gray-500 text-center">
+            <div className="flex flex-col items-center gap-1">
+                <Award size={18} className="text-[#B98E45]" />
+                <span>Best Price</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+                <Shield size={18} className="text-[#B98E45]" />
+                <span>Secure Pay</span>
+            </div>
+            <div className="flex flex-col items-center gap-1">
+                <Clock size={18} className="text-[#B98E45]" />
+                <span>Instant Conf.</span>
+            </div>
+        </div>
+    </form>
+</div>
                     </div>
 
                     {/* Right Section - Booking Summary (Unchanged logic) */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-lg shadow-sm p-6 sticky top-6">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-xl font-semibold">Booking Details</h2>
-                                <span className="text-sm text-green-600 font-medium">You Saved INR 1,225</span>
-                            </div>
+                    
 
-                            <div className="space-y-4">
-                                {/* Room Details - Dynamic Data */}
-                                <div className="pb-4 border-b border-gray-200">
-                                    <div className="flex justify-between items-start mb-1">
-                                        <div>
-                                            <div className="font-medium">**{roomName}**</div>
-                                            <div className="text-sm text-gray-600">Room Only -</div>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            {/* <button className="text-gray-400 hover:text-gray-600">
-                                                <Edit2 size={14} />
-                                            </button> */}
-                                            <span className="font-medium">INR {retailPrice.toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                </div>
+{/* Right Section - Booking Summary & Coupons */}
+<div className="  lg:col-span-1">
+    <div className="sticky top-32 space-y-6">
+        
+        {/* 1. Price Breakdown Card (Design Matched) */}
+        <div className="bg-white  rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-gray-100 overflow-hidden">
+            
+            {/* Top Gold Button */}
+<div className="p-4  border-b border-gray-100">
+    <button 
+        type="submit"               
+        form="booking-form"         
+        disabled={isProcessing}    
+        className={`w-full bg-[#B98E45] hover:bg-[#a37d3b] text-white font-bold py-3.5 rounded-lg shadow-sm transition-colors text-lg uppercase tracking-wide flex items-center justify-center gap-2
+            ${isProcessing ? 'opacity-70 cursor-not-allowed' : ''}`}
+    >
+        {/* ✅ Same Functionality as Old Button (Loader + Text) */}
+        {isProcessing ? (
+            <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Processing...</span>
+            </>
+        ) : (
+            "PAY & Book Now"
+        )}
+    </button>
+</div>
 
-                                {/* Stay Information - Dynamic Data */}
-                                <div className="pb-4 border-b border-gray-200">
-                                    <div className="font-medium mb-3">Stay Information</div>
-                                    <div className="flex justify-between items-center text-sm mb-2">
-                                        <span className="text-gray-600">**{formatDate(checkInStr)} - {formatDate(checkOutStr)}**</span>
-                                        {/* <button className="text-gray-400 hover:text-gray-600 flex items-center gap-1">
-                                            Modify <Edit2 size={12} />
-                                        </button> */}
-                                    </div>
-                                    <div className="flex justify-between items-center text-sm">
-                                        <span className="text-gray-600">2 Adults, 0 Children, 1 Rooms</span>
-                                        {/* <button className="text-gray-400 hover:text-gray-600 flex items-center gap-1">
-                                            Modify <Edit2 size={12} />
-                                        </button> */}
-                                    </div>
-                                </div>
+            {/* Price List */}
+            <div className="p-6 space-y-4">
+                
+                {/* Base Fare */}
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>Base fare per adult</span>
+                    <span className="font-bold text-gray-900">₹{retailPrice.toLocaleString()}</span>
+                </div>
 
-                                {/* Price Breakdown - Dynamic Data */}
-                                <div className="space-y-2 pb-4 border-b border-gray-200">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Price -</span>
-                                        <span className="font-medium">INR {retailPrice.toLocaleString()}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Taxes & Fees -</span>
-                                        <span className="font-medium">INR {(finalTotal - retailPrice).toFixed(0)}</span>
-                                    </div>
-                                </div>
+                {/* Tax */}
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>Tax & Service Fee</span>
+                    <span className="font-bold text-gray-900">₹{(finalTotal - retailPrice).toFixed(0)}</span>
+                </div>
 
-                                {/* Total - Dynamic Data */}
-                                <div className="flex justify-between items-center pt-2">
-                                    <span className="text-lg font-semibold">Total</span>
-                                    <span className="text-xl font-bold text-green-600">INR {finalTotal.toLocaleString()}</span>
-                                </div>
+                {/* Dummy Charges (Design Match ke liye placeholder - Hata sakte ho agar nahi chahiye) */}
+                <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>Reservation charge</span>
+                    <span className="font-bold text-gray-900">₹0</span>
+                </div>
+                
+                {/* Divider */}
+                <div className="h-px bg-gray-200 my-4"></div>
 
-                                {/* Cancellation Policy */}
-                                <div className="pt-4">
-                                    <div className="font-medium text-sm mb-1">Cancellation Policy</div>
-                                    <div className="text-xs text-gray-600">
-                                        You will be charged the 1st night.{' '}
-                                        <a href="#" className="text-blue-600 hover:underline">More info</a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                {/* Total Price */}
+                <div className="flex justify-between items-center">
+                    <span className="text-lg font-bold text-gray-900">Total Price</span>
+                    <span className="text-xl font-extrabold text-gray-900">₹{finalTotal.toLocaleString()}</span>
+                </div>
+            </div>
+        </div>
+
+        {/* 2. Coupon Code Section (Design Matched) */}
+        {/* <div className="bg-white rounded-xl shadow-[0_2px_8px_rgba(0,0,0,0.08)] border border-gray-100 p-6">
+            <h3 className="font-bold text-gray-900 mb-5 text-base">Coupon Code</h3> */}
+            
+            {/* Coupon Options */}
+            {/* <div className="space-y-4">
+                
+                <label className="flex items-start gap-3 cursor-pointer group relative">
+                    <div className="mt-1">
+                        <input type="radio" name="coupon" className="peer sr-only" />
+                        <div className="w-4 h-4 rounded-full border border-gray-300 peer-checked:border-[#B98E45] peer-checked:bg-[#B98E45] relative"></div>
                     </div>
+                    <div className="flex-1">
+                        <div className="flex justify-between w-full">
+                            <span className="font-bold text-gray-800 text-sm">MMTSMARTDEAL</span>
+                            <span className="font-bold text-gray-900 text-sm">₹662</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1 group-hover:text-gray-700 transition-colors">
+                            Congratulations! Discount of ₹1191 Applied
+                        </p>
+                    </div>
+                </label>
+
+                
+                <label className="flex items-start gap-3 cursor-pointer group relative">
+                    <div className="mt-1">
+                        <input type="radio" name="coupon" className="peer sr-only" />
+                         <div className="w-4 h-4 rounded-full border border-gray-300 peer-checked:border-[#B98E45] peer-checked:bg-[#B98E45]"></div>
+                    </div>
+                    <div className="flex-1">
+                        <div className="flex justify-between w-full">
+                            <span className="font-bold text-gray-800 text-sm">WELCOMETRIP</span>
+                            <span className="font-bold text-gray-900 text-sm">₹500</span>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">
+                            Flat ₹500 off on your first booking.
+                        </p>
+                    </div>
+                </label>
+            </div> */}
+
+            {/* Have a Coupon Code Input */}
+            {/* <div className="mt-6 pt-4 border-t border-gray-100">
+                <div className="relative">
+                    <input 
+                        type="text" 
+                        placeholder="Have a Coupon Code?" 
+                        className="w-full pl-4 pr-10 py-3 bg-gray-50 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:border-[#B98E45] focus:bg-white transition-all placeholder:text-gray-400"
+                    />
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 text-[#B98E45] hover:text-[#a37d3b]">
+                        <ArrowRight size={20} />
+                    </button>
+                </div>
+            </div> */}
+        {/* </div> */}
+
+    </div>
+</div>
                 </div>
             </div>
         </div>
