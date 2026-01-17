@@ -18,6 +18,21 @@ const FacebookLogo = () => <FaFacebook size={22} color="#1877F2" />;
 const AppleLogo = () => <FaApple size={22} />;
 const EmailLogo = () => <MdEmail size={22} />;
 
+// 🔹 PROFILE IMAGE DECIDER (Google image OR Letter avatar)
+const getProfileImage = (user: User) => {
+  // 1️⃣ Google / Firebase image available
+  if (user.photoURL) {
+    return user.photoURL;
+  }
+
+
+  const name = user.displayName || user.email || "User";
+  const firstLetter = name.charAt(0).toUpperCase();
+
+  return `https://ui-avatars.com/api/?name=${firstLetter}&size=256&background=0D8ABC&color=fff&bold=true`;
+};
+
+
 
 // === CHECK OR CREATE CUSTOMER IN DATABASE (UNCHANGED LOGIC) ===
 // === CHECK OR CREATE CUSTOMER FUNCTION (FIXED 400 ERROR) ===
@@ -77,7 +92,7 @@ if (searchResponse.ok) {
         phone: "", 
         // 🚨 FIX: Add a unique placeholder password using Firebase UID 
         password: `FB_LOGIN_${user.uid}_TEMP`, 
-
+        profile_image: getProfileImage(user), 
         firebase_uid: user.uid,
         enabled: true,
         default_group: 3
@@ -95,8 +110,7 @@ if (searchResponse.ok) {
     if (!createResponse.ok) {
         const err = await createResponse.text();
         console.error("❌ Failed to create customer:", err);
-        
-        // Agar alert mein sirf yehi message aata hai, toh check karein ki dob mandatory toh nahi hai.
+
         throw new Error("Could not register user in database.");
     }
 
@@ -127,6 +141,11 @@ export function LoginModal({ isOpen, onClose }: LoginModalProps) {
       sessionStorage.setItem("shineetrip_uid", user.uid);
       if (user.displayName) sessionStorage.setItem("shineetrip_name", user.displayName);
       if (user.email) sessionStorage.setItem("shineetrip_email", user.email);
+sessionStorage.setItem(
+  "shineetrip_profile_image",
+  getProfileImage(user)
+);
+
 
       // DEBUGGING STEP: Token ko console pe print karo
       console.log("--- DEBUG: NEW AUTH TOKEN ---");

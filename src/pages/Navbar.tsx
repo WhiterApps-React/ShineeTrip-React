@@ -21,6 +21,21 @@ export const Navbar = () => {
   const location = useLocation();
   const isLandingPage = location.pathname === "/";
 
+
+  useEffect(() => {
+  const params = new URLSearchParams(location.search);
+  const widget = params.get("searchWidget");
+  const type = params.get("type");
+
+  if (widget === "open" && type) {
+    setActiveTab(type);
+  } else {
+
+    setActiveTab("");
+  }
+}, [location.search]);
+
+
   // Check if user is logged in
   useEffect(() => {
   const token = sessionStorage.getItem("shineetrip_token");

@@ -12,12 +12,12 @@ interface CustomerData {
     phone: string;
     dob: string; // Date of Birth (from Swagger)
     address?: string; 
-    
-    // NOTE: Work Title aur Language ke liye fallback use karenge, kyunki woh customer schema mein nahi hain.
+    profile_image?: string;
+
     work_title?: string;
     language?: string;
 
-    // Data jo hum Orders se extract karenge
+
     carts: any[]; // Cart details
     orders: Order[]; // Order details for bookings
 }
@@ -86,11 +86,24 @@ const CustomerProfilePage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isEditMode, setIsEditMode] = useState(false); 
-    const [formState, setFormState] = useState<Partial<CustomerData>>({});
+    const [formState, setFormState] = useState<Partial<CustomerData & { profile_image?: string }>>({});
     const [myBookings, setMyBookings] = useState<any[]>([]);
     
     const customerDbId = sessionStorage.getItem('shineetrip_db_customer_id');
     const token = sessionStorage.getItem('shineetrip_token');
+    const [selectedImage, setSelectedImage] = useState<File | null>(null);
+const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+
+const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+
+  setSelectedImage(file);
+  setImagePreview(URL.createObjectURL(file));
+};
+
+
     
     // ------------------------------------------------
     // 1. GET By ID Logic: Fetch Customer Data and Orders
@@ -181,6 +194,14 @@ const CustomerProfilePage: React.FC = () => {
     // ------------------------------------------------
     // 2. PATCH Logic: Update Customer Data
     // ------------------------------------------------
+
+        const generateLetterAvatar = (name: string) =>
+  `https://ui-avatars.com/api/?name=${name.charAt(0).toUpperCase()}&size=256&background=0D8ABC&color=fff`;
+
+    const finalImageUrl =
+  imagePreview ||
+  customer?.profile_image ||
+  generateLetterAvatar(customer?.first_name || "U");
     const handleSaveProfile = async () => {
         if (!customerDbId || !token || !customer) return;
         
@@ -199,10 +220,11 @@ const CustomerProfilePage: React.FC = () => {
                 email: formState.email, 
                 phone: formState.phone,
                 dob: formState.dob, // Send the date as it is in state (YYYY-MM-DD from input)
-                // NOTE: Address, work_title, language ko backend support karta hai toh unko bhi bhejo
+               
                 address: formState.address,
-                // work_title: formState.work_title, 
-                // language: formState.language, 
+  profile_image:
+    customer?.profile_image ||
+    generateLetterAvatar(formState.first_name || "U"),
             };
             
             const response = await fetch(apiUrl, {
@@ -229,6 +251,8 @@ const CustomerProfilePage: React.FC = () => {
             setLoading(false);
         }
     };
+
+
 
     
 
@@ -328,7 +352,22 @@ const ProfileNavItem: React.FC<{ icon: React.ElementType, label: string, active?
                     {/* 1. About Me Header & Details */}
                     <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
                         <div className="flex justify-between items-center mb-6 border-b pb-4">
-                            <h2 className="text-2xl font-extrabold text-gray-900">About me</h2>
+                            <div className="flex items-center gap-4">
+  <img
+    src={
+      customer.profile_image ||
+      generateLetterAvatar(customer.first_name || "U")
+    }
+    alt="Profile"
+    className="w-14 h-14 rounded-full object-cover border"
+  />
+
+  <div>
+    <h2 className="text-2xl font-extrabold text-gray-900">About me</h2>
+    <p className="text-sm text-gray-500">{fullName}</p>
+  </div>
+</div>
+
                             <button 
                                 onClick={toggleEditMode} 
                                 className={`text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-md flex items-center ${
@@ -357,6 +396,23 @@ const ProfileNavItem: React.FC<{ icon: React.ElementType, label: string, active?
                                             type="date"
                                         />
                                         <ProfileEditField label="Language" name="language" value={formState.language || ''} onChange={handleFormChange} />
+                                        <div className="flex items-center gap-4 col-span-full">
+  <img
+    src={imagePreview || customer?.profile_image || "https://ui-avatars.com/api/?name=U"}
+    className="w-24 h-24 rounded-full object-cover border"
+  />
+
+  <label className="cursor-pointer bg-gray-800 text-white px-4 py-2 rounded-lg text-sm">
+    Change Photo
+    <input
+      type="file"
+      accept="image/*"
+      hidden
+      onChange={handleImageSelect}
+    />
+  </label>
+</div>
+
                                     </>
                                 ) : (
                                     <>

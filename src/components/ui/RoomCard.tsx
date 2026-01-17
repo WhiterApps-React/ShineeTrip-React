@@ -221,7 +221,7 @@ useEffect(() => {
 {/* Pricing Options - Fully Dynamic Section */}
 
 {/* Pricing Options (Matches Figma Boxes) */}
-<div className="pt-5 border-t border-dashed border-gray-200">
+<div className="pt-5  border-gray-200">
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
         {/* Option 1: Base Price (Original "Room Only") */}

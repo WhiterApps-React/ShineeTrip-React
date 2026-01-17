@@ -826,7 +826,7 @@ if (loading) {
                   <div className="flex-1 p-6">
                     <div className="flex flex-col lg:flex-row h-full gap-6">
                       {/* Left Column: Hotel Details */}
-                      <div className="flex-1">
+                      <div className="flex-1 ">
                         {/* Hotel Name and Location */}
                         <h2 className="text-[24px] font-[600] text-gray-900 mb-1">
                           {hotel.name}
@@ -857,7 +857,7 @@ if (loading) {
                         </div>
 
                         {/* Amenities - Simple checkboxes like Figma */}
-  <div className="flex flex-wrap gap-3 mb-6">
+  <div className="flex flex-wrap gap-3 mb-4">
     {hotel.amenities.slice(0, 3).map((amenity, idx) => (
       <div
         key={idx}
@@ -869,18 +869,11 @@ if (loading) {
   </div>
 
                         {/* Features List - EXACT FIGMA STYLE */}
-                        <div className="space-y-3">
-
-                          {/* Couple Friendly */}
-                          <div className="flex items-center gap-3">
-                            <Users className="w-5 h-5 text-gray-700" />
-                            <span className="text-gray-700">Couple Friendly</span>
-                          </div>
-
+                        <div className=" mt-44 space-y-3">
 
                           {/* Additional features from API if available */}
                           {hotel.amenities.slice(3, 6).map((amenity, idx) => (
-                            <div key={idx} className="flex items-center gap-3">
+                            <div key={idx} className="flex  items-center gap-3">
                               <svg
   width="20"
   height="20"

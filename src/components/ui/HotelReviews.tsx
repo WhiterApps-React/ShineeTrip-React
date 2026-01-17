@@ -1,588 +1,509 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star, Sparkles, CheckCircle, Key, MessageSquare, Loader2, X } from 'lucide-react';
-import { format } from 'date-fns'; 
 
-// --- Review Form Modal Component (Unchanged) ---
+// ==========================================
+// 1. SINGLE REVIEW CARD COMPONENT
+// Handles "Show More/Less" & User Image logic
+// ==========================================
+const SingleReviewCard = ({ review }: { review: Review }) => {
+    const [isExpanded, setIsExpanded] = useState(false);
+    
+    // Text Logic
+    const rawContent = review.comment || review.summary || 'No comment provided.';
+    const isLongText = rawContent.length > 150;
+    const contentToDisplay = isExpanded ? rawContent : (isLongText ? `${rawContent.slice(0, 150)}...` : rawContent);
 
-interface ReviewFormModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    hotelId: string;
-    onReviewPosted: () => void;
-}
+    // Simple Date Logic (No external library needed)
+    const formatDate = (dateString: string) => {
+        if (!dateString) return 'Recently';
+        try {
+            return new Date(dateString).toLocaleDateString('en-GB', {
+                day: 'numeric', month: 'short', year: 'numeric'
+            });
+        } catch (e) {
+            return 'Recently';
+        }
+    };
 
-const ReviewFormModal: React.FC<ReviewFormModalProps> = ({ isOpen, onClose, hotelId, onReviewPosted }) => {
-    const [submitting, setSubmitting] = useState(false);
-    const [formError, setFormError] = useState<string | null>(null);
-    
-    const [overallRating, setOverallRating] = useState(0);
-    const [cleanliness, setCleanliness] = useState(0);
-    const [staff, setStaff] = useState(0);
-    const [services, setServices] = useState(0);
-    const [food, setFood] = useState(0); 
+    // Stars Logic
+    const renderStars = (rating: number) => {
+        const fullStars = Math.floor(rating || 0);
+        return Array.from({ length: 5 }).map((_, i) => (
+            <Star 
+                key={i} 
+                className={`w-4 h-4 ${i < fullStars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
+            />
+        ));
+    };
 
-    const [summary, setSummary] = useState('');
-    const [comment, setComment] = useState('');
-    
-    const token = sessionStorage.getItem('shineetrip_token');
+return (
+  <div className="bg-white border border-gray-200 rounded-2xl p-6">
+    {/* Header */}
+    <div className="flex items-start justify-between mb-4">
+      {/* User Info */}
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+          <img
+            src={review.reviewerAvatar || "https://i.pravatar.cc/150?img=12"}
+            alt={review.reviewerName}
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src =
+                "https://i.pravatar.cc/150?img=12";
+            }}
+          />
+        </div>
 
-    useEffect(() => {
-        if (isOpen) {
-            setOverallRating(0);
-            setCleanliness(0);
-            setStaff(0);
-            setServices(0);
-            setFood(0);
-            setSummary('');
-            setComment('');
-            setFormError(null);
-        }
-    }, [isOpen]);
-    
+        <div>
+          <div className="text-sm font-semibold text-gray-900">
+            {review.reviewerName || "Guest User"}
+          </div>
+          <div className="text-xs text-gray-400">
+            {formatDate(review.postedOn)}
+          </div>
+        </div>
+      </div>
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+      {/* Stars */}
+      <div className="flex gap-1">
+        {renderStars(review.overallRating)}
+      </div>
+    </div>
 
-        if (!token || !hotelId || overallRating === 0 || cleanliness === 0 || staff === 0 || services === 0 || food === 0) {
-            setFormError("Please log in and provide a rating for all categories (1-5 stars).");
-            return;
-        }
+    {/* Review Text */}
+    <p className="text-sm text-gray-600 leading-relaxed mb-4">
+      {contentToDisplay}
+    </p>
 
-        setSubmitting(true);
-        setFormError(null);
-    
-        let customerIdToSend: number | null = null;
-        const userString = sessionStorage.getItem('shineetrip_user');
-        if (userString) {
-            try {
-                const user = JSON.parse(userString);
-                customerIdToSend = user.id || user.customerId || null;
-        } catch (e) {
-                console.error('Failed to parse shineetrip_user');
-        }
-        }
+    {/* Show more */}
+    {isLongText && (
+      <button
+        onClick={(e) => {
+          e.preventDefault();
+          setIsExpanded(!isExpanded);
+        }}
+        className="text-sm font-medium text-black underline"
+      >
+        {isExpanded ? "Show less" : "Show more"}
+      </button>
+    )}
+  </div>
+);
 
-        if (!customerIdToSend) {
-            const dbIdString = sessionStorage.getItem('shineetrip_db_customer_id');
-            if (dbIdString) {
-                const parsed = parseInt(dbIdString, 10);
-                if (!isNaN(parsed)) customerIdToSend = parsed;
-            }
-        }
-
-        if (!customerIdToSend) {
-            setFormError("User profile not found. Please log in again.");
-            setSubmitting(false);
-            return;
-        }
-
-        const dataToSend = new FormData();
-    
-        dataToSend.append('propertyId', hotelId);
-        dataToSend.append('customerId', String(customerIdToSend)); 
-        dataToSend.append('overallRating', String(overallRating));
-        dataToSend.append('cleanliness', String(cleanliness));
-        dataToSend.append('staff', String(staff));
-        dataToSend.append('services', String(services));
-        dataToSend.append('food', String(food));
-        
-        if (summary) dataToSend.append('summary', summary);
-        if (comment) dataToSend.append('comment', comment);
-
-        try {
-            const response = await fetch('http://46.62.160.188:3000/ratings', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-                body: dataToSend,
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                try {
-                    const errorData = JSON.parse(errorText);
-                    throw new Error(errorData.message || `API Error: ${response.status}`);
-                } catch {
-                    throw new Error(`Failed to submit review. Status: ${response.status}`);
-                }
-            }
-
-            onReviewPosted();
-            onClose();
-
-        } catch (error) {
-            console.error('Submission error:', error);
-            setFormError(error instanceof Error ? error.message : 'An unknown error occurred.');
-        } finally {
-            setSubmitting(false);
-        }
-    };
-    
-    if (!isOpen) return null;
-
-    // Helper to render rating buttons (Unchanged)
-    const RatingSelector = ({ label, value, setValue }: { label: string, value: number, setValue: (v: number) => void }) => (
-        <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-gray-700">{label} ({value}/5)</label>
-            <div className="flex gap-1">
-                {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                        key={star}
-                        className={`w-6 h-6 cursor-pointer transition-colors ${
-                            star <= value ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                        }`}
-                        onClick={() => setValue(star)}
-                    />
-                ))}
-            </div>
-        </div>
-    );
-    
-    return (
-        <div className="fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex justify-center items-center p-4">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto transform transition-all">
-                <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-900">Submit Your Review</h2>
-                    <button onClick={onClose} className="text-gray-500 hover:text-gray-800">
-                        <X className="w-6 h-6" />
-                    </button>
-                </div>
-                
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
-                    {/* Rating Selectors */}
-                    <div className="space-y-4 p-4 border rounded-lg bg-gray-50">
-                        <RatingSelector label="Overall Rating" value={overallRating} setValue={setOverallRating} />
-                        <RatingSelector label="Cleanliness" value={cleanliness} setValue={setCleanliness} />
-                        <RatingSelector label="Staff" value={staff} setValue={setStaff} />
-                        <RatingSelector label="Services" value={services} setValue={setServices} />
-                        <RatingSelector label="Food" value={food} setValue={setFood} />
-                    </div>
-
-                    {/* Summary and Comment */}
-                    <div>
-                        <label htmlFor="summary" className="block text-sm font-medium text-gray-700 mb-1">Review Title (Summary)</label>
-                        <input
-                            id="summary"
-                            type="text"
-                            value={summary}
-                            onChange={(e) => setSummary(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                            placeholder="e.g., Great stay, highly recommend!"
-                            maxLength={100}
-                        />
-                    </div>
-
-                    <div>
-                        <label htmlFor="comment" className="block text-sm font-medium text-gray-700 mb-1">Detailed Comment</label>
-                        <textarea
-                            id="comment"
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
-                            rows={4}
-                            className="w-full p-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500"
-                            placeholder="Share your detailed experience..."
-                        />
-                    </div>
-                    
-                    {formError && (
-                        <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm">
-                            {formError}
-                        </div>
-                    )}
-
-                    <button
-                        type="submit"
-                        disabled={submitting || overallRating === 0 || cleanliness === 0 || staff === 0 || services === 0 || food === 0}
-                        className={`w-full flex justify-center items-center gap-2 px-4 py-3 rounded-lg font-semibold text-white transition-colors ${
-                            (submitting || overallRating === 0 || cleanliness === 0 || staff === 0 || services === 0 || food === 0) ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#D2A256] hover:bg-[#c2934b]'
-                        }`}
-                    >
-                        {submitting ? (
-                            <>
-                                <Loader2 className="w-5 h-5 animate-spin" /> Submitting...
-                            </>
-                        ) : (
-                            'Post Review'
-                        )}
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
 };
 
 
-// --- Customer and Review Interface (Unchanged) ---
-interface CustomerDetails {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
+// ==========================================
+// 2. REVIEW FORM MODAL
+// Handles Submission
+// ==========================================
+interface ReviewFormModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    hotelId: string;
+    onReviewPosted: () => void;
 }
 
+const ReviewFormModal: React.FC<ReviewFormModalProps> = ({ isOpen, onClose, hotelId, onReviewPosted }) => {
+    const [submitting, setSubmitting] = useState(false);
+    const [formError, setFormError] = useState<string | null>(null);
+    const [ratings, setRatings] = useState({ overall: 0, cleanliness: 0, staff: 0, services: 0, food: 0 });
+    const [text, setText] = useState({ summary: '', comment: '' });
+    
+    const token = sessionStorage.getItem('shineetrip_token');
+
+    useEffect(() => {
+        if (isOpen) {
+            setRatings({ overall: 0, cleanliness: 0, staff: 0, services: 0, food: 0 });
+            setText({ summary: '', comment: '' });
+            setFormError(null);
+        }
+    }, [isOpen]);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const { overall, cleanliness, staff, services, food } = ratings;
+        
+        if (!token || !hotelId || overall === 0 || cleanliness === 0 || staff === 0 || services === 0 || food === 0) {
+            setFormError("Please rate all categories.");
+            return;
+        }
+
+        setSubmitting(true);
+        
+        let customerIdToSend: number | null = null;
+        try {
+            const userStr = sessionStorage.getItem('shineetrip_user');
+            if (userStr) {
+                const user = JSON.parse(userStr);
+                customerIdToSend = user.id || user.customerId;
+            }
+            if (!customerIdToSend) {
+                const dbId = sessionStorage.getItem('shineetrip_db_customer_id');
+                if (dbId) customerIdToSend = parseInt(dbId, 10);
+            }
+        } catch (e) { console.error("User parse error"); }
+
+        if (!customerIdToSend) {
+            setFormError("Please log in again.");
+            setSubmitting(false);
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('propertyId', hotelId);
+        formData.append('customerId', String(customerIdToSend));
+        formData.append('overallRating', String(overall));
+        formData.append('cleanliness', String(cleanliness));
+        formData.append('staff', String(staff));
+        formData.append('services', String(services));
+        formData.append('food', String(food));
+        if (text.summary) formData.append('summary', text.summary);
+        if (text.comment) formData.append('comment', text.comment);
+
+        try {
+            const res = await fetch('http://46.62.160.188:3000/ratings', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            if (!res.ok) throw new Error("Failed to post");
+            onReviewPosted();
+            onClose();
+        } catch (err) {
+            setFormError("Failed to submit review.");
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    if (!isOpen) return null;
+
+    const StarInput = ({ label, field }: { label: string, field: keyof typeof ratings }) => (
+        <div className="flex justify-between items-center">
+            <label className="text-sm font-medium text-gray-700">{label}</label>
+            <div className="flex gap-1">
+                {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} 
+                        className={`w-6 h-6 cursor-pointer ${s <= ratings[field] ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`}
+                        onClick={() => setRatings(prev => ({ ...prev, [field]: s }))} 
+                    />
+                ))}
+            </div>
+        </div>
+    );
+
+    return (
+        <div className="fixed inset-0 bg-black/50 z-[9999] flex justify-center items-center p-4">
+            <div className="bg-white rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+                <div className="p-4 border-b flex justify-between items-center">
+                    <h2 className="text-xl font-bold">Write a Review</h2>
+                    <button onClick={onClose}><X /></button>
+                </div>
+                <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                    <div className="space-y-3 p-3 bg-gray-50 rounded-lg">
+                        <StarInput label="Overall" field="overall" />
+                        <StarInput label="Cleanliness" field="cleanliness" />
+                        <StarInput label="Staff" field="staff" />
+                        <StarInput label="Services" field="services" />
+                        <StarInput label="Food" field="food" />
+                    </div>
+                    <input className="w-full p-2 border rounded" placeholder="Title" value={text.summary} onChange={e => setText(p => ({...p, summary: e.target.value}))} />
+                    <textarea className="w-full p-2 border rounded" rows={3} placeholder="Details..." value={text.comment} onChange={e => setText(p => ({...p, comment: e.target.value}))} />
+                    {formError && <p className="text-red-500 text-sm">{formError}</p>}
+                    <button disabled={submitting} type="submit" className="w-full bg-[#D2A256] text-white p-3 rounded font-bold">
+                        {submitting ? 'Posting...' : 'Post Review'}
+                    </button>
+                </form>
+            </div>
+        </div>
+    );
+};
+
+
+// ==========================================
+// 3. TYPES & MAIN COMPONENT
+// ==========================================
 interface Review {
-    id: number;
-    reviewerName: string;
-    reviewerAvatar: string;
-    overallRating: number; 
-    comment: string;
-    postedOn: string;
-    createdAt: string; 
-    tags: string[];
-    hotelId?: string | number; 
-    property: string | number;
-    customer: CustomerDetails;
-    cleanliness: number; 
-    staff: number; 
-    services: number; 
-    food: number; 
-    summary: string;
+    id: number;
+    reviewerName: string;
+    reviewerAvatar: string;
+    overallRating: number;
+    comment: string;
+    postedOn: string;
+    cleanliness: number;
+    staff: number;
+    services: number;
+    food: number;
+    summary: string;
+    hotelId?: number | string;
+    tags?: string[];
 }
 
-interface HotelReviewsProps {
-    hotelId: string | number;
-}
+const HotelReviews = ({ hotelId }: { hotelId: string | number }) => {
+    const [stats, setStats] = useState<any>(null);
+    const [allReviews, setAllReviews] = useState<Review[]>([]);
+    const [visibleReviews, setVisibleReviews] = useState<Review[]>([]);
+    const [showAll, setShowAll] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
-const HotelReviews: React.FC<HotelReviewsProps> = ({ hotelId }) => {
-    // --- States ---
-    const [averageRatings, setAverageRatings] = useState<any>(null);
-    const [allReviews, setAllReviews] = useState<Review[]>([]); 
-    const [reviews, setReviews] = useState<Review[]>([]); 
-    const [showAllReviews, setShowAllReviews] = useState(false); 
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false); 
+    const token = sessionStorage.getItem('shineetrip_token');
 
-    const token = sessionStorage.getItem('shineetrip_token');
-    
-    const dummyTags = ['Clean', 'Great Hospitality', 'Fast Response', 'Value for Money'];
+    // --- FETCH LOGIC (NO FILTERING, DIRECT MAPPING) ---
+    const fetchReviews = useCallback(async () => {
+        if (!hotelId || !token) {
+            setLoading(false);
+            return;
+        }
+        setLoading(true);
+        
+        try {
+            // Using Specific Property Endpoint (Swagger confirmed this works)
+            const res = await fetch(`http://46.62.160.188:3000/ratings/property/${hotelId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
 
-    // --- Fetching Functions ---
-    const refreshReviews = useCallback(async () => {
-        if (!hotelId || !token) {
-            setLoading(false);
-            return;
-        }
-        setLoading(true);
-        setError(null);
-        
-        let fetchedSummary = null;
+            if (res.ok) {
+                const data = await res.json();
+                console.log("🔍 API Data Loaded:", data); // Debug log
 
-        try {
-            // 1. Fetch Summary (API endpoint for average summary)
-            const summaryUrl = `http://46.62.160.188:3000/ratings/average/summary?hotelId=${hotelId}`;
-            const summaryResponse = await fetch(summaryUrl, { headers: { 'Authorization': `Bearer ${token}` } });
-            if (summaryResponse.ok) {
-                const data = await summaryResponse.json();
-                fetchedSummary = data; // Store summary data
-                
-                // 🔥 CRITICAL FIX 1: Data ko flatten karke set karein taaki UI mein N/A na aaye
-                if (data.averageRatings) {
-                    setAverageRatings({
-                        totalReviews: data.totalReviews || 0,
-                        // Category-wise scores ko seedhe top level par laayein
-                        averageRating: data.averageRatings.overall || 0,
-                        cleanliness: data.averageRatings.cleanliness || 0,
-                        staff: data.averageRatings.staff || 0,
-                        services: data.averageRatings.services || 0,
-                        food: data.averageRatings.food || 0,
-                        ratingBreakdown: {} 
+                // Mapping Data DIRECTLY (No Filtering)
+                // Hum maan ke chal rahe hain API sahi data bhej raha hai
+                const mapped: Review[] = data.map((item: any) => ({
+                    id: item.id,
+                    // Handle Customer Name safely
+                    reviewerName: `${item.customer?.first_name || 'Guest'} ${item.customer?.last_name || ''}`.trim(),
+                    // Generate Avatar
+                    reviewerAvatar: `https://i.pravatar.cc/150?u=${item.customer?.email || item.id}`,
+                    // Ratings
+                    overallRating: Number(item.overallRating) || 0,
+                    cleanliness: Number(item.cleanliness) || 0,
+                    staff: Number(item.staff) || 0,
+                    services: Number(item.services) || 0,
+                    food: Number(item.food) || 0,
+                    // Content
+                    comment: item.comment || '',
+                    summary: item.summary || '',
+                    postedOn: item.createdAt,
+                    hotelId: hotelId
+                }));
+
+                // Stats Calculation
+                if (mapped.length > 0) {
+                    const sum = mapped.reduce((acc, r) => ({
+                        overall: acc.overall + r.overallRating,
+                        cleanliness: acc.cleanliness + r.cleanliness,
+                        staff: acc.staff + r.staff,
+                        services: acc.services + r.services,
+                        food: acc.food + r.food,
+                    }), { overall: 0, cleanliness: 0, staff: 0, services: 0, food: 0 });
+
+                    const total = mapped.length;
+                    const breakdown: any = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+                    mapped.forEach(r => {
+                        const star = Math.round(r.overallRating);
+                        if (breakdown[star] !== undefined) breakdown[star]++;
+                    });
+
+                    setStats({
+                        total,
+                        avg: (sum.overall / total).toFixed(1),
+                        cleanliness: (sum.cleanliness / total).toFixed(1),
+                        staff: (sum.staff / total).toFixed(1),
+                        services: (sum.services / total).toFixed(1),
+                        breakdown
                     });
                 } else {
-                    setAverageRatings(null);
+                    setStats(null);
                 }
 
-            } else {
-                 console.warn("Could not fetch average summary. Calculating client-side average.");
-                setAverageRatings(null);
-            }
+                setAllReviews(mapped);
+                setVisibleReviews(mapped.slice(0, 4)); 
 
-            // 2. Fetch Individual Reviews
-            const reviewsUrl = `http://46.62.160.188:3000/ratings/property/${hotelId}`;
-            const reviewsResponse = await fetch(reviewsUrl, { headers: { 'Authorization': `Bearer ${token}` } });
-            
-            if (reviewsResponse.ok) {
-                const data: any[] = await reviewsResponse.json();
-                
-                // Data Mapping
-                const mappedReviews: Review[] = data.map(review => {
-                    const customerData = review.customer;
-                    const defaultAvatar = `https://i.pravatar.cc/150?u=${customerData?.email || review.id}`; 
-                    const fullName = `${customerData?.first_name || ''} ${customerData?.last_name || 'Guest'}`.trim();
+            } else {
+                console.warn("API Error, status:", res.status);
+                setAllReviews([]);
+            }
+        } catch (error) {
+            console.error("Fetch Error:", error);
+        } finally {
+            setLoading(false);
+        }
+    }, [hotelId, token]);
 
-                    return {
-                        ...review,
-                        reviewerName: fullName || 'Guest User',
-                        reviewerAvatar: defaultAvatar,
-                        hotelId: review.property,
-                        tags: [],
-                        postedOn: review.createdAt,
-                        cleanliness: review.cleanliness || 0,
-                        staff: review.staff || 0,
-                        services: review.services || 0,
-                        food: review.food || 0,
-                        overallRating: review.overallRating || 0,
-                        summary: review.summary || '',
-                        comment: review.comment || '',
-                    } as Review;
-                });
-                
-                // 🟢 FIX 1.3: Client-Side Fallback Average Calculation (If summary API fails)
-                if (!fetchedSummary && mappedReviews.length > 0) {
-                    const count = mappedReviews.length;
-                    const total = mappedReviews.reduce((acc, r) => ({
-                        overall: acc.overall + r.overallRating,
-                        cleanliness: acc.cleanliness + r.cleanliness,
-                        staff: acc.staff + r.staff,
-                        services: acc.services + r.services,
-                        food: acc.food + r.food,
-                    }), { overall: 0, cleanliness: 0, staff: 0, services: 0, food: 0 });
+    useEffect(() => {
+        fetchReviews();
+    }, [fetchReviews]);
 
-                    setAverageRatings({
-                        totalReviews: count,
-                        averageRating: total.overall / count,
-                        cleanliness: total.cleanliness / count,
-                        staff: total.staff / count,
-                        services: total.services / count,
-                        food: total.food / count,
-                        ratingBreakdown: {} // Keep empty if not needed
-                    });
-                }
-                
-                // 🟢 FIX 2.2: Store ALL reviews in a dedicated state
-                setAllReviews(mappedReviews);
-                
-                // Show top 4 reviews initially
-                setReviews(mappedReviews.slice(0, 4)); 
-            } else {
-                 throw new Error(`Failed to fetch reviews: ${reviewsResponse.statusText}`);
-            }
-
-        } catch (error) {
-            console.error('Error fetching reviews:', error);
-            setError(error instanceof Error ? error.message : 'Failed to load ratings or reviews.');
-        } finally {
-            setLoading(false);
-        }
-    }, [hotelId, token]);
-
-    // Main useEffect for fetching reviews (Unchanged)
-    useEffect(() => {
-        refreshReviews(); 
-    }, [refreshReviews]);
+    // Handle "Show All" toggle
+    useEffect(() => {
+        if (showAll) {
+            setVisibleReviews(allReviews);
+        } else {
+            setVisibleReviews(allReviews.slice(0, 4));
+        }
+    }, [showAll, allReviews]);
 
 
-    // --- Helper functions for UI (Unchanged) ---
-    const renderStars = (rating: number) => {
-        const fullStars = Math.floor(rating);
-        const stars = [];
-        for (let i = 0; i < 5; i++) {
-            stars.push(
-                <Star 
-                    key={i} 
-                    className={`w-4 h-4 ${i < fullStars ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'}`} 
-                />
-            );
-        }
-        return stars;
-    };
-    
-    // 🛑 FIX 3: Total average ab directly averageRatings se lega (jo calculated ya fetched hai)
-    const renderAverageRating = () => {
-        return averageRatings?.averageRating?.toFixed(1) || 'N/A';
-    };
+    // --- RENDERING ---
+    if (!token) return <div className="p-8 text-center bg-white rounded-lg">Please login to view reviews.</div>;
+    if (loading) return <div className="p-8 text-center bg-white rounded-lg"><Loader2 className="mx-auto animate-spin" /></div>;
 
-    // Date formatter (Unchanged)
-    const formatReviewDate = (dateString: string) => {
-        if (!dateString) return 'Just now';
-        try {
-            return format(new Date(dateString), 'MMM dd, yyyy');
-        } catch {
-            return dateString; 
-        }
-    }
+    const dummyTags = ['Clean', 'Great Hospitality', 'Fast Response', 'Value for Money'];
+
+    return (
+        <>
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
+                {/* Header Section */}
+                <div className="flex items-start justify-between">
+  <div className="flex gap-6">
+    <div className="text-[64px] font-bold leading-none text-black">
+      {stats?.avg || "0.0"}
+    </div>
+
+    <div className="pt-2">
+<h3
+  className="
+    font-['Open_Sans']
+    font-semibold
+    text-[32px]
+    leading-[24px]
+    tracking-[0]
+    text-black
+    flex
+    items-center
+  "
+>
+  Guest Favorite
+</h3>
+
+<p
+  className="
+    font-['Open_Sans']
+    font-normal
+    text-[14px]
+    leading-[20px]
+    tracking-[0]
+    text-gray-500
+    mt-2
+  "
+>
+  This hotel is the guests top favorite based on their rating & reviews.
+</p>
+
+    </div>
+  </div>
+
+ <button
+  onClick={() => setIsModalOpen(true)}
+  className="
+    bg-black
+    text-white
+    font-['Inter']
+    text-[18px]
+    leading-[18px]
+    tracking-[0]
+    px-8
+    py-4
+    rounded-lg
+    flex
+    items-center
+    justify-center
+  "
+>
+  Write a Review
+</button>
+
+</div>
 
 
-    // --- Conditional Render (Unchanged) ---
-    if (!token) {
-        return (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center text-gray-500">
-                Please log in to view detailed ratings and reviews.
-            </div>
-        );
-    }
-
-    if (loading) {
-        return (
-            <div className="bg-white rounded-lg shadow-sm p-8 text-center text-gray-500">
-                <Loader2 className="h-5 w-5 animate-spin mx-auto mb-2" /> Loading Reviews...
-            </div>
-        );
-    }
-    
-    if (error) {
-        return <div className="p-4 bg-red-100 border border-red-400 text-red-700 rounded-md">Error: {error}</div>;
-    }
-    
-    const calculatedAvgRating = parseFloat(renderAverageRating());
-    // Total review count ab summary API se aayega ya client-side calculated hoga
-    const totalReviewCount = averageRatings?.totalReviews || allReviews.length; 
-    
-    // 🟢 FIX: Reviews to Display (Is variable ko use karke rendering logic clean hoga)
-    const reviewsToDisplay = showAllReviews ? allReviews : reviews;
+                {/* Statistics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-8 border-t border-b border-[#E5E7EB] py-8 mt-8 bg-white">
 
 
-    // --- UI Rendering ---
-    return (
-        <>
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 mb-8">
-            <div className="flex justify-between items-center mb-6">
-                <div className="flex items-baseline gap-4">
-                    {/* Overall Score Dynamic */}
-                    <h2 className="text-6xl font-bold text-gray-900">
-                        {renderAverageRating()} 
-                    </h2>
-                    <div>
-                        <h3 className="text-2xl font-bold text-gray-900">
-                            {calculatedAvgRating >= 4.5 ? 'Guest Favorite' : 'Ratings Summary'}
-                        </h3>
-                        <p className="text-gray-500 text-sm">
-                            {totalReviewCount} Reviews based on their rating & reviews.
-                        </p>
-                    </div>
-                </div>
+                    {/* Progress Bars */}
+                    <div className="space-y-2">
+                        <h4 className="text-sm font-semibold mb-4">Overall Rating</h4>
 
-                {/* Submit Review Button (Unchanged) */}
-                <button
-                    onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 bg-[#D2A256] text-white px-4 py-2 rounded-lg font-medium hover:bg-[#c2934b] transition-colors shadow-md"
-                >
-                    <MessageSquare className="w-4 h-4" />
-                    Submit Your Review
-                </button>
-                
-            </div>
-        
-            {/* Rating Breakdown */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 my-8 border-t border-b border-gray-200 py-8">
-                {/* Overall Rating Breakdown (Unchanged) */}
-                <div className="space-y-2">
-                    <h4 className="font-semibold text-gray-900 mb-4">Overall Rating</h4>
-                    {[5, 4, 3, 2, 1].map((rating) => (
-                        <div key={rating} className="flex items-center gap-2">
-                            <span className="text-xs text-gray-600 w-3">{rating}</span>
-                            <div className="flex-1 h-1 bg-gray-200 rounded-full overflow-hidden">
-                                <div className="h-full bg-gray-800 rounded-full" style={{ width: (averageRatings?.ratingBreakdown?.[rating] / averageRatings?.totalReviews) * 100 || 0 + '%' }}></div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-        
-                {/* Categorical Scores - Now fixed */}
-                <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Cleanliness</h4>
-                    <div className="text-2xl font-bold text-gray-900 mb-2">{averageRatings?.cleanliness?.toFixed(1) || 'N/A'}</div>
-                    <Sparkles className="w-8 h-8 text-gray-800" />
-                </div>
-        
-                <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Staff</h4>
-                    <div className="text-2xl font-bold text-gray-900 mb-2">{averageRatings?.staff?.toFixed(1) || 'N/A'}</div>
-                    <CheckCircle className="w-8 h-8 text-gray-800" />
-                </div>
-        
-                <div>
-                    <h4 className="font-semibold text-gray-900 mb-2">Services</h4>
-                    <div className="text-2xl font-bold text-gray-900 mb-2">{averageRatings?.services?.toFixed(1) || 'N/A'}</div>
-                    <Key className="w-8 h-8 text-gray-800" />
-                </div>
-            </div>
-        
-            {/* Tags (Unchanged) */}
-            <div className="flex flex-wrap gap-4 mb-8">
-                 {dummyTags.map((tag, idx) => ( 
-                    <div key={idx} className="bg-gray-100 px-6 py-3 rounded-full text-gray-700 font-medium text-sm">
-                        {tag}
-                    </div>
-                ))}
-            </div>
-        
-            {/* 🔥 CRITICAL FIX: Reviews Grid Dynamic and Conditional Rendering */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                
-                {/* Check if there are ANY reviews */}
-                {allReviews.length > 0 ? (
-                    
-                    // Render the selected list (top 4 or all)
-                    reviewsToDisplay.map((reviewItem, idx) => ( 
-                        <div key={reviewItem.id || idx} className="bg-gray-50 rounded-xl p-6">
-                            <div className="flex items-start justify-between mb-4">
-                                {/* User details */}
-                                <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full overflow-hidden">
-                                        <img src={reviewItem.reviewerAvatar || "https://i.pravatar.cc/150?img=32"} alt="User" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).src = "https://i.pravatar.cc/150?img=32" }} />
-                                    </div>
-                                    <div>
-                                        <div className="font-bold text-gray-900">{reviewItem.reviewerName || 'Guest User'}</div>
-                                        <div className="text-xs text-gray-500">{formatReviewDate(reviewItem.createdAt)}</div>
-                                    </div>
-                                </div>
-                                {/* Stars Dynamic - Using overallRating */}
-                                <div className="flex gap-1">
-                                    {renderStars(reviewItem.overallRating)}
-                                </div>
-                            </div>
-                            {/* Review Text Dynamic */}
-                            <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                                {reviewItem.comment || reviewItem.summary || 'No comment provided.'}
-                            </p>
-                            <button className="bg-white border border-gray-200 px-4 py-2 rounded-lg text-sm font-semibold text-gray-900 hover:bg-gray-50">
-                                Show more
-                            </button>
+  {[5,4,3,2,1].map(rating => (
+    <div key={rating} className="flex items-center gap-3 mb-2">
+      <span className="text-xs w-3">{rating}</span>
+      <div className="flex-1 h-[6px] bg-gray-200 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-black rounded-full"
+          style={{
+            width: stats?.total
+              ? `${(stats.breakdown[rating] / stats.total) * 100}%`
+              : "0%"
+          }}
+        />
+      </div>
+    </div>
+  ))}
+                    </div>
+
+                    {/* Feature Scores */}
+                    {[
+  { label: "Cleanliness", value: stats?.cleanliness, Icon: Sparkles },
+  { label: "Staff", value: stats?.staff, Icon: CheckCircle },
+  { label: "Services", value: stats?.services, Icon: Key },
+  { label: "Food", value: stats?.services, Icon: MessageSquare },
+].map(item => (
+  <div key={item.label} className="text-center">
+    <h4 className="text-sm font-medium mb-2">{item.label}</h4>
+    <div className="text-2xl font-semibold">{item.value || "5.0"}</div>
+    <item.Icon className="mx-auto mt-3 w-6 h-6 text-black" />
+  </div>
+))}
+
+                </div>
+
+                {/* Tags */}
+                {/* <div className="flex flex-wrap gap-4 mb-8">
+                    {dummyTags.map((tag, idx) => (
+                        <div key={idx} className="bg-gray-100 px-6 py-3 rounded-full text-gray-700 font-medium text-sm">
+                            {tag}
                         </div>
-                    ))
-                ) : (
-                    // Empty State Message (Agar allReviews array mein kuch na ho)
-                    <div className="md:col-span-2 text-center text-gray-500 p-4">
-                        Be the first to leave a review for this hotel!
+                    ))}
+                </div> */}
+
+                {/* Review Cards */}
+                <div className="grid grid-cols-1 mt-4 md:grid-cols-2 gap-6">
+                    {visibleReviews.length > 0 ? (
+                        visibleReviews.map((review) => (
+                            <SingleReviewCard key={review.id} review={review} />
+                        ))
+                    ) : (
+                        <div className="md:col-span-2 text-center text-gray-500 p-4">
+                            Be the first to leave a review for this hotel!
+                        </div>
+                    )}
+                </div>
+
+                {/* Show All / Less Button */}
+                {allReviews.length > 4 && (
+                    <div className="mt-8 text-center">
+                        <button 
+                            onClick={() => setShowAll(!showAll)}
+                            className="bg-white border border-gray-200 px-8 py-3 rounded-lg font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
+                        >
+                            {showAll ? 'Show top reviews' : `Show all ${allReviews.length} reviews`}
+                        </button>
                     </div>
                 )}
-            </div>
-            
-            
-            <div className="mt-8 text-center">
-                
-{/*                 {totalReviewCount > reviews.length && !showAllReviews && (
-//                     <button 
-//                         onClick={() => setShowAllReviews(true)}
-//                         className="bg-white border border-gray-200 px-8 py-3 rounded-lg font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
-//                     >
-//                         Show all {totalReviewCount} reviews
-//                     </button>
-                )} */}
-    
-              
-{/*                 {showAllReviews && (
-//                     <button 
-//                         onClick={() => setShowAllReviews(false)}
-//                         className="bg-white border border-gray-200 px-8 py-3 rounded-lg font-semibold text-gray-900 hover:bg-gray-50 transition-colors"
-//                     >
-//                         Show top reviews
-//                     </button>
-                )} */}
             </div>
-        </div>
-        
-        {/* Review Form Modal Rendering (Unchanged) */}
-        <ReviewFormModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            hotelId={String(hotelId)}
-            onReviewPosted={refreshReviews} 
-        />
-      </>
-    );
+
+            {/* Modal */}
+            <ReviewFormModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                hotelId={String(hotelId)} 
+                onReviewPosted={fetchReviews} 
+            />
+        </>
+    );
 };
 
 export default HotelReviews;

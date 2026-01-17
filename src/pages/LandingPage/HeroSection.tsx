@@ -762,7 +762,7 @@ const handleDestinationClick = (destination: Destination) => {
           
           {/* Tabs */}
           <div className="flex justify-center mb-4   relative z-10">
-            <div className="flex gap-8 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex  gap-8 overflow-x-auto no-scrollbar pb-1">
               {categories.map((cat) => (
                   <button
                     key={cat.id}
@@ -772,7 +772,7 @@ const handleDestinationClick = (destination: Destination) => {
                        setSlideIndex(0);
                      }}
                      
-                    className={`pb-3 whitespace-nowrap transition-all relative font-opensans ${
+                    className={`pb-3 whitespace-nowrap transition-all relative text-[18px] font-opensans ${
                       activeTab === cat.name ? "text-gray-900" : "text-gray-500 hover:text-gray-700"
                     }`}
                   >
