@@ -64,20 +64,22 @@ interface Order {
 const formatDayAndDate = (dateStr?: string) => {
     if (!dateStr) return 'N/A';
     try {
-        return format(new Date(dateStr), 'E, dd MMM');
+        return format(new Date(dateStr), 'E, dd MMM yyyy');
     } catch {
         return dateStr;
     }
 };
 
+
 const formatShortDate = (dateStr?: string) => {
     if (!dateStr) return 'N/A';
     try {
-        return format(new Date(dateStr), 'dd MMM');
+        return format(new Date(dateStr), 'dd MMM yyyy');
     } catch {
         return dateStr;
     }
 };
+
 
 // Fixed Status Pill to match API Strings like "Complete payment received"
 const BookingStatusPill: React.FC<{ status: string }> = ({ status }) => {
