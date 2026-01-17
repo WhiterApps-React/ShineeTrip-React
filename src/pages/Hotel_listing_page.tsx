@@ -194,34 +194,39 @@ console.log("META FROM API:", meta);
                 const roomDetails = roomType?.price;
 
                 if (!roomDetails) return null;
-          
-          // --- Fetch Dynamic Reviews Data (Individual Hotel) ---
-          const summaryUrl = `http://46.62.160.188:3000/ratings/average/summary?propertyId=${hotel.id}`;
-          let reviewsCount = 0; 
-          let avgRating = parseFloat(hotel.rating) || 4.2; 
-          
-          try {
-              const reviewResponse = await fetch(summaryUrl, { 
-                  headers: { 'Authorization': `Bearer ${token}` } 
-              });
+          // --- Rating Logic Start ---
+            let calculatedRating = 0;
+            let calculatedCount = 0;
 
-              if (reviewResponse.ok) {
-                  const reviewData = await reviewResponse.json();
-                  if (reviewData) {
-                      reviewsCount = parseInt(reviewData.totalReviews, 10) || 0; 
-                      avgRating = parseFloat(reviewData.averageRating) || avgRating; 
-                  }
-              }
-          } catch (e) {
-              console.error(`Failed to fetch reviews for hotel ${hotel.id}:`, e);
-          }
-          
+            try {
+                // ✅ Use the List Endpoint for this property
+                const reviewApiUrl = `http://46.62.160.188:3000/ratings/property/${hotel.id}`;
+                
+                const reviewResponse = await fetch(reviewApiUrl, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                if (reviewResponse.ok) {
+                    const reviewsData = await reviewResponse.json();
+
+                    // ✅ Calculate Average from the Array of Reviews
+                    if (Array.isArray(reviewsData) && reviewsData.length > 0) {
+                        const totalStars = reviewsData.reduce((sum: number, r: any) => sum + (Number(r.overallRating) || 0), 0);
+                        calculatedRating = totalStars / reviewsData.length; // Average
+                        calculatedCount = reviewsData.length; // Count
+                    }
+                }
+            } catch (e) {
+                console.warn(`Review fetch failed for Hotel ${hotel.id}, using default 0.`);
+            }
+            // --- Rating Logic End ---
+
           return {
             id: String(hotel.id),
             name: hotel.name || "",
             location: `${hotel.city || ""}, ${hotel.country || ""}`.trim(),
-            rating: avgRating, 
-            reviewsCount: reviewsCount, 
+            rating: calculatedRating, 
+            reviewsCount: calculatedCount,
             images:
               hotel.images
                 ?.map((img: any) => img.image)
@@ -306,30 +311,39 @@ const fetchMoreHotels = async (nextPage: number) => {
                 const roomDetails = roomType?.price;
 
                 if (!roomDetails) return null;
-                // --- Review fetching logic (same as in fetchHotels) ---
-                const summaryUrl = `http://46.62.160.188:3000/ratings/average/summary?propertyId=${hotel.id}`;
-                let reviewsCount = 0; 
-                let avgRating = parseFloat(hotel.rating) || 4.2; 
+// --- Rating Logic Start ---
+            let calculatedRating = 0;
+            let calculatedCount = 0;
+
+            try {
+                // ✅ Use the List Endpoint for this property
+                const reviewApiUrl = `http://46.62.160.188:3000/ratings/property/${hotel.id}`;
                 
-                try {
-                    const reviewResponse = await fetch(summaryUrl, { headers: { 'Authorization': `Bearer ${token}` } });
-                    if (reviewResponse.ok) {
-                        const reviewData = await reviewResponse.json();
-                        if (reviewData) {
-                            reviewsCount = parseInt(reviewData.totalReviews, 10) || 0; 
-                            avgRating = parseFloat(reviewData.averageRating) || avgRating; 
-                        }
+                const reviewResponse = await fetch(reviewApiUrl, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                if (reviewResponse.ok) {
+                    const reviewsData = await reviewResponse.json();
+
+                    // ✅ Calculate Average from the Array of Reviews
+                    if (Array.isArray(reviewsData) && reviewsData.length > 0) {
+                        const totalStars = reviewsData.reduce((sum: number, r: any) => sum + (Number(r.overallRating) || 0), 0);
+                        calculatedRating = totalStars / reviewsData.length; // Average
+                        calculatedCount = reviewsData.length; // Count
                     }
-                } catch (e) {
-                    console.error(`Failed to fetch reviews for hotel ${hotel.id}:`, e);
                 }
-                
+            } catch (e) {
+                console.warn(`Review fetch failed for Hotel ${hotel.id}, using default 0.`);
+            }
+            // --- Rating Logic End ---
+
                 return {
                     id: String(hotel.id),
                     name: hotel.name || "",
                     location: `${hotel.city || ""}, ${hotel.country || ""}`.trim(),
-                    rating: avgRating, 
-                    reviewsCount: reviewsCount, 
+                    rating: calculatedRating, 
+                    reviewsCount: calculatedCount,
                     images: hotel.images?.map((img: any) => img.image).filter((url: string | null) => url && typeof url === "string") || [],
                     amenities: hotel.selectedFeatures?.map((f: any) => f.name) || ["Gym", "Restaurant"],
                     price: parseFloat(roomDetails.retail_price || 8999),
@@ -825,83 +839,100 @@ if (loading) {
                   {/* Content Section - EXACT FIGMA STRUCTURE */}
                   <div className="flex-1 p-6">
                     <div className="flex flex-col lg:flex-row h-full gap-6">
-                      {/* Left Column: Hotel Details */}
-                      <div className="flex-1 ">
-                        {/* Hotel Name and Location */}
-                        <h2 className="text-[24px] font-[600] text-gray-900 mb-1">
-                          {hotel.name}
-                        </h2>
-                        {/* FIX 3: ADDED DYNAMIC RATING AND REVIEW COUNT DISPLAY HERE */}
-                        {/* <div className="flex items-center gap-2 mb-2">
-                            <div className="flex items-center">
-                                {Array.from({ length: 5 }, (_, i) => (
-                                    <Star
-                                        key={i}
-                                        className={`w-4 h-4 ${
-                                            i < Math.round(hotel.rating) ? 'text-yellow-400 fill-yellow-400' : 'text-gray-300'
-                                        }`}
-                                    />
-                                ))}
-                            </div>
-                            <span className="text-sm text-gray-700 font-semibold">{hotel.rating.toFixed(1)}</span>
-                            <span className="text-sm text-gray-500">| {hotel.reviewsCount.toLocaleString()} Reviews</span>
-                        </div> */}
-                        {/* END FIX 3 */}
-                        
-                        <div className="flex items-center gap-2 text-gray-600 mb-4">
-                          <MapPin className="w-4 h-4 text-gray-500" />
-                          <span className="text-sm">
-                                {hotel.location || location} 
-                                {hotel.location && ' | 1.5Km drive to city center'} {/* Optional static distance re-added */}
-                            </span>
-                        </div>
+{/* Left Column: Hotel Details */}
+<div className="flex-1 flex flex-col justify-between h-full"> 
+    
+    {/* 1. TOP PART: Rating + Name + Location + Amenities Chips */}
+    <div>
+        {/* A. Review Section (Sabse Upar) */}
+        <div className="flex items-center gap-2 mb-1"> {/* Gap thoda kam kiya taaki naam ke paas rahe */}
+            {/* Stars */}
+            <div className="flex items-center gap-0.5">
+                {Array.from({ length: 5 }, (_, i) => {
+                    const isActive = i < Math.round(hotel.rating); 
+                    return (
+                        <Star
+                            key={i}
+                            className={`w-5 h-5 ${
+                                isActive ? 'text-green-500 fill-green-500' : 'text-gray-300'
+                            }`}
+                        />
+                    );
+                })}
+            </div>
+            {/* Numeric Rating */}
+            <span className="text-sm text-gray-900 font-bold">
+                {hotel.rating > 0 ? hotel.rating.toFixed(1) : "New"}
+            </span>
+             {/* Review Count (Optional) */}
+            {hotel.reviewsCount > 0 && (
+                <>
+                    <span className="text-gray-400 text-xs">•</span>
+                    <span className="text-sm text-gray-500">
+                        {hotel.reviewsCount} Reviews
+                    </span>
+                </>
+            )}
+        </div>
 
-                        {/* Amenities - Simple checkboxes like Figma */}
-  <div className="flex flex-wrap gap-3 mb-4">
-    {hotel.amenities.slice(0, 3).map((amenity, idx) => (
-      <div
-        key={idx}
-        className="px-4 py-1.5 text-sm text-gray-700 rounded-full border border-gray-300 bg-white"
-      >
-        {amenity}
-      </div>
-    ))}
-  </div>
+        {/* B. Hotel Name (Thoda Gap) */}
+        <h2 className="text-[24px] font-[600] text-gray-900 mb-1 leading-tight mt-2">
+            {hotel.name}
+        </h2>
 
-                        {/* Features List - EXACT FIGMA STYLE */}
-                        <div className=" mt-44 space-y-3">
+        {/* C. Location */}
+        <div className="flex items-center gap-2 text-gray-600 mb-4">
+            <MapPin className="w-4 h-4 text-gray-500" />
+            <span className="text-sm">
+                {hotel.location || location} 
+                {hotel.location && ' | 1.5Km drive to city center'}
+            </span>
+        </div>
 
-                          {/* Additional features from API if available */}
-                          {hotel.amenities.slice(3, 6).map((amenity, idx) => (
-                            <div key={idx} className="flex  items-center gap-3">
-                              <svg
-  width="20"
-  height="20"
-  viewBox="0 0 24 24"
-  fill="none"
-  xmlns="http://www.w3.org/2000/svg"
->
-  <circle
-    cx="12"
-    cy="12"
-    r="11"
-    stroke="#22C55E"
-    strokeWidth="2"
-  />
-  <path
-    d="M7 12.5L10.5 16L17 9"
-    stroke="#22C55E"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  />
-</svg>
+        {/* D. Amenities Chips */}
+        <div className="flex flex-wrap gap-3 ">
+            {hotel.amenities.slice(0, 3).map((amenity, idx) => (
+                <div
+                    key={idx}
+                    className="px-4 py-1.5 text-sm text-gray-700 rounded-full border border-gray-300 bg-white"
+                >
+                    {amenity}
+                </div>
+            ))}
+        </div>
+    </div>
 
-                              <span className="text-gray-700">{amenity}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
+
+    <div className="mt-auto space-y-3 pb-2"> 
+        {hotel.amenities.slice(3, 6).map((amenity, idx) => (
+            <div key={idx} className="flex items-center gap-3">
+                <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <circle
+                        cx="12"
+                        cy="12"
+                        r="11"
+                        stroke="#22C55E"
+                        strokeWidth="2"
+                    />
+                    <path
+                        d="M7 12.5L10.5 16L17 9"
+                        stroke="#22C55E"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                    />
+                </svg>
+                <span className="text-gray-700">{amenity}</span>
+            </div>
+        ))}
+    </div>
+</div>
 
                       {/* Right Column: Price and Booking - EXACT FIGMA STYLE */}
                       <div className="lg:w-[300px] border-l flex flex-col justify-between h-full border-gray-200 pl-6">
