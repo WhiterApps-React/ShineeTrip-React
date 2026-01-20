@@ -197,57 +197,62 @@ const CustomerProfilePage: React.FC = () => {
         imagePreview ||
         customer?.profile_image ||
         generateLetterAvatar(customer?.first_name || "U");
-    const handleSaveProfile = async () => {
-        if (!customerDbId || !token || !customer) return;
-
-        setLoading(true);
-        setError(null);
-
-        try {
-            // Endpoint: PATCH /customers/{id}
-            const apiUrl = `http://46.62.160.188:3000/customers/${customerDbId}`;
-
-            // 💡 FIX 1: Sirf woh fields bhejo jo Swagger PATCH schema mein allowed hain.
-            // DOB ko same format mein bhejna zaroori hai jo backend accept karta hai.
-            // Inside handleSaveProfile...
-            const payload: Partial<CustomerData> = {
-                first_name: formState.first_name,
-                last_name: formState.last_name,
-                email: formState.email,
-                phone: formState.phone,
-                // Fix: Convert YYYY-MM-DD to ISO 8601
-                dob: formState.dob && formState.dob !== 'N/A'
-                    ? new Date(formState.dob).toISOString()
-                    : undefined,
-                address: formState.address,
-                profile_image: customer?.profile_image || generateLetterAvatar(formState.first_name || "U"),
-            };
-
-            const response = await fetch(apiUrl, {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`,
-                },
-                body: JSON.stringify(payload),
-            });
-
-            if (!response.ok) {
-                const errorBody = await response.json();
-                throw new Error(errorBody.message || "Failed to update profile.");
-            }
-
-            await fetchProfileData();
-            setIsEditMode(false);
-            alert("Profile updated successfully!");
-
-        } catch (err) {
-            console.error("Profile update error:", err);
-            setError(err instanceof Error ? err.message : 'Failed to update profile.');
-            setLoading(false);
+   const handleSaveProfile = async () => {
+    if (!customerDbId || !token || !customer) return;
+    
+    setLoading(true);
+    setError(null);
+    
+    try {
+        const apiUrl = `http://46.62.160.188:3000/customers/${customerDbId}`;
+        
+        // 🟢 Use FormData for Multer compatibility
+        const formData = new FormData();
+        
+        // Append text fields
+        if (formState.first_name) formData.append('first_name', formState.first_name);
+        if (formState.last_name) formData.append('last_name', formState.last_name);
+        if (formState.email) formData.append('email', formState.email);
+        if (formState.phone) formData.append('phone', formState.phone);
+        if (formState.address) formData.append('address', formState.address);
+        
+        // Format DOB to ISO for backend validation
+        if (formState.dob && formState.dob !== 'N/A') {
+            formData.append('dob', new Date(formState.dob).toISOString());
         }
-    };
 
+        // 🟢 Append the actual File object
+        if (selectedImage) {
+            formData.append('profile_image', selectedImage);
+        }
+
+        const response = await fetch(apiUrl, {
+            method: "PATCH", 
+            headers: {
+                // ⚠️ IMPORTANT: Do NOT set 'Content-Type' header manually when using FormData.
+                // The browser will automatically set it to 'multipart/form-data' with the correct boundary.
+                "Authorization": `Bearer ${token}`,
+            },
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.json();
+            throw new Error(errorBody.message || "Failed to update profile.");
+        }
+
+        await fetchProfileData(); 
+        setSelectedImage(null); // Clear the file state after success
+        setIsEditMode(false);
+        alert("Profile updated successfully!");
+
+    } catch (err) {
+        console.error("Profile update error:", err);
+        setError(err instanceof Error ? err.message : 'Failed to update profile.');
+    } finally {
+        setLoading(false);
+    }
+};
 
 
 
