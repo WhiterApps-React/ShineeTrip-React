@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react';
 import { Card } from "@/components/ui/card"
 import { Star } from "lucide-react"
 
-// API URL (Updated IP based on your curl)
+// API URL
 const API_URL = 'http://46.62.160.188:3000/testimonials';
 
 // --- TYPE DEFINITIONS ---
 
-// 1. API Response Structure
+// 1. API Response Structure (Updated based on Swagger)
 interface ApiTestimonial {
   id: number;
   rating: number;
@@ -17,7 +17,8 @@ interface ApiTestimonial {
   review: string;
   cu_name: string;
   cu_addr: string;
-  cu_img: string | null; // API might return null sometimes
+  cu_img: string | null;
+  isApproved: boolean; // Added based on swagger
   created_at: string;
   updated_at: string;
 }
@@ -44,27 +45,28 @@ export default function Testimonials() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [currentIdx,setCurrIdx]=useState<number>(0);
+  const [currentIdx, setCurrIdx] = useState<number>(0);
 
-  useEffect(()=>{
+  // Carousel Logic
+  useEffect(() => {
     if (testimonials.length <= 3) return;
 
-    const interval= setInterval(()=>{
-
-      setCurrIdx((prev)=>{
-        return prev+3 >= testimonials.length ?0:prev+3
+    const interval = setInterval(() => {
+      setCurrIdx((prev) => {
+        return prev + 3 >= testimonials.length ? 0 : prev + 3
       });
-
-    },4000);
+    }, 4000);
 
     return () => clearInterval(interval);
 
-  },[testimonials])
+  }, [testimonials])
 
+  // Data Fetching Logic
   useEffect(() => {
     const fetchTestimonials = async () => {
       try {
-        const response = await fetch(API_URL);
+        // ✅ CHANGE: Added ?isApproved=true to fetch only approved reviews
+        const response = await fetch(`${API_URL}?isApproved=true`);
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -75,17 +77,14 @@ export default function Testimonials() {
         // Data Mapping Logic
         const formattedData: FormattedTestimonial[] = data.map((item, index) => ({
           id: item.id,
-        
-          name: item.cu_name || "Happy Traveler", 
-          location: item.cu_addr || "India", 
-        
-          package: item.title ? item.title.substring(0, 20) : "LUXURY STAY", 
-          content: item.review || "An unforgettable experience!", 
-          rating: item.rating || 5, 
+          name: item.cu_name || "Happy Traveler",
+          location: item.cu_addr || "India",
+          package: item.title ? item.title.substring(0, 20) : "LUXURY STAY",
+          content: item.review || "An unforgettable experience!",
+          rating: item.rating || 5,
           image: item.cu_img || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&q=80",
           number: formatNumber(index),
         }));
-
 
         setTestimonials(formattedData);
         setError(null);
@@ -106,8 +105,8 @@ export default function Testimonials() {
       <div className="pt-12 bg-white">
         <section className="py-20 bg-[#2C3C3C] text-white text-center min-h-[400px] flex items-center justify-center">
           <div className="animate-pulse flex flex-col items-center">
-             <div className="h-4 w-32 bg-gray-600 rounded mb-4"></div>
-             <div className="h-8 w-64 bg-gray-600 rounded"></div>
+            <div className="h-4 w-32 bg-gray-600 rounded mb-4"></div>
+            <div className="h-8 w-64 bg-gray-600 rounded"></div>
           </div>
         </section>
       </div>
@@ -115,17 +114,14 @@ export default function Testimonials() {
   }
 
   if (error) {
-   
-    return null; 
+    return null;
   }
-
-
 
   return (
     <div className="pt-12 bg-white">
       <section className="py-16 bg-[#2C3C3C] font-opensans">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           {/* Header Section */}
           <div className="text-center mb-16">
             <div className="flex items-center justify-center gap-3 mb-4">
@@ -146,13 +142,9 @@ export default function Testimonials() {
           </div>
 
           {/* Dynamic Grid */}
-          
-    
-
           {testimonials.length === 0 ? (
-            
             <div className="text-center py-16 text-gray-400">
-              <p className="text-sm tracking-wide">No stories available yet.</p>
+              <p className="text-sm tracking-wide">No approved stories available yet.</p>
             </div>
           ) : (
             /* ---------- Slider ---------- */
@@ -171,36 +163,6 @@ export default function Testimonials() {
                     <Card className="relative bg-[#425656] border-0 p-15 overflow-hidden group hover:-translate-y-1 transition-all duration-300 rounded-sm  shadow-lg hover:shadow-2xl h-[537px]">
 
                       <div className="relative z-10 flex flex-col h-full">
-                        {/* Background Quote Watermark */}
-{/* <div className="absolute top-[-20px] right-4 opacity-20 pointer-events-none select-none">
-  <svg
-    width="160"
-    height="160"
-    viewBox="0 0 64 64"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    className="text-[#D4A76A]"
-  >
-    <path
-      d="M38 10
-         C26 10 20 18 20 28
-         C20 36 24 42 30 46
-         C34 49 36 52 36 56
-         V58
-         H28
-         V56
-         C28 53 26 50 22 46
-         C16 41 12 35 12 26
-         C12 14 22 6 38 6"
-      stroke="currentColor"
-      strokeWidth="6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </svg>
-</div> */}
-
-
                         
                         {/* Rating Stars */}
                         <div className="flex gap-1 mb-4">
@@ -225,14 +187,12 @@ export default function Testimonials() {
                         </div>
 
                         {/* Review Text */}
-<p
-  className="text-gray-200 mb-6 leading-relaxed text-[20px] font-opensans
-             overflow-hidden line-clamp-10"
->
-  "{testimonial.content}"
-</p>
-
-
+                        <p
+                          className="text-gray-200 mb-6 leading-relaxed text-[20px] font-opensans
+                                     overflow-hidden line-clamp-10"
+                        >
+                          "{testimonial.content}"
+                        </p>
 
                         {/* User Info */}
                         <div className="flex items-center gap-4 mt-auto border-t border-white/10 pt-4">
@@ -264,8 +224,6 @@ export default function Testimonials() {
               </div>
             </div>
           )}
-
-
         </div>
       </section>
     </div>
