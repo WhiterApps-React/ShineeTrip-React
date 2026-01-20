@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# local ssh keys (DO NOT COMMIT)
+.ssh_work_shineetrip
+.ssh_work_shineetrip.pub
