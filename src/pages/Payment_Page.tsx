@@ -51,6 +51,7 @@ const BookingPage: React.FC = () => {
     
 
    
+<<<<<<< HEAD
 const [guestList, setGuestList] = useState<{ title: string; firstName: string; lastName: string  , email: string , phone:string , phoneCode: string }[]>([]);
 
 // 2. Add Guest Button ka Function
@@ -63,6 +64,13 @@ const handleAddGuest = () => {
         phone: '', 
         phoneCode: '+91' 
     }]);
+=======
+const [guestList, setGuestList] = useState<{ title: string; firstName: string; lastName: string }[]>([]);
+
+// 2. Add Guest Button ka Function
+const handleAddGuest = () => {
+    setGuestList([...guestList, { title: '', firstName: '', lastName: '' }]);
+>>>>>>> origin/master
 };
 
 // 3. Remove Guest Button ka Function
@@ -75,7 +83,11 @@ const handleRemoveGuest = (index: number) => {
 // 4. Input Change Handler for Guests
 const handleGuestChange = (index: number, field: string, value: string) => {
     const updatedList = [...guestList];
+<<<<<<< HEAD
     // @ts-ignore
+=======
+    // @ts-ignore (TypeScript strictness simple fix)
+>>>>>>> origin/master
     updatedList[index][field] = value;
     setGuestList(updatedList);
 };
@@ -842,6 +854,77 @@ try {
             </div>
         </div>
 
+<<<<<<< HEAD
+=======
+        {/* ✅ DYNAMIC GUEST LIST RENDER */}
+{guestList.map((guest, index) => (
+    <div key={index} className="animate-in fade-in slide-in-from-top-4 duration-300">
+        
+        {/* Header for Guest X */}
+        <div className="flex justify-between items-center mb-2 mt-4 border-t border-gray-100 pt-4">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Guest {index + 2} Details {/* Index 0 means Guest 2 */}
+            </span>
+            <button
+                type="button"
+                onClick={() => handleRemoveGuest(index)}
+                className="text-red-500 hover:text-red-700 text-xs flex items-center gap-1 font-medium transition-colors"
+            >
+                <Trash2 size={14} /> Remove
+            </button>
+        </div>
+
+        {/* Guest Input Fields (Same Design as Primary) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            {/* Title + First Name */}
+            <div>
+                <div className="flex gap-3">
+                    {/* Title */}
+                    <div className="relative min-w-[80px]">
+                        <select
+                            value={guest.title}
+                            onChange={(e) => handleGuestChange(index, 'title', e.target.value)}
+                            className="w-full appearance-none bg-gray-100 text-gray-900 font-medium px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Title</option>
+                            <option value="Mr.">Mr</option>
+                            <option value="Mrs.">Mrs</option>
+                            <option value="Ms.">Ms</option>
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                             <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                        </div>
+                    </div>
+
+                    {/* First Name */}
+                    <input
+                        type="text"
+                        placeholder="First Name"
+                        value={guest.firstName}
+                        onChange={(e) => handleGuestChange(index, 'firstName', e.target.value)}
+                        className="flex-1 bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        required 
+                    />
+                </div>
+            </div>
+
+            {/* Last Name */}
+            <div>
+                 <input
+                    type="text"
+                    placeholder="Last Name"
+                    value={guest.lastName}
+                    onChange={(e) => handleGuestChange(index, 'lastName', e.target.value)}
+                    className="w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                />
+            </div>
+        </div>
+    </div>
+))}
+
+>>>>>>> origin/master
         {/* ROW 2: Contact (Email & Mobile) */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             
@@ -904,6 +987,7 @@ try {
                 </div>
                 {formErrors.phone && <span className="text-red-500 text-[10px] mt-1 block">{formErrors.phone}</span>}
             </div>
+<<<<<<< HEAD
                                 </div>
                                 
 
@@ -991,6 +1075,10 @@ try {
     </div>
 ))}
 
+=======
+        </div>
+
+>>>>>>> origin/master
         {/* GST Toggle / Header (Optional visual separator) */}
         <div className="flex justify-end">
              <span className="text-sm font-bold text-gray-900 cursor-pointer hover:underline">Enter GST Details</span>
