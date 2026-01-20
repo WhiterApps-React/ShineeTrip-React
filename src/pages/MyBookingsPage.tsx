@@ -217,7 +217,7 @@ return (
 <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
     <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Stay Inclusions</h4>
     <div className="flex flex-wrap gap-2">
-        {/* 🟢 STEP 1: Agar Order ke room mein specific services (like Breakfast) saved hain */}
+      
         {(room.roomType?.serviceProdInfos ?? []).length > 0 ? (
             (room.roomType?.serviceProdInfos ?? []).map((service: any, idx: number) => (
                 <div key={idx} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 border border-gray-100">
@@ -226,7 +226,7 @@ return (
                 </div>
             ))
         ) : (
-            /* 🟢 STEP 2: Agar koi extra service nahi hai, toh standard amenities dikhao jo Room Details modal mein thi */
+           
             <>
                 <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 border border-gray-100">
                      No extra services included
@@ -595,7 +595,7 @@ const openPackageDetails = (order: any) => {
 
         {/* ✅ UPDATED BUTTONS FOR PACKAGE */}
         <div className='pt-4 flex gap-3'>
-            {/* View Details - Filhal alert de sakte ho ya alag modal bana sakte ho */}
+         
             <button 
                 onClick={() => openPackageDetails(order)} 
                 className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all"

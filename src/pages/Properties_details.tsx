@@ -33,7 +33,7 @@ export default function RoomBookingPage() {
     const [isPolicyModalOpen, setIsPolicyModalOpen] = useState(false);
     const [services, setServices] = useState<any[]>([]);
 
-    // NOTE: Availability check states (Rehnde dete hain)
+    // NOTE: Availability check states
     const [isAvailabilityCheckOpen, setIsAvailabilityCheckOpen] = useState(false);
     const [roomForCheck, setRoomForCheck] = useState<any>(null);
 
@@ -82,7 +82,7 @@ export default function RoomBookingPage() {
   
     // 🟢 CRITICAL FIX: Navigation to Payment Page
     const handleProceedToPayment = (roomData: any) => { 
-    // Fresh object create karo taaki purana koi bhi data (like old price) carry forward na ho
+ 
     const params = new URLSearchParams();
 
     // 1. Basic Search Info (Editable states se lo)
@@ -127,11 +127,11 @@ export default function RoomBookingPage() {
             rooms: currentRooms,
         }).toString();
         
-        // Navigate back to listing page with new parameters
+       
         navigate(`/hotellists?${newSearchParams}`);
     };
      
-    // Is useEffect mein setServices ke saath ek empty array fallback rakhein
+   
 useEffect(() => {
     const fetchServices = async () => {
         try {
@@ -140,7 +140,6 @@ useEffect(() => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            // Agar data array hai toh set karo, warna empty array
             setServices(Array.isArray(data) ? data : []);
         } catch (err) {
             console.error("Failed to fetch services", err);

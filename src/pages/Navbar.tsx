@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { Menu, X, User, Phone, Mail } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Logo from "../assets/Logo.png";
-import HotelIcon from "../assets/Hotel Streamline Rounded Line - Material Symbols.png";
+import HotelIcon from "../assets/Group.png";
 import FlightIcon from "../assets/Airplane In Flight Bold Streamline Phosphor Bold.png";
 import TrainIcon from "../assets/Train Streamline Sharp Line - Material Symbols.png";
 import PackageIcon from "../assets/Package Streamline Phosphor Regular.png";
 import EventIcon from "../assets/Event Streamline Carbon.png";
 import { LoginModal } from "./Login/Loginpage";
 import { getAuth, signOut } from "firebase/auth";
+
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -22,18 +23,45 @@ export const Navbar = () => {
   const isLandingPage = location.pathname === "/";
 
 
-  useEffect(() => {
-  const params = new URLSearchParams(location.search);
-  const widget = params.get("searchWidget");
-  const type = params.get("type");
+useEffect(() => {
+  const path = location.pathname.toLowerCase();
 
-  if (widget === "open" && type) {
-    setActiveTab(type);
-  } else {
+  // Hotel flow (list → detail → booking → payment)
+  if (
+    path.includes("hotel") ||
+    path.includes("room") ||
+    path.includes("booking") ||
+    path.includes("payment")
+  ) {
+    setActiveTab("Hotels");
+  }
 
+  // Flights flow
+  else if (path.includes("flight")) {
+    setActiveTab("Flights");
+  }
+
+  // Trains flow
+  else if (path.includes("train")) {
+    setActiveTab("Trains");
+  }
+
+  // Holiday Packages
+  else if (path.includes("package")) {
+    setActiveTab("Holiday Packages");
+  }
+
+  // Events
+  else if (path.includes("event")) {
+    setActiveTab("Events");
+  }
+
+  // Landing page fallback
+  else {
     setActiveTab("");
   }
-}, [location.search]);
+}, [location.pathname]);
+
 
 
   // Check if user is logged in
@@ -156,47 +184,72 @@ const handleLogout = async () => {
 
             {/* Desktop Menu - Center */}
             <div className="hidden md:flex items-center gap-8 flex-1 justify-center">
-              <button 
-                onClick={() => handleNavClick("Hotels")} 
-                className={`flex items-center gap-2 font-opensans font-medium text-[18px] leading-[21px] tracking-[0px] transition-colors group ${
-                  activeTab === "Hotels" ? "text-[#C9A961]" : "text-black hover:text-[#C9A961]"
-                }`}
-              >
-                <img 
-                  src={HotelIcon} 
-                  alt="Hotels" 
-                  className="w-5 h-5 transition-all nav-icon"
-                  style={{
-                    filter: activeTab === "Hotels" 
-                      ? "brightness(0) saturate(100%) invert(63%) sepia(25%) saturate(1089%) hue-rotate(359deg)" 
-                      : "brightness(0)"
-                  }}
-                />
-                Hotels
-              </button>
-              
-              <button 
-                onClick={() => handleNavClick("Flights")} 
-                className={`flex items-center gap-2 font-opensans font-medium text-[18px] leading-[21px] tracking-[0px] transition-colors group ${
-                  activeTab === "Flights" ? "text-[#C9A961]" : "text-black hover:text-[#C9A961]"
-                }`}
-              >
-                <img 
-                  src={FlightIcon} 
-                  alt="Flights" 
-                  className="w-5 h-5 transition-all nav-icon"
-                  style={{
-                    filter: activeTab === "Flights" 
-                      ? "brightness(0) saturate(100%) invert(63%) sepia(25%) saturate(1089%) hue-rotate(359deg)" 
-                      : "brightness(0)"
-                  }}
-                />
-                Flights
-              </button>
+<button 
+  onClick={() => handleNavClick("Hotels")} 
+  className={`relative flex items-center gap-2 font-opensans font-medium 
+  text-[18px] leading-[21px] transition-colors group ${
+    activeTab === "Hotels"
+      ? "text-[#C9A961]"
+      : "text-black hover:text-[#C9A961]"
+  }`}
+>
+  <img 
+    src={HotelIcon} 
+    alt="Hotels" 
+    className="w-5 h-5 transition-all nav-icon"
+    style={{
+      filter: activeTab === "Hotels" 
+        ? "brightness(0) saturate(100%) invert(63%) sepia(25%) saturate(1089%) hue-rotate(359deg)" 
+        : "brightness(0)"
+    }}
+  />
+
+  Hotels
+
+  {/* underline */}
+  <span
+    className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961]
+    transform scale-x-0 origin-left transition-transform duration-300
+    group-hover:scale-x-100 ${
+      activeTab === "Hotels" ? "scale-x-100" : ""
+    }`}
+  />
+</button>
+
+                              
+<button
+  onClick={() => handleNavClick("Flights")}
+  className={`relative flex items-center gap-2 font-opensans font-medium
+  text-[18px] leading-[21px] transition-colors group ${
+    activeTab === "Flights"
+      ? "text-[#C9A961]"
+      : "text-black hover:text-[#C9A961]"
+  }`}
+>
+  <svg viewBox="0 0 24 24" className="w-5 h-5">
+    <path
+      d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3-1 3 1v-1.5L13 19v-5.5l8 2.5Z"
+      fill="currentColor"
+    />
+  </svg>
+
+  Flights
+
+  <span
+    className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961]
+    transform scale-x-0 origin-left transition-transform duration-300
+    group-hover:scale-x-100 ${
+      activeTab === "Flights" ? "scale-x-100" : ""
+    }`}
+  />
+</button>
+
+
+
 
               <button 
                 onClick={() => handleNavClick("Trains")} 
-                className={`flex items-center gap-2 font-opensans font-medium text-[18px] leading-[21px] tracking-[0px] transition-colors group ${
+                className={`flex relative items-center gap-2 font-opensans font-medium text-[18px] leading-[21px] tracking-[0px] transition-colors group ${
                   activeTab === "Trains" ? "text-[#C9A961]" : "text-black hover:text-[#C9A961]"
                 }`}
               >
@@ -211,11 +264,19 @@ const handleLogout = async () => {
                   }}
                 />
                 Trains
+                <span
+  className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961] 
+  transform scale-x-0 origin-left transition-transform duration-300
+  group-hover:scale-x-100 ${
+    activeTab === "Flights" ? "scale-x-100" : ""
+  }`}
+/>
+
               </button>
 
               <button 
                 onClick={() => handleNavClick("Holiday Packages")} 
-                className={`flex items-center gap-2 font-opensans font-medium text-[18px] leading-[21px] tracking-[0px] transition-colors group ${
+                className={` relative flex items-center gap-2 font-opensans font-medium text-[18px] leading-[21px] tracking-[0px] transition-colors group ${
                   activeTab === "Holiday Packages" ? "text-[#C9A961]" : "text-black hover:text-[#C9A961]"
                 }`}
               >
@@ -230,11 +291,19 @@ const handleLogout = async () => {
                   }}
                 />
                 Holiday Packages
+                <span
+  className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961] 
+  transform scale-x-0 origin-left transition-transform duration-300
+  group-hover:scale-x-100 ${
+    activeTab === "Flights" ? "scale-x-100" : ""
+  }`}
+/>
+
               </button>
 
               <button 
                 onClick={() => handleNavClick("Events")} 
-                className={`flex items-center gap-2 font-opensans font-medium text-[18px] leading-[21px] tracking-[0px] transition-colors group ${
+                className={`relative flex items-center gap-2 font-opensans font-medium text-[18px] leading-[21px] tracking-[0px] transition-colors group ${
                   activeTab === "Events" ? "text-[#C9A961]" : "text-black hover:text-[#C9A961]"
                 }`}
               >
@@ -249,6 +318,14 @@ const handleLogout = async () => {
                   }}
                 />
                 Events
+                <span
+  className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961] 
+  transform scale-x-0 origin-left transition-transform duration-300
+  group-hover:scale-x-100 ${
+    activeTab === "Flights" ? "scale-x-100" : ""
+  }`}
+/>
+
               </button>
             </div>
 
@@ -288,6 +365,7 @@ const handleLogout = async () => {
                           className="w-full text-left px-4 py-2 hover:bg-gray-100 transition-colors text-gray-700"
                         >
                           Profile
+                          
                         </button>
                         <button
                           onClick={() => {

@@ -50,7 +50,7 @@ const BookingPage: React.FC = () => {
     const [showValidationModal, setShowValidationModal] = useState(false); // ✅ New State for Validation Popup
     
 
-    // 1. Extra Guests ke liye State
+   
 const [guestList, setGuestList] = useState<{ title: string; firstName: string; lastName: string }[]>([]);
 
 // 2. Add Guest Button ka Function
@@ -68,7 +68,7 @@ const handleRemoveGuest = (index: number) => {
 // 4. Input Change Handler for Guests
 const handleGuestChange = (index: number, field: string, value: string) => {
     const updatedList = [...guestList];
-    // @ts-ignore (TypeScript strictness handle karne ke liye simple fix)
+    // @ts-ignore (TypeScript strictness simple fix)
     updatedList[index][field] = value;
     setGuestList(updatedList);
 };
@@ -76,7 +76,7 @@ const handleGuestChange = (index: number, field: string, value: string) => {
 
     
 
-    const navigate = useNavigate(); // ✅ FIX 2: useNavigate hook use kiya
+    const navigate = useNavigate(); 
     const [searchParams] = useSearchParams();
     const propertyId = searchParams.get('propertyId');
     
@@ -154,7 +154,7 @@ const validateForm = () => {
         errors.email = "Please enter a valid email address.";
     }
     
-    // Validation mein ye line add karo
+   
     if (!formData.address.trim()) {
         errors.address = "Billing address is required for invoice.";
     }
@@ -189,19 +189,19 @@ const validateForm = () => {
 
 
 
-const [showPolicyModal, setShowPolicyModal] = useState(false); // Popup kholne ke liye
-const [policyText, setPolicyText] = useState(""); // Policy ka HTML text store karne ke liye
+const [showPolicyModal, setShowPolicyModal] = useState(false);
+const [policyText, setPolicyText] = useState(""); 
 
-// ✅ API se Policy Fetch karne ke liye (Ye useEffect add karo)
+
 useEffect(() => {
     const fetchPolicy = async () => {
         if (!propertyId) return;
         try {
-            // Token optional rakha hai taaki public data aa jaye
+   
             const res = await fetch(`http://46.62.160.188:3000/properties/${propertyId}`);
             if (res.ok) {
                 const data = await res.json();
-                // API se 'policies' field utha rahe hain
+                
                 setPolicyText(data.policies || "<p>No specific privacy policy available.</p>");
             }
         } catch (err) {
@@ -220,10 +220,10 @@ useEffect(() => {
         
         
         if (!validateForm()) {
-        // Validation fail hone par, error message set karo
+      
             setShowValidationModal(true);
         setPaymentMessage('Please check your details. All required fields must be valid.'); 
-        return; // Execution yahan ruk jayega
+        return; 
     }
 
         if (!formData.agreePolicy) {
@@ -279,7 +279,7 @@ useEffect(() => {
                 paymentMethod: "online",
                 currency: "INR",
                 notes: { bookingSource: "web-portal-checkout" },
-                customerId: customerId, // Abhi existing logic (Session ID) use kar rahe hain
+                customerId: customerId, 
             };
 
             console.log("Create Order Payload Sent:", createOrderPayload);
@@ -356,17 +356,16 @@ console.log("Customer ID check before API:", customerId);
             
             // Handle Payment Failure/Cancellation
             rzp1.on('modal.close', function() {
-            // ✅ CRITICAL FIX: Functional update for reliable state check
-            // Isse isProcessing state ki current value milegi
+
             setIsProcessing((currentIsProcessing) => {
             if (!paymentCompletedRef.current && currentIsProcessing) {
             setPaymentMessage('Payment window closed. Please try again.');
-            return false; // Loader ko band karo
+            return false; 
         }
         return currentIsProcessing;
     });
     
-            setIsRazorpayOpen(false); // Ye to direct set ho sakta hai
+            setIsRazorpayOpen(false); 
         });
             setIsRazorpayOpen(true);
             rzp1.open(); // Open the payment gateway popup
@@ -441,8 +440,8 @@ try {
         billingName: `${formData.firstName} ${formData.lastName}`,
         billingEmail: formData.email,
         billingPhone: `${formData.phoneCode}${formData.phone}`,
-        billingAddress: formData.address, // User ka real address
-        taxIdentifier: formData.gstNumber || "" // User ka GST number
+        billingAddress: formData.address, 
+        taxIdentifier: formData.gstNumber || "" 
     };
 
     try {
@@ -587,13 +586,13 @@ try {
         {/* Backdrop */}
         <div 
             className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
-            onClick={() => setShowValidationModal(false)} // Bahar click karne par close ho jaye
+            onClick={() => setShowValidationModal(false)}
         />
 
         {/* Popup Card */}
         <div 
             className="relative w-full max-w-sm bg-white rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-95 duration-300"
-            style={{ border: "2px solid #ef4444" }} // Red border for error attention
+            style={{ border: "2px solid #ef4444" }} 
         >
             {/* Close Button */}
             <button 
@@ -633,7 +632,7 @@ try {
         {/* Backdrop */}
         <div 
             className="absolute inset-0 bg-black/60 backdrop-blur-sm" 
-            onClick={() => navigate('/')} // Redirect to home on backdrop click
+            onClick={() => navigate('/')}
         />
 
         {/* Popup Card */}
@@ -703,10 +702,10 @@ try {
         adults={searchParams.get('adults') || '2'}
         children={searchParams.get('children') || '0'}
         roomName={roomName}
-        roomCount={'1'} // Abhi ke liye 1 hardcoded hai, ya logic se nikalo agar hai
+        roomCount={'1'} 
     />
 
-    {/* 2. Price Breakdown Card (Isko neeche retain kar sakte ho agar chahiye, ya hata do) */}
+   
     {/* <div className="bg-white rounded-lg shadow-sm p-6">
          <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Price Summary</h2>
@@ -863,7 +862,7 @@ try {
                         value={guest.firstName}
                         onChange={(e) => handleGuestChange(index, 'firstName', e.target.value)}
                         className="flex-1 bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required // Agar additional guest add kiya hai to naam dena zaroori hai
+                        required 
                     />
                 </div>
             </div>
@@ -1010,10 +1009,10 @@ try {
     <label className="text-sm text-gray-600 mt-[1px]">
         I agree to the{' '}
         <button
-            type="button" // Important: Button type button rakho taaki form submit na ho
+            type="button" 
             onClick={(e) => {
                 e.preventDefault();
-                setShowPolicyModal(true); // Popup open karega
+                setShowPolicyModal(true); 
             }}
             className="text-blue-600 font-medium hover:underline focus:outline-none"
         >
@@ -1112,7 +1111,7 @@ try {
                     <span className="font-bold text-gray-900">₹{(finalTotal - retailPrice).toFixed(0)}</span>
                 </div>
 
-                {/* Dummy Charges (Design Match ke liye placeholder - Hata sakte ho agar nahi chahiye) */}
+              
                 <div className="flex justify-between items-center text-sm text-gray-600">
                     <span>Reservation charge</span>
                     <span className="font-bold text-gray-900">₹0</span>

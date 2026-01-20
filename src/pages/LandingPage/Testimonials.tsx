@@ -146,6 +146,7 @@ export default function Testimonials() {
           </div>
 
           {/* Dynamic Grid */}
+          
     
 
           {testimonials.length === 0 ? (
@@ -167,14 +168,39 @@ export default function Testimonials() {
                     key={testimonial.id}
                     className="w-full md:w-1/2 lg:w-1/3 flex-shrink-0 px-3"
                   >
-                    <Card className="relative bg-[#425656] border-0 p-8 overflow-hidden group hover:-translate-y-1 transition-all duration-300 rounded-sm shadow-lg hover:shadow-2xl h-full">
-                      
-                      {/* Background Number Watermark */}
-                      <div className="absolute top-2 right-4 text-[#4A5E5E] text-[100px] font-bold leading-none pointer-events-none opacity-40 font-serif select-none">
-                        {testimonial.number}
-                      </div>
+                    <Card className="relative bg-[#425656] border-0 p-15 overflow-hidden group hover:-translate-y-1 transition-all duration-300 rounded-sm  shadow-lg hover:shadow-2xl h-[537px]">
 
                       <div className="relative z-10 flex flex-col h-full">
+                        {/* Background Quote Watermark */}
+{/* <div className="absolute top-[-20px] right-4 opacity-20 pointer-events-none select-none">
+  <svg
+    width="160"
+    height="160"
+    viewBox="0 0 64 64"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    className="text-[#D4A76A]"
+  >
+    <path
+      d="M38 10
+         C26 10 20 18 20 28
+         C20 36 24 42 30 46
+         C34 49 36 52 36 56
+         V58
+         H28
+         V56
+         C28 53 26 50 22 46
+         C16 41 12 35 12 26
+         C12 14 22 6 38 6"
+      stroke="currentColor"
+      strokeWidth="6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+</div> */}
+
+
                         
                         {/* Rating Stars */}
                         <div className="flex gap-1 mb-4">
@@ -193,15 +219,20 @@ export default function Testimonials() {
 
                         {/* Package Badge */}
                         <div className="mb-4">
-                          <span className="bg-[#8B7355]/30 border border-[#A5865F]/50 px-3 py-1.5 rounded-sm text-[#D4A76A] text-[10px] font-bold tracking-[0.15em] uppercase">
+                          <span className="bg-[#8B7355]/30 border border-[#A5865F]/50 px-3 py-1.5 rounded-sm text-[#D4A76A] text-[14px] font-bold tracking-[0.15em] uppercase">
                             {testimonial.package}
                           </span>
                         </div>
 
                         {/* Review Text */}
-                        <p className="text-gray-200 mb-6 leading-relaxed text-[14px] flex-grow italic">
-                          "{testimonial.content}"
-                        </p>
+<p
+  className="text-gray-200 mb-6 leading-relaxed text-[20px] font-opensans
+             overflow-hidden line-clamp-10"
+>
+  "{testimonial.content}"
+</p>
+
+
 
                         {/* User Info */}
                         <div className="flex items-center gap-4 mt-auto border-t border-white/10 pt-4">

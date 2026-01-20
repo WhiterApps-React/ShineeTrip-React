@@ -511,8 +511,8 @@ const handleDestinationClick = (destination: Destination) => {
               {/* Header */}
               <div className="flex flex-col sm:flex-row justify-between items-start mb-6 pr-8">
                 <div>
-                  <h2 className="text-2xl sm:text-3xl font-bold mb-2 tracking-wide">PLAN YOUR JOURNEY</h2>
-                  <p className="text-gray-300 text-xs sm:text-sm">Select your travel dates and destination to find the perfect getaway</p>
+                  <h2 className="text-2xl sm:text-3xl font-bold font-opensans mb-2 text-[32px] tracking-wide">PLAN YOUR JOURNEY</h2>
+                  <p className="text-gray-300 text-[18px] sm:text-sm">Select your travel dates and destination to find the perfect getaway</p>
                 </div>
               </div>
 
@@ -521,7 +521,7 @@ const handleDestinationClick = (destination: Destination) => {
                 {/* Location */}
                 {/* Location */}
 <div className="space-y-2 relative" ref={wrapperRef}>
-  <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
+  <div className="flex items-center gap-2 text-white text-xs font-opensans font-semibold text-[18px] tracking-wider uppercase">
     <MapPin size={14} className="text-[#D2A256]" />
     NAME OF LOCATION
   </div>
@@ -598,7 +598,7 @@ const handleDestinationClick = (destination: Destination) => {
 </div>
                 {/* Check In */}
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] mb-1 tracking-wider uppercase">
                     <Calendar size={14} className="text-[#D2A256]" />
                     CHECK-IN DATE *
                   </div>
@@ -614,7 +614,7 @@ const handleDestinationClick = (destination: Destination) => {
 
                 {/* Check Out */}
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] mb-1 tracking-wider uppercase">
                     <Calendar size={14} className="text-[#D2A256]" />
                     CHECK-OUT DATE *
                   </div>
@@ -633,7 +633,7 @@ const handleDestinationClick = (destination: Destination) => {
               {/* Counters Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] tracking-wider uppercase">
                     <Users size={14} className="text-[#D2A256]" />
                     ADULTS *
                   </div>
@@ -660,7 +660,7 @@ const handleDestinationClick = (destination: Destination) => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] tracking-wider uppercase">
                     <Users size={14} className="text-[#D2A256]" />
                     CHILDREN
                   </div>
@@ -687,7 +687,7 @@ const handleDestinationClick = (destination: Destination) => {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white text-xs font-bold tracking-wider uppercase">
+                  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] tracking-wider uppercase">
                     <Bed size={14} className="text-[#D2A256]" />
                     ROOMS
                   </div>

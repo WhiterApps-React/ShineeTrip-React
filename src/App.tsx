@@ -28,14 +28,14 @@ const AuthObserver = () => {
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       if (user) {
-        // ✅ OLD PROBLEM REMOVED: Humne wo strict check hata diya jo logout kar raha tha.
+       
         
         try {
           console.log("🔄 User detected, syncing token...");
           // Token generate karo
           const newToken = await user.getIdToken(true);
           
-          // Chupchap token save kar do (Refresh hone par bhi ye chalega aur token wapis aa jayega)
+        
           sessionStorage.setItem("shineetrip_token", newToken);
           sessionStorage.setItem("shineetrip_uid", user.uid);
           
@@ -44,7 +44,7 @@ const AuthObserver = () => {
           console.error("❌ Token sync failed:", error);
         }
       } else {
-        // Agar user sach mein logout ho gaya hai (Firebase se), tabhi safai karo
+      
         console.log("🔒 No user found. Clearing storage.");
         sessionStorage.clear();
         localStorage.clear();

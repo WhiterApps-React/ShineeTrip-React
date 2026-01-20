@@ -45,6 +45,20 @@
   font-family: "Open Sans", sans-serif;
 }
 
+
+/* Hide default calendar icon (Chrome, Edge, Brave) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0;
+  display: none;
+}
+
+/* Optional: Safari / Firefox safety */
+input[type="date"] {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: none;
+}
+
 .dark {
   --background: oklch(0.12 0 0);
   --foreground: oklch(0.98 0 0);

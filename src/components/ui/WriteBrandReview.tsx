@@ -23,6 +23,8 @@ const WriteBrandReview: React.FC = () => {
 
    const [cuName, setCuName] = useState<string>("");
   const [cuAddr, setCuAddr] = useState<string>("");
+  const ERROR_TOAST_ID = "review-error";
+
   
   
 
@@ -78,10 +80,13 @@ const WriteBrandReview: React.FC = () => {
           cu_addr: cuAddr,
           cu_img: cuImg});
 
-  if (!rating || !review.trim()) {
-    toast.error("Rating and review are required");
-    return;
-  }
+if (!rating || !review.trim()) {
+  toast.error("Rating and review are required", {
+    id: ERROR_TOAST_ID,
+  });
+  return;
+}
+
 
   if (!token || !cuName) {
     toast.error("User information missing. Please login again.");

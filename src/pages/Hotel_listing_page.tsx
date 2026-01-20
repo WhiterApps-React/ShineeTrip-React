@@ -14,6 +14,8 @@ import {
   Minus,
   Plus,
 } from "lucide-react";
+import { useRef } from "react";
+
 
 interface Hotel {
   id: string;
@@ -37,6 +39,41 @@ const getTodayDateString = () => {
   const dd = String(today.getDate()).padStart(2, "0");
   return `${yyyy}-${mm}-${dd}`;
 };
+
+const GuestRow = ({ label, value, min, onMinus, onPlus }: { label: string; value: string; min: number; onMinus: () => void; onPlus: () => void }) => {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <span className="text-gray-700 font-medium">{label}</span>
+
+      <div className="flex items-center gap-3">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onMinus();
+          }}
+          className="w-8 h-8 rounded-full border flex items-center justify-center
+                     hover:border-[#D2A256] hover:text-[#D2A256]"
+        >
+          <Minus size={14} />
+        </button>
+
+        <span className="w-6 text-center font-semibold">{value}</span>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onPlus();
+          }}
+          className="w-8 h-8 rounded-full border flex items-center justify-center
+                     hover:border-[#D2A256] hover:text-[#D2A256]"
+        >
+          <Plus size={14} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
 
 const HotelListingPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -68,6 +105,13 @@ const HotelListingPage: React.FC = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
+  const [showGuestPicker, setShowGuestPicker] = useState(false);
+  const guestPickerRef = useRef<HTMLDivElement | null>(null);
+  const checkoutRef = useRef<HTMLInputElement | null>(null);
+  const checkinRef = useRef<HTMLInputElement | null>(null);
+
+
+
 
   // 💡 PAGINATION STATES:
   const [page, setPage] = useState(1);
@@ -257,8 +301,8 @@ const HotelListingPage: React.FC = () => {
         (item): item is Hotel => item !== null,
       );
 
-      setHotels(finalHotelList); // Overwrite old data
-      setHasMore(meta.hasNextPage || false); // HasMore set kiya
+      setHotels(finalHotelList); 
+      setHasMore(meta.hasNextPage || false); 
       // Initialize selected images
 
       const initialImages: { [key: number]: number } = {};
@@ -327,7 +371,7 @@ const HotelListingPage: React.FC = () => {
       const data = responseData.data || [];
       const meta = responseData.meta || {};
 
-      // Mapping logic ko reuse karna (review fetching same rahega)
+      
       const hotelPromises = (Array.isArray(data) ? data : []).map(
         async (item: any) => {
           const hotel = item;
@@ -403,7 +447,7 @@ const HotelListingPage: React.FC = () => {
       setHotels((prev) => [...prev, ...finalHotelList]);
       setHasMore(meta.hasNextPage || false);
 
-      // Naye images ke liye selectedImages update karna
+     
       const newInitialImages: { [key: number]: number } = {};
       const currentHotelCount = hotels.length; // hotels.length will give the starting index for new data
       finalHotelList.forEach((_, index) => {
@@ -431,7 +475,7 @@ const HotelListingPage: React.FC = () => {
   useEffect(() => {
     fetchHotels(); // Calls the fetchHotels (Page 1 Only) function
   }, [fetchHotels, searchParams]); // searchParams dependency added
-  // UI Rendering ke pehle, total reviews calculate karein
+  
 
   const totalReviewsCount = hotels.reduce(
     (sum, hotel) => sum + hotel.reviewsCount,
@@ -472,6 +516,26 @@ const HotelListingPage: React.FC = () => {
     setHotels(sorted);
   }, [sortBy]); // Sync internal states when URL changes (Unchanged)
 
+  useEffect(() => {
+  const handleClickOutside = (event: MouseEvent) => {
+    if (
+      guestPickerRef.current &&
+      !guestPickerRef.current.contains(event.target as Node)
+    ) {
+      setShowGuestPicker(false);
+    }
+  };
+
+  if (showGuestPicker) {
+    document.addEventListener("mousedown", handleClickOutside);
+  }
+
+  return () => {
+    document.removeEventListener("mousedown", handleClickOutside);
+  };
+}, [showGuestPicker]);
+
+
   // Sync internal states when URL changes
   useEffect(() => {
     // console.log("Syncing states with URL...");
@@ -482,15 +546,15 @@ const HotelListingPage: React.FC = () => {
     const urlChl = searchParams.get("children") || "0";
     const urlRms = searchParams.get("rooms") || "1";
 
-    // 💡 Ye saari states update karna zaroori hai
+  
     setCurrentLocation(urlLoc);
     setCurrentCheckIn(urlCin);
     setCurrentCheckOut(urlCout);
     setCurrentAdults(urlAdl);
     setCurrentChildren(urlChl);
-    setRooms(urlRms); // Isse rooms gayab nahi honge
-  }, [searchParams]); // Jab bhi URL badle, ye states ko fresh kar dega
-  // Scroll to top when component mounts (Unchanged)
+    setRooms(urlRms);
+  }, [searchParams]); 
+
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -506,19 +570,17 @@ const HotelListingPage: React.FC = () => {
   const handleHotelClick = (hotelId: string) => {
     const currentSearchParams = new URLSearchParams(searchParams.toString());
 
-    // 💡 FIX 2 (CRITICAL): Yahan propertyId ko query parameter mein add karein
+    
     currentSearchParams.set("propertyId", hotelId);
     if (!currentSearchParams.has("rooms")) {
       currentSearchParams.set("rooms", String(rooms));
     }
     navigate(`/room-booking/${hotelId}?${currentSearchParams}`);
   }; // ===============================================
-  // VIEW ALL & SEARCH LOGIC (Unchanged)
-  // ===============================================
-  // Helper to check if location is currently empty or not
-  const isLocationEmpty = currentLocation.trim() === ""; // Function to navigate to View All Hotels (No location filter)
+
+  const isLocationEmpty = currentLocation.trim() === ""; 
   const handleViewAllHotels = () => {
-    // 1. Safe dates: Check-in aaj ki, aur Check-out kal ki (Kam se kam 1 din ka gap)
+  
     const safeCheckIn = getTodayDateString();
 
     const tomorrow = new Date();
@@ -534,7 +596,7 @@ const HotelListingPage: React.FC = () => {
       checkOut: safeCheckOut,
       adults: currentAdults,
       children: currentChildren,
-      rooms: rooms || "1", // 💡 YE ZAROORI HAI: Rooms parameter add karo
+      rooms: rooms || "1", 
     }).toString();
 
     navigate(`/hotellists?${searchQuery}`);
@@ -545,12 +607,12 @@ const HotelListingPage: React.FC = () => {
     if (!token) {
       alert("Please log in to search for hotels.");
       return;
-    } // Agar location khali hai, toh View All logic chalao
+    } 
 
     if (isLocationEmpty) {
       handleViewAllHotels();
     } else {
-      // Agar location filled hai, toh detailed search chalao (handleSearch)
+      
       handleSearch();
     }
   }; // ===============================================
@@ -563,160 +625,163 @@ const HotelListingPage: React.FC = () => {
         <div
           className="
              flex flex-col sm:flex-row items-stretch sm:items-center 
-             justify-center gap-0 mb-4 rounded-lg overflow-hidden 
+             justify-center gap-0 mb-4 rounded-lg 
              border border-gray-300 bg-[#F4F1EC]/20
-             rounded-tl-[24px] rounded-bl-[24px] 
-             rounded-tr-[24px] rounded-br-[24px] 
+             rounded-tl-[24px] rounded-bl-[24px]
         "
         >
           {/* Location Field */}
           <div className="flex-1 w-full sm:max-w-[250px] bg-[#F4F1EC]/20 px-4 py-3 rounded-tl-[24px] rounded-bl-[24px]  sm:border-r sm:border-b-0 border-gray-300">
-            <div className="text-[14px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">
+            <div className="text-[14px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
               CITY, AREA OR PROPERTY
             </div>
             <div className="flex items-center gap-2">
-              <MapPin className="w-4 h-4 text-[#D2A256]" />
+              <MapPin className="w-7 h-7 text-[#D2A256]" />
               <input
                 type="text"
                 value={currentLocation}
                 onChange={(e) => setCurrentLocation(e.target.value)}
-                className="text-base font-[700] text-[18px] text-gray-900 bg-transparent w-full focus:outline-none"
+                className="text-base font-[700] text-[18px] text-gray-900  w-full focus:outline-none"
                 placeholder="Enter location"
               />
             </div>
           </div>
 
           {/* Check-in Field */}
-          <div className="flex-1 w-full sm:max-w-[200px] bg-[#F4F1EC]/20  px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
-            <div className="text-[14px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">
-              CHECK-IN
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#D2A256]" />
-              <input
-                type="date"
-                min={new Date().toISOString().split("T")[0]}
-                value={currentCheckIn}
-                onChange={(e) => setCurrentCheckIn(e.target.value)}
-                className="text-base font-[700] text-[18px] text-gray-900 bg-transparent w-full focus:outline-none"
-              />
-            </div>
-          </div>
+<div className="flex-1 w-full sm:max-w-[200px] bg-[#F4F1EC]/20 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+  <div className="text-[14px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
+    CHECK-IN
+  </div>
+
+  <div className="flex items-center gap-3">
+    {/* Yellow Calendar Icon */}
+    <button
+      type="button"
+      onClick={() => checkinRef.current?.showPicker()}
+      className="text-[#D2A256] hover:scale-110 transition-transform"
+    >
+      <Calendar className="w-7 h-7" />
+    </button>
+
+    {/* Date Input */}
+    <input
+      ref={checkinRef}
+      type="date"
+      min={new Date().toISOString().split("T")[0]}
+      value={currentCheckIn}
+      onChange={(e) => setCurrentCheckIn(e.target.value)}
+      className="text-[18px] font-[700] text-gray-900 bg-transparent w-full focus:outline-none appearance-none"
+    />
+  </div>
+</div>
+
 
           {/* Check-out Field */}
           <div className="flex-1 w-full sm:max-w-[200px] bg-[#F4F1EC]/20 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
-            <div className="text-[14px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">
-              CHECK-OUT
-            </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#D2A256]" />
-              <input
-                type="date"
-                min={new Date().toISOString().split("T")[0]}
-                value={currentCheckOut}
-                onChange={(e) => setCurrentCheckOut(e.target.value)}
-                className="text-base font-[700] text-[18px] text-gray-900 bg-transparent w-full focus:outline-none"
-              />
-            </div>
-          </div>
+  <div className="text-[14px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
+    CHECK-OUT
+  </div>
+
+  <div className="flex items-center gap-3">
+    {/* Yellow Calendar Icon */}
+    <button
+      type="button"
+      onClick={() => checkoutRef.current?.showPicker()}
+      className="text-[#D2A256] hover:scale-110 transition-transform"
+    >
+      <Calendar className="w-7 h-7" />
+    </button>
+
+    {/* Date Input */}
+    <input
+      ref={checkoutRef}
+      type="date"
+      min={new Date().toISOString().split("T")[0]}
+      value={currentCheckOut}
+      onChange={(e) => setCurrentCheckOut(e.target.value)}
+      className="text-[18px] font-[700] text-gray-900 bg-transparent w-full focus:outline-none appearance-none"
+    />
+  </div>
+</div>
+
 
           {/* Room & Guest Field */}
-          {/* Note: Isme right border sirf sm:screen par chahiye, mobile par nahi, isliye border-r hataya */}
-          {/* 🟢 UPDATED: ROOMS & GUESTS (With Rooms and Better Design) */}
-          <div className="flex-1 w-full sm:max-w-[320px] bg-[#F4F1EC]/20 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
-            <div className="text-[14px] font-semibold text-gray-500 mb-1 uppercase tracking-wide">
-              ROOMS & GUESTS
-            </div>
-            <div className="flex items-center gap-3">
-              <Users className="w-4 h-4 text-[#D2A256]" />
+{/* Room & Guest Field (SUMMARY STYLE) */}
+<div
+  ref={guestPickerRef}
+  className="flex-1 w-full sm:max-w-[320px] bg-[#F4F1EC]/20 px-4 py-3
+             border-b sm:border-r sm:border-b-0 border-gray-300
+             cursor-pointer relative"
+  onClick={(e) => {
+    e.stopPropagation();
+    setShowGuestPicker(true);
+  }}
+>
 
-              <div className="flex items-center gap-2 text-gray-900 font-bold text-sm">
-                {/* Rooms Section */}
-                <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setRooms(String(Math.max(1, parseInt(rooms) - 1)));
-                    }}
-                    className="hover:text-[#D2A256] transition-colors"
-                  >
-                    <Minus size={12} />
-                  </button>
-                  <span className="min-w-[20px] text-center">{rooms || 1}</span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setRooms(String(parseInt(rooms) + 1));
-                    }}
-                    className="hover:text-[#D2A256] transition-colors"
-                  >
-                    <Plus size={12} />
-                  </button>
-                  <span className="text-[10px] text-gray-500 ml-0.5">Rm</span>
-                </div>
+  <div className="text-[14px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
+    Room & Guest
+  </div>
 
-                <span className="text-gray-400">|</span>
+  <div className="flex items-center gap-3">
+    <Users className="w-5 h-5 text-[#D2A256]" />
 
-                {/* Adults Section */}
-                <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentAdults(
-                        String(Math.max(1, parseInt(currentAdults) - 1)),
-                      );
-                    }}
-                    className="hover:text-[#D2A256] transition-colors"
-                  >
-                    <Minus size={12} />
-                  </button>
-                  <span className="min-w-[20px] text-center">
-                    {currentAdults}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentAdults(String(parseInt(currentAdults) + 1));
-                    }}
-                    className="hover:text-[#D2A256] transition-colors"
-                  >
-                    <Plus size={12} />
-                  </button>
-                  <span className="text-[10px] text-gray-500 ml-0.5">Ad</span>
-                </div>
+<span
+  spellCheck={false}
+  className="text-[20px] font-semibold text-gray-900"
+>
+  {rooms} Room{Number(rooms) > 1 ? "s" : ""},{" "}
+  {currentAdults} Adult{Number(currentAdults) > 1 ? "s" : ""}
+</span>
 
-                <span className="text-gray-400">|</span>
+  </div>
 
-                {/* Children Section */}
-                <div className="flex items-center gap-1 bg-white/40 px-2 py-1 rounded-md">
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentChildren(
-                        String(Math.max(0, parseInt(currentChildren) - 1)),
-                      );
-                    }}
-                    className="hover:text-[#D2A256] transition-colors"
-                  >
-                    <Minus size={12} />
-                  </button>
-                  <span className="min-w-[20px] text-center">
-                    {currentChildren}
-                  </span>
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCurrentChildren(String(parseInt(currentChildren) + 1));
-                    }}
-                    className="hover:text-[#D2A256] transition-colors"
-                  >
-                    <Plus size={12} />
-                  </button>
-                  <span className="text-[10px] text-gray-500 ml-0.5">Ch</span>
-                </div>
-              </div>
-            </div>
-          </div>
+
+{showGuestPicker && (
+  <div
+  className="absolute top-full left-0 mt-2 bg-white rounded-xl shadow-xl p-4 w-[320px] z-50"
+  onClick={(e) => e.stopPropagation()}
+>
+    
+    {/* Rooms */}
+    <GuestRow
+      label="Rooms"
+      value={rooms}
+      min={1}
+      onMinus={() => setRooms(String(Math.max(1, parseInt(rooms) - 1)))}
+      onPlus={() => setRooms(String(parseInt(rooms) + 1))}
+    />
+
+    {/* Adults */}
+    <GuestRow
+      label="Adults"
+      value={currentAdults}
+      min={1}
+      onMinus={() =>
+        setCurrentAdults(String(Math.max(1, parseInt(currentAdults) - 1)))
+      }
+      onPlus={() =>
+        setCurrentAdults(String(parseInt(currentAdults) + 1))
+      }
+    />
+
+    {/* Children */}
+    <GuestRow
+      label="Children"
+      value={currentChildren}
+      min={0}
+      onMinus={() =>
+        setCurrentChildren(
+          String(Math.max(0, parseInt(currentChildren) - 1)),
+        )
+      }
+      onPlus={() =>
+        setCurrentChildren(String(parseInt(currentChildren) + 1))
+      }
+    />
+  </div>
+)}
+</div>
+
 
           {/* Search Button - Yellow/Gold color as in Figma */}
           <div className="bg-[#F4F1EC]/20 flex-shrink-0 p-2 flex justify-center">
@@ -769,7 +834,7 @@ const HotelListingPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Temporary Button for Figma Style (Hata diya gaya hai jaisa aapne pichle response mein suggest kiya tha) */}
+       
       </div>
     </div>
   ); // --- Rendering UI ---

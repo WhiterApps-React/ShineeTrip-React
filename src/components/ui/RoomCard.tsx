@@ -111,7 +111,7 @@ useEffect(() => {
                 {/* Image Carousel Section */}
                 <div className="w-full lg:w-[320px] flex-shrink-0">
                     {/* Main Image */}
-                    <div className="relative h-72 lg:h-64 rounded-xl overflow-hidden mb-2 group">
+                    <div className="relative h-80 lg:h-74 rounded-xl overflow-hidden mb-2 group">
                         <img 
                             src={roomImages[currentImageIndex]} 
                             alt={room.room_type} 
@@ -143,7 +143,7 @@ useEffect(() => {
                               e.stopPropagation();
                               setCurrentImageIndex(idx);
                             }}
-                            className={`w-14 h-14 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
+                            className={`w-16 h-16 flex-shrink-0 rounded-lg overflow-hidden border-2 transition-all ${
                               currentImageIndex === idx
                                 ? 'border-green-600 opacity-100'
                                 : 'border-transparent opacity-60 hover:opacity-100'
@@ -228,7 +228,7 @@ useEffect(() => {
         <div className="flex flex-col justify-between border hover:border-[#D2A256] hover:bg-[#FFFBF4] rounded-xl p-4 relative h-full min-h-[120px]">
             <div>
                 <div className="flex items-center justify-between mb-2">
-                    <div className=" text-[18px] font-[600] text-gray-900">Room Only</div>
+                    <div className=" text-[14px] font-[600] text-gray-900">Room Only</div>
                     <div onClick={handlePolicyClick} className="text-[12px] font-[400] text-[#4A5565] underline cursor-pointer">Inclusions & Policies</div>
                 </div>
                 <div>
