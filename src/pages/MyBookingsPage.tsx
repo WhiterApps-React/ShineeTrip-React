@@ -45,6 +45,7 @@ interface Order {
     id: number;
     status: string; 
     totalPrice: number;
+    grandTotal?: number;
     currency: string;
     createdAt: string;
     orderRooms?: OrderRoomDetail[];
@@ -472,21 +473,32 @@ const openPackageDetails = (order: any) => {
         setIsModalOpen(true);
     };
 
-    const fetchAllData = useCallback(async () => {
-        if (!customerDbId || !token) { setLoading(false); return; }
-        setLoading(true);
-        try {
-            const headers = { "Authorization": `Bearer ${token}` };
-            const [hotelRes, pkgRes] = await Promise.all([
-                fetch(`${API_BASE}/order/search?customerId=${customerDbId}`, { headers }),
-                fetch(`${API_BASE}/holiday-package-orders?customerId=${customerDbId}`, { headers })
-            ]);
-            const hData = await hotelRes.json();
-            const pData = await pkgRes.json();
-            setOrders(Array.isArray(hData) ? hData.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()) : []);
-            setPackageOrders(pData.data || pData || []);
-        } catch (err) { console.error(err); } finally { setLoading(false); }
-    }, [customerDbId, token]);
+const fetchAllData = useCallback(async () => {
+    if (!customerDbId || !token) { setLoading(false); return; }
+    setLoading(true);
+    try {
+        const headers = { "Authorization": `Bearer ${token}` };
+        const [hotelRes, pkgRes] = await Promise.all([
+            fetch(`${API_BASE}/order?customerId=${customerDbId}`, { headers }),
+            fetch(`${API_BASE}/holiday-package-orders?customerId=${customerDbId}`, { headers })
+        ]);
+        
+        const hData = await hotelRes.json();
+        const pData = await pkgRes.json();
+
+        const hotelOrdersArray = Array.isArray(hData.data) ? hData.data : (Array.isArray(hData) ? hData : []);
+        
+        const packageOrdersArray = Array.isArray(pData.data) ? pData.data : (Array.isArray(pData) ? pData : []);
+
+        setOrders(hotelOrdersArray.sort((a:any, b:any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        setPackageOrders(packageOrdersArray);
+
+    } catch (err) { 
+        console.error("Fetch Error:", err); 
+    } finally { 
+        setLoading(false); 
+    }
+}, [customerDbId, token, API_BASE]);
 
     useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
@@ -554,11 +566,20 @@ const openPackageDetails = (order: any) => {
                                                 <span className='text-gray-400 text-sm'>• Out: {formatDayAndDate(room.checkOut)}</span>
                                             </div>
                                             <div className="flex gap-5 border-b pb-5">
-                                                <img src={room.property?.images?.[0]?.image || "https://placehold.co/400x400?text=Hotel"} className="w-28 h-28 object-cover rounded-xl border" />
+                                                <img src={
+        room.property?.images?.[0]?.image || 
+        room.roomType?.images?.[0]?.image || 
+        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80" // ✅ Premium Fallback Image
+    } className="w-28 h-28 object-cover rounded-xl border" />
                                                 <div className="flex-1">
                                                     <h3 className="text-xl font-bold">{room.property?.name}</h3>
                                                     <p className="text-sm text-gray-500">{room.property?.city}</p>
-                                                    <div className="mt-3 text-sm"><p>Room: <span className='font-bold'>{room.roomType?.room_type}</span></p><p className='text-[#D2A256] font-extrabold'>{formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}</p></div>
+                                                    <div className="mt-3 text-sm font-bold text-[#D2A256]">
+                    {formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}
+                    <p className="mt-1 text-gray-900 font-black">
+                        Amount: {order.currency} {(order.grandTotal || order.totalPrice || 0).toLocaleString()}
+                    </p>
+                </div>                             <div className="mt-3 text-sm"><p>Room: <span className='font-bold'>{room.roomType?.room_type}</span></p><p className='text-[#D2A256] font-extrabold'>{formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}</p></div>
                                                 </div>
                                             </div>
                                             <div className='pt-4 flex gap-3'>
