@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { 
-    Loader2, ShoppingBag, Search, 
+import {
+    Loader2, ShoppingBag, Search,
     CheckCircle, Clock, ArrowLeft, Star, FileText,
     User, XCircle,
     Phone,
@@ -10,7 +10,7 @@ import {
     MapPin,
     Calendar
 } from 'lucide-react';
-import { format } from 'date-fns'; 
+import { format } from 'date-fns';
 import InvoicePDF from '@/components/ui/InvoicePDF';
 
 // --- Interfaces Fixed based on API Response ---
@@ -33,17 +33,17 @@ interface OrderRoomDetail {
     id: number;
     checkIn: string;
     checkOut: string;
-    adults: number; 
+    adults: number;
     children: number;
-    roomPrice: number; 
+    roomPrice: number;
     status: string;
-    property: PropertyDetails; 
-    roomType: RoomTypeDetails; 
+    property: PropertyDetails;
+    roomType: RoomTypeDetails;
 }
 
 interface Order {
     id: number;
-    status: string; 
+    status: string;
     totalPrice: number;
     grandTotal?: number;
     currency: string;
@@ -85,21 +85,21 @@ const formatShortDate = (dateStr?: string) => {
 // Fixed Status Pill to match API Strings like "Complete payment received"
 const BookingStatusPill: React.FC<{ status: string }> = ({ status }) => {
     const lowerStatus = status.toLowerCase();
-    
+
     let Icon = CheckCircle;
-    let text = status; 
+    let text = status;
     let colorClass = 'text-gray-600';
 
     if (lowerStatus.includes('complete') || lowerStatus.includes('confirmed') || lowerStatus.includes('received')) {
         Icon = CheckCircle;
         text = 'Confirmed';
         colorClass = 'text-green-600';
-    } 
+    }
     else if (lowerStatus.includes('awaiting') || lowerStatus.includes('pending')) {
         Icon = Clock;
         text = 'Payment Pending';
         colorClass = 'text-yellow-600';
-    } 
+    }
     else if (lowerStatus.includes('cancelled') || lowerStatus.includes('fail')) {
         Icon = XCircle;
         text = 'Cancelled';
@@ -115,31 +115,30 @@ const BookingStatusPill: React.FC<{ status: string }> = ({ status }) => {
 };
 
 const ProfileNavItem: React.FC<{ icon: React.ElementType, label: string, active?: boolean, onClick: () => void }> = ({ icon: Icon, label, active = false, onClick }) => (
-    <button onClick={onClick} className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${
-        active ? 'bg-[#D2A256] text-white shadow-md' : 'text-gray-700 hover:bg-gray-100'
-    }`}>
+    <button onClick={onClick} className={`w-full text-left flex items-center gap-3 px-3 py-2 rounded-lg transition-all ${active ? 'bg-[#D2A256] text-white shadow-md' : 'text-gray-700 hover:bg-gray-100'
+        }`}>
         <Icon className="w-5 h-5" />
         <span className="font-medium text-sm">{label}</span>
     </button>
 );
 
-const BookingDetailModal = ({ isOpen, onClose, data }: { isOpen: boolean, onClose: () => void, data: {order: Order, room: OrderRoomDetail} | null }) => {
+const BookingDetailModal = ({ isOpen, onClose, data }: { isOpen: boolean, onClose: () => void, data: { order: Order, room: OrderRoomDetail } | null }) => {
     if (!isOpen || !data) return null;
     const { order, room } = data;
 
-    
+
     const userName = sessionStorage.getItem('shineetrip_name') || "Guest User";
     const userEmail = sessionStorage.getItem('shineetrip_email') || "N/A";
 
-// 🟢 DYNAMIC PRICE CALCULATION
-const roomBasePrice = Number(room.roomPrice) || 0;
-const totalOrderPrice = Number(order.totalPrice) || 0;
-const taxesAndFees = totalOrderPrice - roomBasePrice;
+    // 🟢 DYNAMIC PRICE CALCULATION
+    const roomBasePrice = Number(room.roomPrice) || 0;
+    const totalOrderPrice = Number(order.totalPrice) || 0;
+    const taxesAndFees = totalOrderPrice - roomBasePrice;
 
-return (
+    return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in duration-200">
-                
+
                 {/* Header Section */}
                 <div className="bg-[#263238] p-6 text-white">
                     <div className="flex justify-between items-start">
@@ -157,7 +156,7 @@ return (
                 </div>
 
                 <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto bg-gray-50/30">
-                    
+
                     {/* 1. Dynamic Guest Information Section */}
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                         <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4 flex items-center gap-2">
@@ -182,9 +181,9 @@ return (
                     {/* 2. Dynamic Hotel & Room Info */}
                     <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
                         <div className="flex gap-4 pb-5 border-b border-gray-50">
-                            <img 
-                                src={room.property.images?.[0]?.image || "https://placehold.co/100x100?text=Hotel"} 
-                                className="w-24 h-24 rounded-2xl object-cover border border-gray-100" 
+                            <img
+                                src={room.property.images?.[0]?.image || "https://placehold.co/100x100?text=Hotel"}
+                                className="w-24 h-24 rounded-2xl object-cover border border-gray-100"
                                 alt="hotel"
                             />
                             <div>
@@ -214,29 +213,29 @@ return (
                         </div>
                     </div>
 
-                   {/* 3. Fully Dynamic Services (Amenities/Inclusions) */}
-<div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-    <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Stay Inclusions</h4>
-    <div className="flex flex-wrap gap-2">
-      
-        {(room.roomType?.serviceProdInfos ?? []).length > 0 ? (
-            (room.roomType?.serviceProdInfos ?? []).map((service: any, idx: number) => (
-                <div key={idx} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 border border-gray-100">
-                    <CheckCircle className="w-4 h-4 text-green-500" /> 
-                    {service.name}
-                </div>
-            ))
-        ) : (
-           
-            <>
-                <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 border border-gray-100">
-                     No extra services included
-                </div>
-               
-            </>
-        )}
-    </div>
-</div>
+                    {/* 3. Fully Dynamic Services (Amenities/Inclusions) */}
+                    <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
+                        <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Stay Inclusions</h4>
+                        <div className="flex flex-wrap gap-2">
+
+                            {(room.roomType?.serviceProdInfos ?? []).length > 0 ? (
+                                (room.roomType?.serviceProdInfos ?? []).map((service: any, idx: number) => (
+                                    <div key={idx} className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 border border-gray-100">
+                                        <CheckCircle className="w-4 h-4 text-green-500" />
+                                        {service.name}
+                                    </div>
+                                ))
+                            ) : (
+
+                                <>
+                                    <div className="flex items-center gap-2 bg-gray-50 px-3 py-2 rounded-xl text-xs font-bold text-gray-700 border border-gray-100">
+                                        No extra services included
+                                    </div>
+
+                                </>
+                            )}
+                        </div>
+                    </div>
 
                     {/* 4. Dynamic Payment Summary */}
                     <div className="space-y-3">
@@ -261,13 +260,13 @@ return (
 
                 {/* Footer Actions */}
                 <div className="p-6 bg-white border-t border-gray-100 flex gap-4">
-                    <button 
+                    <button
                         onClick={() => handleDownloadPDF(order, room)}
                         className="flex-1 flex items-center justify-center gap-2 bg-[#D2A256] text-white py-4 rounded-2xl text-sm font-black hover:bg-[#b88d45] transition-all shadow-lg"
                     >
                         <FileText className="w-5 h-5" /> Download Voucher
                     </button>
-                    
+
                 </div>
             </div>
         </div>
@@ -278,16 +277,16 @@ return (
 const handleDownloadPDF = (order: Order, room: OrderRoomDetail) => {
     const userName = sessionStorage.getItem('shineetrip_name') || "Guest User";
     const userEmail = sessionStorage.getItem('shineetrip_email') || "Not Provided";
-    const bookingDate = new Date(order.createdAt).toLocaleDateString('en-GB', { 
-        day: '2-digit', month: 'long', year: 'numeric' 
+    const bookingDate = new Date(order.createdAt).toLocaleDateString('en-GB', {
+        day: '2-digit', month: 'long', year: 'numeric'
     });
 
     // 🟢 DYNAMIC INCLUSIONS (Badges with Icons)
-    const inclusionsHTML = room.roomType?.serviceProdInfos && room.roomType.serviceProdInfos.length > 0 
+    const inclusionsHTML = room.roomType?.serviceProdInfos && room.roomType.serviceProdInfos.length > 0
         ? room.roomType.serviceProdInfos.map((s: any) => `
             <div class="inclusion-pill">
                 <span class="dot"></span> ${s.name}
-            </div>`).join('') 
+            </div>`).join('')
         : `<div class="inclusion-pill"><span class="dot"></span> Free Wi-Fi</div>
            <div class="inclusion-pill"><span class="dot"></span> Air Conditioning</div>
            <div class="inclusion-pill"><span class="dot"></span> Complimentary Breakfast</div>`;
@@ -449,20 +448,20 @@ const MyBookingsPage: React.FC = () => {
     const [orders, setOrders] = useState<Order[]>([]);
     const [packageOrders, setPackageOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
-    const [filterStatus, setFilterStatus] = useState('all'); 
-    const [selectedBooking, setSelectedBooking] = useState<{order: Order, room: OrderRoomDetail} | null>(null);
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [selectedBooking, setSelectedBooking] = useState<{ order: Order, room: OrderRoomDetail } | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState<any>(null);
 
     // 1. Naye state (jahan selectedBooking pehle se hai)
-const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
-const [selectedPackageOrder, setSelectedPackageOrder] = useState<any>(null);
+    const [isPackageModalOpen, setIsPackageModalOpen] = useState(false);
+    const [selectedPackageOrder, setSelectedPackageOrder] = useState<any>(null);
 
-// 2. Open function
-const openPackageDetails = (order: any) => {
-    setSelectedPackageOrder(order);
-    setIsPackageModalOpen(true);
-};
+    // 2. Open function
+    const openPackageDetails = (order: any) => {
+        setSelectedPackageOrder(order);
+        setIsPackageModalOpen(true);
+    };
 
     const customerDbId = sessionStorage.getItem('shineetrip_db_customer_id');
     const token = sessionStorage.getItem('shineetrip_token');
@@ -473,32 +472,32 @@ const openPackageDetails = (order: any) => {
         setIsModalOpen(true);
     };
 
-const fetchAllData = useCallback(async () => {
-    if (!customerDbId || !token) { setLoading(false); return; }
-    setLoading(true);
-    try {
-        const headers = { "Authorization": `Bearer ${token}` };
-        const [hotelRes, pkgRes] = await Promise.all([
-            fetch(`${API_BASE}/order?customerId=${customerDbId}`, { headers }),
-            fetch(`${API_BASE}/holiday-package-orders?customerId=${customerDbId}`, { headers })
-        ]);
-        
-        const hData = await hotelRes.json();
-        const pData = await pkgRes.json();
+    const fetchAllData = useCallback(async () => {
+        if (!customerDbId || !token) { setLoading(false); return; }
+        setLoading(true);
+        try {
+            const headers = { "Authorization": `Bearer ${token}` };
+            const [hotelRes, pkgRes] = await Promise.all([
+                fetch(`${API_BASE}/order?customerId=${customerDbId}`, { headers }),
+                fetch(`${API_BASE}/holiday-package-orders?customerId=${customerDbId}`, { headers })
+            ]);
 
-        const hotelOrdersArray = Array.isArray(hData.data) ? hData.data : (Array.isArray(hData) ? hData : []);
-        
-        const packageOrdersArray = Array.isArray(pData.data) ? pData.data : (Array.isArray(pData) ? pData : []);
+            const hData = await hotelRes.json();
+            const pData = await pkgRes.json();
 
-        setOrders(hotelOrdersArray.sort((a:any, b:any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-        setPackageOrders(packageOrdersArray);
+            const hotelOrdersArray = Array.isArray(hData.data) ? hData.data : (Array.isArray(hData) ? hData : []);
 
-    } catch (err) { 
-        console.error("Fetch Error:", err); 
-    } finally { 
-        setLoading(false); 
-    }
-}, [customerDbId, token, API_BASE]);
+            const packageOrdersArray = Array.isArray(pData.data) ? pData.data : (Array.isArray(pData) ? pData : []);
+
+            setOrders(hotelOrdersArray.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+            setPackageOrders(packageOrdersArray);
+
+        } catch (err) {
+            console.error("Fetch Error:", err);
+        } finally {
+            setLoading(false);
+        }
+    }, [customerDbId, token, API_BASE]);
 
     useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
@@ -522,7 +521,7 @@ const fetchAllData = useCallback(async () => {
 
     return (
         <div className="min-h-screen bg-gray-50 pt-24 pb-12">
-            <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print-main { display: none !important; } .print-only-invoice { display: block !important; position: absolute; top: 0; left: 0; width: 100%; z-index: 9999; } }`}} />
+            <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print-main { display: none !important; } .print-only-invoice { display: block !important; position: absolute; top: 0; left: 0; width: 100%; z-index: 9999; } }` }} />
 
             <div className={`no-print-main ${selectedInvoice ? 'hidden' : ''}`}>
                 <div className="max-w-7xl mt-16 mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
@@ -532,7 +531,7 @@ const fetchAllData = useCallback(async () => {
                             <h3 className="text-xl font-bold mb-4 border-b pb-2">Profile</h3>
                             <div className="space-y-1">
                                 <ProfileNavItem icon={User} label="About me" onClick={() => navigate('/profile')} />
-                                <ProfileNavItem icon={ShoppingBag} label="My booking" active={true} onClick={() => {}} />
+                                <ProfileNavItem icon={ShoppingBag} label="My booking" active={true} onClick={() => { }} />
                             </div>
                         </div>
                     </div>
@@ -562,24 +561,24 @@ const fetchAllData = useCallback(async () => {
                                     {bookingType === 'hotel' && order.orderRooms?.map(room => (
                                         <div key={room.id} className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
                                             <div className="flex items-center gap-2 mb-4">
-                                                <BookingStatusPill status={order.status} /> 
+                                                <BookingStatusPill status={order.status} />
                                                 <span className='text-gray-400 text-sm'>• Out: {formatDayAndDate(room.checkOut)}</span>
                                             </div>
                                             <div className="flex gap-5 border-b pb-5">
                                                 <img src={
-        room.property?.images?.[0]?.image || 
-        room.roomType?.images?.[0]?.image || 
-        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80" // ✅ Premium Fallback Image
-    } className="w-28 h-28 object-cover rounded-xl border" />
+                                                    room.property?.images?.[0]?.image ||
+                                                    room.roomType?.images?.[0]?.image ||
+                                                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80" // ✅ Premium Fallback Image
+                                                } className="w-28 h-28 object-cover rounded-xl border" />
                                                 <div className="flex-1">
                                                     <h3 className="text-xl font-bold">{room.property?.name}</h3>
                                                     <p className="text-sm text-gray-500">{room.property?.city}</p>
                                                     <div className="mt-3 text-sm font-bold text-[#D2A256]">
-                    {formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}
-                    <p className="mt-1 text-gray-900 font-black">
-                        Amount: {order.currency} {(order.grandTotal || order.totalPrice || 0).toLocaleString()}
-                    </p>
-                </div>                             <div className="mt-3 text-sm"><p>Room: <span className='font-bold'>{room.roomType?.room_type}</span></p><p className='text-[#D2A256] font-extrabold'>{formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}</p></div>
+                                                        {formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}
+                                                        <p className="mt-1 text-gray-900 font-black">
+                                                            Amount: {order.currency} {(order.grandTotal || order.totalPrice || 0).toLocaleString()}
+                                                        </p>
+                                                    </div>                             <div className="mt-3 text-sm"><p>Room: <span className='font-bold'>{room.roomType?.room_type}</span></p><p className='text-[#D2A256] font-extrabold'>{formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}</p></div>
                                                 </div>
                                             </div>
                                             <div className='pt-4 flex gap-3'>
@@ -592,48 +591,48 @@ const fetchAllData = useCallback(async () => {
                                     ))}
 
                                     {/* PACKAGE VIEW */}
-{bookingType === 'package' && (
-    <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
-        <div className="flex items-center gap-2 mb-4">
-            <CheckCircle className="w-4 h-4 text-green-500" />
-            <span className="text-sm font-bold text-gray-700">{order.status}</span>
-            <span className='text-gray-400 text-sm'>• ID: #{order.id}</span>
-        </div>
-        
-        <div className="flex gap-6 border-b pb-5">
-            <img src={order.holidayPackage?.hero_image} className="w-28 h-28 object-cover rounded-xl border bg-gray-100" />
-            <div className="flex-1">
-                <h3 className="text-xl font-black text-gray-900">{order.holidayPackage?.title}</h3>
-                <p className="text-xs text-gray-500 flex items-center gap-1 font-bold mt-1 uppercase tracking-tighter">
-                    <MapPin size={12} className="text-[#D2A256]" /> {order.holidayPackage?.included_cities?.join(" • ")}
-                </p>
-                <div className="mt-4 flex flex-wrap gap-4 text-xs font-bold">
-                    <div className="flex items-center gap-1.5"><Calendar size={14} className="text-gray-400" /> {formatShortDate(order.startDate)} - {formatShortDate(order.endDate)}</div>
-                    <div className="flex items-center gap-1.5"><Users size={14} className="text-gray-400" /> {order.adults} Persons</div>
-                </div>
-            </div>
-        </div>
+                                    {bookingType === 'package' && (
+                                        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
+                                            <div className="flex items-center gap-2 mb-4">
+                                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                                <span className="text-sm font-bold text-gray-700">{order.status}</span>
+                                                <span className='text-gray-400 text-sm'>• ID: #{order.id}</span>
+                                            </div>
 
-        {/* ✅ UPDATED BUTTONS FOR PACKAGE */}
-        <div className='pt-4 flex gap-3'>
-         
-            <button 
-                onClick={() => openPackageDetails(order)} 
-                className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all"
-            >
-                View Details
-            </button>
+                                            <div className="flex gap-6 border-b pb-5">
+                                                <img src={order.holidayPackage?.hero_image} className="w-28 h-28 object-cover rounded-xl border bg-gray-100" />
+                                                <div className="flex-1">
+                                                    <h3 className="text-xl font-black text-gray-900">{order.holidayPackage?.title}</h3>
+                                                    <p className="text-xs text-gray-500 flex items-center gap-1 font-bold mt-1 uppercase tracking-tighter">
+                                                        <MapPin size={12} className="text-[#D2A256]" /> {order.holidayPackage?.included_cities?.join(" • ")}
+                                                    </p>
+                                                    <div className="mt-4 flex flex-wrap gap-4 text-xs font-bold">
+                                                        <div className="flex items-center gap-1.5"><Calendar size={14} className="text-gray-400" /> {formatShortDate(order.startDate)} - {formatShortDate(order.endDate)}</div>
+                                                        <div className="flex items-center gap-1.5"><Users size={14} className="text-gray-400" /> {order.adults} Persons</div>
+                                                    </div>
+                                                </div>
+                                            </div>
 
-            {/* Book Again - Redirect to the package detail page */}
-            <button 
-                onClick={() => navigate(`/package-detail/${order.holidayPackage?.id}`)}
-                className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-md hover:bg-[#b38842] transition-all"
-            >
-                Book Again
-            </button>
-        </div>
-    </div>
-)}
+                                            {/* ✅ UPDATED BUTTONS FOR PACKAGE */}
+                                            <div className='pt-4 flex gap-3'>
+
+                                                <button
+                                                    onClick={() => openPackageDetails(order)}
+                                                    className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all"
+                                                >
+                                                    View Details
+                                                </button>
+
+                                                {/* Book Again - Redirect to the package detail page */}
+                                                <button
+                                                    onClick={() => navigate(`/package-detail/${order.holidayPackage?.id}`)}
+                                                    className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-md hover:bg-[#b38842] transition-all"
+                                                >
+                                                    Book Again
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )) : (
                                 <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed"><ShoppingBag className="w-12 h-12 text-gray-200 mx-auto mb-4" /><p className="text-gray-400 font-bold uppercase text-[10px]">No {bookingType} bookings found.</p></div>
@@ -644,11 +643,11 @@ const fetchAllData = useCallback(async () => {
             </div>
 
             <BookingDetailModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} data={selectedBooking} />
-                <PackageDetailModal 
-    isOpen={isPackageModalOpen} 
-    onClose={() => setIsPackageModalOpen(false)} 
-    order={selectedPackageOrder} 
-/>
+            <PackageDetailModal
+                isOpen={isPackageModalOpen}
+                onClose={() => setIsPackageModalOpen(false)}
+                order={selectedPackageOrder}
+            />
 
             {selectedInvoice && (
                 <div className="fixed inset-0 z-[200] bg-white overflow-auto print-only-invoice">
@@ -666,7 +665,7 @@ const PackageDetailModal = ({ isOpen, onClose, order }: { isOpen: boolean, onClo
     if (!isOpen || !order) return null;
 
     const pkg = order.holidayPackage;
-    
+
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
             <div className="bg-white rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in zoom-in duration-200">
