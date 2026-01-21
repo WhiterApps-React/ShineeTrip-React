@@ -72,30 +72,64 @@ const status =
         className="bg-white max-w-[800px] mx-auto shadow-2xl rounded-lg overflow-hidden font-sans text-gray-800 printable-content"
         id="printable-invoice"
       >
-        <div
+      <div
   className={`text-white p-5 flex items-center gap-4 ${
     status === "CONFIRMATION AWAITED" ? "bg-[#D2A256]" : "bg-[#2e7d32]"
   }`}
 >
-          <div className="bg-white rounded-full p-1 flex items-center justify-center">
-           <svg
-  className={`w-5 h-5 ${
-    status === "CONFIRMATION AWAITED" ? "text-[#D2A256]" : "text-[#2e7d32]"
-  }`}
-  fill="none"
-  stroke="currentColor"
-  viewBox="0 0 24 24"
->
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <div>
-                     <h1 className="font-bold text-xl uppercase tracking-tight">{status}</h1> 
-            <p className="text-xs opacity-90 leading-tight">
-              Your booking is confirmed. This is your official electronic receipt.
-            </p>
-          </div>
-        </div>
+  <div className="bg-white rounded-full p-1 flex items-center justify-center">
+    {status === "CONFIRMATION AWAITED" ? (
+      // ⏳ Pending icon
+      <svg
+        className={`w-5 h-5 ${
+          status === "CONFIRMATION AWAITED" ? "text-[#D2A256]" : "text-[#2e7d32]"
+        }`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M12 8v5l3 3"
+        />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    ) : (
+      // ✅ Success icon
+      <svg
+        className={`w-5 h-5 ${
+          status === "CONFIRMATION AWAITED" ? "text-[#D2A256]" : "text-[#2e7d32]"
+        }`}
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="3"
+          d="M5 13l4 4L19 7"
+        />
+      </svg>
+    )}
+  </div>
+
+  <div>
+    <h1 className="font-bold text-xl uppercase tracking-tight">{status}</h1>
+    <p className="text-xs opacity-90 leading-tight">
+      {status === "CONFIRMATION AWAITED"
+        ? "Your booking request is received. Confirmation is awaited."
+        : "Your booking is confirmed. This is your official electronic receipt."}
+    </p>
+  </div>
+</div>
 
         <div className="p-10">
           <div className="flex justify-between items-start mb-10">
