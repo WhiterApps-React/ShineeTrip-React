@@ -251,7 +251,7 @@ const BookingPage: React.FC = () => {
             return;
         }
 
-        if (finalTotal <= 0 || isNaN(finalTotal)) {
+        if (grandTotal <= 0 || isNaN(grandTotal)) {
             setPaymentMessage('Invalid total price for booking.');
             return;
         }
@@ -278,7 +278,7 @@ const BookingPage: React.FC = () => {
         }
 
         setIsProcessing(true);
-        const amountInPaise = Math.round(finalTotal * 100);
+        const amountInPaise = Math.round(grandTotal * 100);
 
         console.log("Token check before API:", token ? "Token present" : "TOKEN MISSING"); // NEW!
         console.log("Token", token);
@@ -938,89 +938,132 @@ if (!orderResponse.ok) {
 
 
                                 {/* ✅ DYNAMIC GUEST LIST RENDER */}
-                                {guestList.map((guest, index) => (
-                                    <div key={index} className="animate-in fade-in slide-in-from-top-4 duration-300 border-t border-gray-100 mt-6 pt-6">
-                                        <div className="flex justify-between items-center mb-4">
-                                            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Guest {index + 2} Details</span>
-                                            <button type="button" onClick={() => handleRemoveGuest(index)} className="text-red-500 hover:text-red-700 text-xs flex items-center gap-1">
-                                                <Trash2 size={14} /> Remove
-                                            </button>
-                                        </div>
+                                {/* ✅ DYNAMIC GUEST LIST RENDER */}
+{guestList.map((guest, index) => (
+    <div key={index} className="animate-in fade-in slide-in-from-top-4 duration-300 border-t border-gray-100 mt-8 pt-8">
+        <div className="flex justify-between items-center mb-6">
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Guest {index + 2} Details</span>
+            <button 
+                type="button" 
+                onClick={() => handleRemoveGuest(index)} 
+                className="text-red-500 hover:text-red-700 text-xs font-bold flex items-center gap-1 uppercase"
+            >
+                <Trash2 size={14} /> Remove
+            </button>
+        </div>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-6">
+            {/* ROW 1: Names (Title, First Name, Last Name) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left Col: Title + First Name */}
+                <div>
+                    <div className="flex gap-4 mb-1">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Title</label>
+                        <label className="text-xs font-bold text-gray-500 uppercase flex-1 pl-[52px]">First Name</label>
+                    </div>
+                    <div className="flex gap-3">
+                        {/* Title Select */}
+                        <div className="relative min-w-[80px]">
+                            <select
+                                value={guest.title}
+                                onChange={(e) => handleGuestChange(index, 'title', e.target.value)}
+                                className="w-full appearance-none bg-gray-100 text-gray-900 font-medium px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                disabled={isProcessing}
+                            >
+                                <option value="">Select</option>
+                                <option value="Mr.">Mr</option>
+                                <option value="Mrs.">Mrs</option>
+                                <option value="Ms.">Ms</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                            </div>
+                        </div>
 
-                                            
-                                            {/* Guest Names */}
-                                            <input
-                                                type="text"
-                                                placeholder="First Name"
-                                                value={guest.firstName}
-                                                onChange={(e) => handleGuestChange(index, 'firstName', e.target.value)}
-                                                className="bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
-                                            <input
-                                                type="text"
-                                                placeholder="Last Name"
-                                                value={guest.lastName}
-                                                onChange={(e) => handleGuestChange(index, 'lastName', e.target.value)}
-                                                className="bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
+                        {/* First Name Input */}
+                        <input
+                            type="text"
+                            placeholder="First Name"
+                            value={guest.firstName}
+                            onChange={(e) => handleGuestChange(index, 'firstName', e.target.value)}
+                            className="flex-1 bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            disabled={isProcessing}
+                            required
+                        />
+                    </div>
+                </div>
 
-                                            {/* Guest Email */}
-                                            <input
-                                                type="email"
-                                                placeholder="Email ID"
-                                                value={guest.email}
-                                                onChange={(e) => handleGuestChange(index, 'email', e.target.value)}
-                                                className="bg-gray-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                                required
-                                            />
+                {/* Right Col: Last Name */}
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Last Name</label>
+                    <input
+                        type="text"
+                        placeholder="Last Name"
+                        value={guest.lastName}
+                        onChange={(e) => handleGuestChange(index, 'lastName', e.target.value)}
+                        className="w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isProcessing}
+                        required
+                    />
+                </div>
+            </div>
 
-                                            {/* Guest Phone with Code */}
-                                            <div className="md:col-span-1">
-                                                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Mobile Number</label>
-                                                <div className="flex bg-gray-100 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+            {/* ROW 2: Contact (Email & Mobile) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Email Field */}
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                    <input
+                        type="email"
+                        placeholder="Email ID"
+                        value={guest.email}
+                        onChange={(e) => handleGuestChange(index, 'email', e.target.value)}
+                        className="w-full bg-gray-100 text-gray-900 font-medium placeholder-gray-500 px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isProcessing}
+                        required
+                    />
+                </div>
 
-                                                    {/* Code Select with Arrow SVG */}
-                                                    <div className="relative border-r border-gray-300">
-                                                        <select
-                                                            value={guest.phoneCode || '+91'}
-                                                            onChange={(e) => handleGuestChange(index, 'phoneCode', e.target.value)}
-                                                            className="appearance-none bg-transparent text-gray-900 font-bold px-4 py-3 pr-8 focus:outline-none h-full cursor-pointer"
-                                                        >
-                                                            <option value="+91">+91</option>
-                                                            <option value="+1">+1</option>
-                                                            <option value="+44">+44</option>
-                                                        </select>
-                                                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
-                                                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                                                                <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                                                            </svg>
-                                                        </div>
-                                                    </div>
+                {/* Mobile Number Field */}
+                <div>
+                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Mobile Number</label>
+                    <div className="flex bg-gray-100 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
+                        {/* Code Select */}
+                        <div className="relative border-r border-gray-300">
+                            <select
+                                value={guest.phoneCode || '+91'}
+                                onChange={(e) => handleGuestChange(index, 'phoneCode', e.target.value)}
+                                className="appearance-none bg-transparent text-gray-900 font-bold px-4 py-3 pr-8 focus:outline-none h-full cursor-pointer"
+                            >
+                                <option value="+91">+91</option>
+                                <option value="+1">+1</option>
+                                <option value="+44">+44</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" /></svg>
+                            </div>
+                        </div>
 
-                                                    {/* Phone Input */}
-                                                    <input
-                                                        type="tel"
-                                                        placeholder="Contact Number"
-                                                        value={guest.phone}
-                                                        onChange={(e) => {
-                                                            const onlyDigits = e.target.value.replace(/\D/g, '');
-                                                            // Using the same phoneLimit logic as your primary input
-                                                            const limitedDigits = onlyDigits.slice(0, 10);
-                                                            handleGuestChange(index, 'phone', limitedDigits);
-                                                        }}
-                                                        className="flex-1 bg-transparent text-gray-900 font-medium placeholder-gray-500 px-4 py-3 focus:outline-none"
-                                                        disabled={isProcessing}
-                                                        required
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
+                        {/* Phone Input */}
+                        <input
+                            type="tel"
+                            placeholder="Contact Number"
+                            value={guest.phone}
+                            onChange={(e) => {
+                                const onlyDigits = e.target.value.replace(/\D/g, '');
+                                const limitedDigits = onlyDigits.slice(0, 10);
+                                handleGuestChange(index, 'phone', limitedDigits);
+                            }}
+                            className="flex-1 bg-transparent text-gray-900 font-medium placeholder-gray-500 px-4 py-3 focus:outline-none"
+                            disabled={isProcessing}
+                            required
+                        />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+))}
 
                                 {/* GST Toggle / Header (Optional visual separator) */}
                                 <div className="flex justify-end">
