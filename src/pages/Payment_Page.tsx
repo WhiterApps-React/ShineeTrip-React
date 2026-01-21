@@ -249,8 +249,6 @@ const BookingPage: React.FC = () => {
             return;
         }
 
-
-
         // Ensure propertyId exists before attempting conversion
         if (!propertyId) {
             setPaymentMessage('Error: Missing property information in URL. Please go back and select a property.');
@@ -319,10 +317,10 @@ const BookingPage: React.FC = () => {
                 headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
                 body: JSON.stringify(createOrderPayload),
             });
-
+              
             const responseText = await orderResponse.text();
 
-
+            console.log(responseText); 
             if (!orderResponse.ok) {
                 const errorStatus = orderResponse.status;
 
@@ -350,13 +348,17 @@ const BookingPage: React.FC = () => {
             }
 
             const orderData = JSON.parse(responseText);
-            const razorpayOrderId = orderData.razorpayOrderId;
-            const backendId = orderData.orderId;
+            const razorpayOrderId = orderData.order.razorpayOrderId || orderData.razorpay_order_id;
+            const backendId = orderData.order.id;
             console.log("Backend Response:", orderData);
             setDbOrderId(backendId);
+            if (!razorpayOrderId) {
+    throw new Error("Backend did not return a valid Razorpay Order ID. Check API response.");
+}
 
+            
             setPaymentMessage(`Order ID ${razorpayOrderId} generated. Opening payment gateway...`);
-
+             setDbOrderId(backendId); 
             // Step 2: Initialize Razorpay Checkout
             if (typeof window.Razorpay === 'undefined') {
                 throw new Error("Razorpay SDK not loaded. Please ensure script tag is in your HTML.");
@@ -370,7 +372,7 @@ const BookingPage: React.FC = () => {
                 description: `Room Booking: ${roomName}`,
                 order_id: razorpayOrderId,
                 handler: async function (response: any) {
-                    await verifyPayment(response, razorpayOrderId, backendId);
+                    await verifyPayment(response, razorpayOrderId , backendId);
                 },
                 prefill: {
                     name: formData.firstName + ' ' + formData.lastName,
@@ -378,7 +380,10 @@ const BookingPage: React.FC = () => {
                     contact: formData.phoneCode + formData.phone,
                 },
                 theme: { "color": "#D2A256" }
-            };
+            }; 
+
+
+
 
             const rzp1 = new window.Razorpay(options);
 
@@ -416,43 +421,57 @@ const BookingPage: React.FC = () => {
     };
 
     // Step 3: Verify Payment Success
-    const verifyPayment = async (razorpayResponse: any, orderId: string, backendId: number) => {
-        setIsProcessing(true);
-        try {
-            const verificationPayload = {
-                razorpayOrderId: orderId,
-                razorpayPaymentId: razorpayResponse.razorpay_payment_id,
-                razorpaySignature: razorpayResponse.razorpay_signature,
-            };
+      // Step 3: Verify Payment Success
+const verifyPayment = async (razorpayResponse: any, orderId: string, backendId: number) => {
+    setIsProcessing(true);
+    try {
+        // Log the response to see exactly what Razorpay is sending
+        console.log("Razorpay Callback Response:", razorpayResponse);
 
-            const verifyResponse = await fetch(VERIFY_URL, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
-                body: JSON.stringify(verificationPayload),
-            });
+        const verificationPayload = {
+            // Force values to strings and use the correct Razorpay underscore keys
+            razorpayOrderId: String(razorpayResponse.razorpay_order_id || orderId || ""),
+            razorpayPaymentId: String(razorpayResponse.razorpay_payment_id || ""),
+            razorpaySignature: String(razorpayResponse.razorpay_signature || ""),
+        }; 
 
-            if (verifyResponse.ok) {
-                // ✅ LOGIC CLEANUP: Successful block
-                console.log("3. Payment Verified! Creating Invoice for:", backendId);
-                await createInvoiceAfterPayment(backendId);
 
-                paymentCompletedRef.current = true;
-                if (paymentTimeoutRef.current) clearTimeout(paymentTimeoutRef.current);
 
-                setPaymentMessage('Booking successful! Invoice Generated.');
-                setSuccessOrderId(orderId);
-                setIsBookingSuccessful(true);
-            } else {
-                const text = await verifyResponse.text();
-                throw new Error(text || 'Verification failed');
-            }
-        } catch (error) {
-            console.error("Verification Catch Error:", error);
-            setPaymentMessage('Payment verification failed.');
-        } finally {
-            setIsProcessing(false);
+        // Manual validation before sending to backend to stop the "400 Bad Request"
+        if (!verificationPayload.razorpayOrderId || !verificationPayload.razorpaySignature) {
+            throw new Error("Missing Razorpay Order ID or Signature from gateway.");
         }
-    };
+
+        const verifyResponse = await fetch(VERIFY_URL, {
+            method: 'POST',
+            headers: { 
+                'Authorization': `Bearer ${token}`, 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(verificationPayload),
+        });
+
+        if (verifyResponse.ok) {
+            const verifydata = await verifyResponse.json(); 
+            console.log(verifydata); 
+            await createInvoiceAfterPayment(backendId);
+            paymentCompletedRef.current = true;
+            if (paymentTimeoutRef.current) clearTimeout(paymentTimeoutRef.current);
+
+            setPaymentMessage('Booking successful! Invoice Generated.');
+            setSuccessOrderId(verificationPayload.razorpayOrderId);
+            setIsBookingSuccessful(true);
+        } else {
+            const errorData = await verifyResponse.json();
+            throw new Error(errorData.message || 'Verification failed');
+        }
+    } catch (error: any) {
+        console.error("Verification Catch Error:", error);
+        setPaymentMessage(error.message || 'Payment verification failed.');
+    } finally {
+        setIsProcessing(false);
+    }
+};
     const createInvoiceAfterPayment = async (backendOrderId: number) => {
         // Validation: Address check
         if (!formData.address) {
@@ -795,7 +814,7 @@ const BookingPage: React.FC = () => {
                                                     className={`w-full appearance-none bg-gray-100 text-gray-900 font-medium px-4 py-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 ${formErrors.title ? 'ring-2 ring-red-500 bg-red-50' : ''}`}
                                                     disabled={isProcessing}
                                                 >
-                                                    <option value="">Mr</option>
+                                                    <option value="">Select</option>
                                                     <option value="Mr.">Mr</option>
                                                     <option value="Mrs.">Mrs</option>
                                                     <option value="Ms.">Ms</option>
