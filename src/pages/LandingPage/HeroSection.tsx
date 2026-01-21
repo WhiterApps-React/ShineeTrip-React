@@ -597,39 +597,48 @@ const handleDestinationClick = (destination: Destination) => {
   </div>
 </div>
                 {/* Check In */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] mb-1 tracking-wider uppercase">
-                   <Calendar size={14} className="text-[#D2A256]" />
-                          CHECK-IN DATE *
-                          
-                  </div>
-                  <input
-                    type="date"
-                    min={new Date().toISOString().split("T")[0]}
-                    value={checkIn}
-                    onChange={(e) => setCheckIn(e.target.value)}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white"
-                  />
+              {/* Check In */}
+<div className="space-y-2">
+  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] mb-1 tracking-wider uppercase">
+    CHECK-IN DATE *
+  </div>
+  <div className="relative">
+    <input
+      type="date"
+      min={new Date().toISOString().split("T")[0]}
+      value={checkIn}
+      onChange={(e) => setCheckIn(e.target.value)}
+      onClick={(e) => e.currentTarget.showPicker()}
+      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white focus:outline-none appearance-none"
+    />
+    <Calendar 
+      size={18} 
+      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#D2A256] pointer-events-none" 
+    />
+  </div>
+</div>
 
-                </div>
-
-                {/* Check Out */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] mb-1 tracking-wider uppercase">
-                  
-                          CHECK-OUT DATE *
-                            <Calendar size={14} className="text-[#D2A256]" />
-                  </div>
-                  <input
-                    type="date"
-                    min={checkIn || new Date().toISOString().split("T")[0]}
-                   value={checkOut}
-                    onChange={(e) => setCheckOut(e.target.value)}
-                    disabled={!checkIn}
-                    className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white disabled:opacity-50"
-                  />
-
-                </div>
+{/* Check Out */}
+<div className="space-y-2">
+  <div className="flex items-center gap-2 text-white font-opensans font-semibold text-[18px] mb-1 tracking-wider uppercase">
+    CHECK-OUT DATE *
+  </div>
+  <div className="relative">
+    <input
+      type="date"
+      min={checkIn || new Date().toISOString().split("T")[0]}
+      value={checkOut}
+      onChange={(e) => setCheckOut(e.target.value)}
+      onClick={(e) => e.currentTarget.showPicker()}
+      disabled={!checkIn}
+      className="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white disabled:opacity-50 focus:outline-none appearance-none"
+    />
+    <Calendar 
+      size={18} 
+      className="absolute right-4 top-1/2 -translate-y-1/2 text-[#D2A256] pointer-events-none" 
+    />
+  </div>
+</div>
               </div>
 
               {/* Counters Grid */}
