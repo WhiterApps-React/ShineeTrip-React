@@ -825,27 +825,7 @@ if (!orderResponse.ok) {
                             />
 
 
-                            {/* <div className="bg-white rounded-lg shadow-sm p-6">
-         <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Price Summary</h2>
-         </div>
-         
-         <div className="space-y-2 pb-4 border-b border-gray-200">
-              <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Room Price</span>
-                  <span className="font-medium">INR {retailPrice.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Taxes & Fees</span>
-                  <span className="font-medium">INR {(finalTotal - retailPrice).toFixed(0)}</span>
-              </div>
-         </div>
-         <div className="flex justify-between items-center pt-4">
-              <span className="text-lg font-semibold">Total Amount</span>
-              <span className="text-xl font-bold text-green-600">INR {finalTotal.toLocaleString()}</span>
-         </div>
-    </div> */}
-                        </div>
+                          </div>
 
 
                         {/* ... inside your component ... */}

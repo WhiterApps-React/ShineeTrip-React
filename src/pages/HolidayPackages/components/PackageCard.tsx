@@ -184,9 +184,9 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
 
       {/* ================= PRICE POPUP (Existing) ================= */}
       {showPricePopup && (
-        <div className="absolute left-0 right-0 bottom-0 py-10 z-20 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300 border-t">
-          <div className="flex justify-between items-center px-6 mb-6">
-            <h3 className="font-bold text-gray-900 truncate pr-4">{data.title}</h3>
+        <div className="absolute left-0 right-0 bottom-0 pb-10 z-20 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300 border-t overflow-hidden">
+          <div className="flex justify-between items-center py-6 bg-blue-300/20 px-6 mb-6">
+            <h2 className="font-semibold text-gray-900 truncate pr-4">{data.title}</h2>
             <button onClick={(e) =>{ e.stopPropagation(); setShowPricePopup(false)}}><X size={20} className="text-gray-400" /></button>
           </div>
           <div className="px-6 space-y-3">
