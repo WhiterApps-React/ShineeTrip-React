@@ -90,9 +90,7 @@ const PackageDetailsPage = () => {
 
     <div className="max-w-1480px mx-auto px-4 sm:px-6 lg:px-8 mt-10">
   {/* The White Card Container */}
-  <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl overflow-hidden p-6 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
-    
-    {/* Header Section inside the Card */}
+ <div className="bg-white rounded-[32px] border border-gray-100 shadow-xl overflow-hidden p-6 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col h-full">
     <div className="flex flex-col md:flex-row md:items-end justify-evenly gap-100 mb-8">
       <div className="space-y-3">
         {/* Title */}
@@ -140,7 +138,9 @@ const PackageDetailsPage = () => {
         imageCategories={galleryData} 
       />
     
-          <PackageTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+        <div className="mt-auto pt-6">
+  <PackageTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+</div>
         </div>
          
 </div>
