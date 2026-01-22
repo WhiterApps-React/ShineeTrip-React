@@ -733,32 +733,33 @@ const HotelListingPage: React.FC = () => {
 
 
           {/* Check-out Field */}
-          <div className="flex-1 w-full sm:max-w-[200px] bg-[#F4F1EC]/20 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
-            <div className="text-[14px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
-              CHECK-OUT
-            </div>
+        {/* Check-out Field */}
+<div className="flex-1 w-full sm:max-w-[200px] bg-[#F4F1EC]/20 px-4 py-3 border-b sm:border-r sm:border-b-0 border-gray-300">
+  <div className="text-[14px] font-bold text-gray-900 mb-1 uppercase tracking-wide">
+    CHECK-OUT
+  </div>
 
-            <div className="flex items-center gap-3">
-              {/* Yellow Calendar Icon */}
-              <button
-                type="button"
-                onClick={() => checkoutRef.current?.showPicker()}
-                className="text-[#D2A256] hover:scale-110 transition-transform"
-              >
-                <Calendar className="w-7 h-7" />
-              </button>
+  <div className="flex items-center gap-3">
+    {/* ADD THIS: Yellow Calendar Icon for Check-out */}
+    <button
+      type="button"
+      onClick={() => checkoutRef.current?.showPicker()}
+      className="text-[#D2A256] hover:scale-110 transition-transform"
+    >
+      <Calendar className="w-7 h-7" />
+    </button>
 
-              {/* Date Input */}
-              <input
-                ref={checkoutRef}
-                type="date"
-                min={currentCheckIn} // Prevents picking date before check-in
-                value={currentCheckOut} // Binds to state
-                onChange={(e) => setCurrentCheckOut(e.target.value)} // Updates state
-                className="text-[18px] font-[700] text-gray-900 bg-transparent w-full focus:outline-none appearance-none"
-              />
-            </div>
-          </div>
+    {/* Date Input */}
+    <input
+      ref={checkoutRef}
+      type="date"
+      min={currentCheckIn} 
+      value={currentCheckOut} 
+      onChange={(e) => setCurrentCheckOut(e.target.value)} 
+      className="text-[18px] font-[700] text-gray-900 bg-transparent w-full focus:outline-none appearance-none"
+    />
+  </div>
+</div>
 
 
           {/* Room & Guest Field */}

@@ -30,38 +30,46 @@ export const ItinerarySection = ({ days, holiday, summary }: ItinerarySectionPro
   return (
     <div className="w-full font-opensans text-[18px]">
       {/* 1. Top Summary Chips (Real counts from Summary API) */}
-      <div className="flex flex-wrap gap-3 mb-8">
-        {/* Updated text size to 18px */}
-        <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[18px] font-bold tracking-wider font-opensans">
-          {holiday?.days || summary?.totalDays || 0} DAY PLAN
-        </span>
-        {stats && (
-          <>
-            {/* Updated text size to 18px */}
-            <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[18px] font-bold tracking-wider uppercase font-opensans">
-              {stats.flights} FLIGHTS & TRANSFERS
-            </span>
-            {/* Updated text size to 18px */}
-            <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[18px] font-bold tracking-wider uppercase font-opensans">
-              {stats.hotels} HOTELS
-            </span>
-            {/* Updated text size to 18px */}
-            <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[18px] font-bold tracking-wider uppercase font-opensans">
-              {stats.activities} ACTIVITIES
-            </span>
-            {/* Updated text size to 18px */}
-            <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[18px] font-bold tracking-wider uppercase font-opensans">
-              {stats.meals} MEALS
-            </span>
-          </>
-        )}
-      </div>
+     <div className="bg-white p-6 rounded-[24px] border border-gray-100 shadow-sm mb-8">
+  <div className="flex flex-wrap gap-4">
+    {/* 1. Day Plan Badge */}
+    <span className="bg-[#F8F8F8] text-[#2C4A5E] px-6 py-3 rounded-full text-[16px] font-bold tracking-wider font-opensans border border-gray-50 shadow-sm">
+      {holiday?.days || summary?.totalDays || 0} DAY PLAN
+    </span>
 
-      <div className="flex gap-8">
+    {stats && (
+      <>
+        {/* 2. Flights & Transfers Badge */}
+        <span className="bg-[#F8F8F8] text-[#444] px-6 py-3 rounded-full text-[16px] font-bold tracking-wider uppercase font-opensans border border-gray-50 shadow-sm">
+          {stats.flights} FLIGHTS & TRANSFERS
+        </span>
+
+        {/* 3. Hotels Badge */}
+        <span className="bg-[#F8F8F8] text-[#444] px-6 py-3 rounded-full text-[16px] font-bold tracking-wider uppercase font-opensans border border-gray-50 shadow-sm">
+          {stats.hotels} HOTELS
+        </span>
+
+        {/* 4. Activities Badge */}
+        <span className="bg-[#F8F8F8] text-[#444] px-6 py-3 rounded-full text-[16px] font-bold tracking-wider uppercase font-opensans border border-gray-50 shadow-sm">
+          {stats.activities} ACTIVITIES
+        </span>
+
+        {/* 5. Meals Badge */}
+        <span className="bg-[#F8F8F8] text-[#444] px-6 py-3 rounded-full text-[16px] font-bold tracking-wider uppercase font-opensans border border-gray-50 shadow-sm">
+          {stats.meals} MEALS
+        </span>
+      </>
+    )}
+  </div>
+</div>
+
+      <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-6 md:p-8">
+  <div className="flex flex-col md:flex-row gap-10">
+        
         {/* Left Side: Day Plan Sticky Navigation */}
-        <div className="hidden bg-gray-200 p-5 rounded-2xl md:block w-32 shrink-0 h-fit sticky top-40">
+        <div className="hidden bg-gray-200 p-5 rounded-2xl md:block w-36 shrink-0 h-fit sticky top-40">
           {/* Updated text size */}
-          <p className="font-bold text-[18px] mb-4 text-[#2C4A5E] font-opensans">DAY PLAN</p>
+          <p className="font-semibold text-[17px] mb-4 text-[#2C4A5E] font-opensans">DAY PLAN</p>
           <div className="space-y-6 relative border-l-2 border-gray-100 ml-2">
             {days.map((day: any) => (
               <div 
@@ -69,9 +77,9 @@ export const ItinerarySection = ({ days, holiday, summary }: ItinerarySectionPro
                 onClick={() => setOpenDay(day.dayNumber)}
                 className="relative pl-6 cursor-pointer group"
               >
-                <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 transition-colors ${openDay === day.dayNumber ? 'bg-[#C9A961] border-[#C9A961]' : 'bg-white border-gray-300'}`} />
+                <div className={`absolute -left-[9px] top-1 w-4 h-4 rounded-full border-2 transition-colors ${openDay === day.dayNumber ? 'bg-[#000000] border-[#000000]' : 'bg-white border-gray-300'}`} />
                 {/* Updated text size to 18px */}
-                <p className={`text-[18px] font-bold font-opensans ${openDay === day.dayNumber ? 'text-black' : 'text-gray-400 group-hover:text-gray-600'}`}>
+                <p className={`text-[17px] font-bold font-opensans ${openDay === day.dayNumber ? 'text-black' : 'text-gray-400 group-hover:text-gray-600'}`}>
                    Day {day.dayNumber}
                 </p>
               </div>
@@ -92,12 +100,12 @@ export const ItinerarySection = ({ days, holiday, summary }: ItinerarySectionPro
                 >
                   <div className="flex items-center gap-4">
                     {/* Updated text size */}
-                    <span className="bg-white/20 px-3 py-1 rounded text-[18px] font-bold uppercase font-opensans">DAY {day.dayNumber}</span>
+                    <span className="bg-white/20 px-3 py-1 rounded text-[16px] font-bold uppercase font-opensans">DAY {day.dayNumber}</span>
                     {/* Updated text size */}
-                    <p className="text-[18px] font-medium font-opensans">
+                    <p className="text-[16px] font-medium font-opensans">
                       {day.title} • 
                       {/* Updated sub-text size */}
-                      <span className="text-gray-300 uppercase text-[14px] ml-2 font-opensans">
+                      <span className="text-gray-300 uppercase text-[12px] ml-2 font-opensans">
                         Included: {daySummary?.hotels ? '1 Hotel | ' : ''}{daySummary?.flightsAndTransfers ? 'Transport | ' : ''}{daySummary?.activities ? `${daySummary.activities} Activities` : ''}
                       </span>
                     </p>
@@ -299,6 +307,7 @@ export const ItinerarySection = ({ days, holiday, summary }: ItinerarySectionPro
           })}
         </div>
       </div>
-    </div>
+      </div>
+      </div>
   );
 };

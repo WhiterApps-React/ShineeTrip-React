@@ -73,32 +73,38 @@ export const SummarySection = ({ days, summary }: SummarySectionProps) => {
     <div className="animate-in fade-in duration-500 font-opensans">
       
       {/* 1. Top Filter Chips */}
-      <div className="flex flex-wrap gap-3 mb-8">
-        {/* Updated: text-[11px] -> text-[18px] and added font-opensans */}
-        <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[18px] font-opensans font-bold tracking-wider uppercase">
-          {summary?.totalDays || days.length} DAY PLAN
-        </span>
-        {/* Updated: text-[11px] -> text-[18px] and added font-opensans */}
-        <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[18px] font-opensans font-bold tracking-wider uppercase">
-          {totalActivities || 0} ACTIVITIES INCLUDED
-        </span>
-        {/* Updated: text-[11px] -> text-[18px] and added font-opensans */}
-        <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[18px] font-opensans font-bold tracking-wider uppercase">
-          {totalMeals || 0} MEALS PLANNED
-        </span>
-      </div>
+   <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-6 mb-8">
+  <div className="flex flex-wrap gap-3">
+    <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[16px] font-opensans font-bold tracking-wider uppercase">
+      {summary?.totalDays || days.length} DAY PLAN
+    </span>
+
+    <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[16px] font-opensans font-bold tracking-wider uppercase">
+      {totalActivities || 0} ACTIVITIES INCLUDED
+    </span>
+
+    <span className="bg-[#F3F3F3] text-[#444] px-5 py-2.5 rounded-full text-[16px] font-opensans font-bold tracking-wider uppercase">
+      {totalMeals || 0} MEALS PLANNED
+    </span>
+  </div>
+</div>
 
       {/* 2. Grouped Summary Cards */}
       {cityWiseData.length > 0 ? (
-        cityWiseData.map((city, index) => (
-          <SummaryCityCard key={index} cityData={city} />
-        ))
-      ) : (
-        <div className="py-20 text-center bg-white rounded-[30px] border-2 border-dashed border-gray-100">
-          {/* Updated: text-xs -> text-[18px] and added font-opensans */}
-          <p className="text-gray-400 font-bold uppercase tracking-widest text-[18px] font-opensans">No Summary Data Available</p>
-        </div>
-      )}
+  <div className="bg-white rounded-[32px] border border-gray-100 shadow-sm p-6">
+    <div className="space-y-6">
+      {cityWiseData.map((city, index) => (
+        <SummaryCityCard key={index} cityData={city} />
+      ))}
+    </div>
+  </div>
+) : (
+  <div className="py-20 text-center bg-white rounded-[30px] border-2 border-dashed border-gray-100">
+    <p className="text-gray-400 font-bold uppercase tracking-widest text-[18px] font-opensans">
+      No Summary Data Available
+    </p>
+  </div>
+)}
 
       {/* 3. Important Note */}
       <div className="bg-orange-50/50 border border-orange-100 p-5 rounded-[25px] mt-6 flex items-start gap-4">
