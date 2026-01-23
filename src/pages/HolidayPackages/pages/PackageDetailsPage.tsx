@@ -89,9 +89,9 @@ const PackageDetailsPage = () => {
         <NewSearch isDetailsPage={true} persons={persons} setPersons={setPersons} />
       </div>
 
-    <div className="max-w-[1480px]  mx-auto px-4 sm:px-6 lg:px-8 mt-5">
+    <div className="max-w-100vw  mx-auto px-4 sm:px-6 lg:px-8 mt-5">
   {/* The White Card Container */}
- <div className=" rounded-[32px] border border-gray-100 shadow-xl overflow-hidden p-2 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col h-full">
+ <div className=" rounded-[32px] border border-gray-100 shadow-xl overflow-hidden p-2 md:p-10 animate-in fade-in slide-in-from-bottom-4 duration-700 flex flex-col justify-between h-full">
     <div className="flex  flex-col md:flex-row md:items-end justify-evenly gap-100 mb-8">
       <div className="space-y-2">
         {/* Title */}
@@ -138,7 +138,11 @@ const PackageDetailsPage = () => {
         onOpenGallery={() => setIsGalleryOpen(true)} 
         imageCategories={galleryData} 
       />
-    
+     
+          
+          <div className="max-w-[1390px] z-50 rounded-2xl mx-auto w-full pt-6">
+  <PackageTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+</div>
 
         </div>
          
@@ -176,10 +180,6 @@ const PackageDetailsPage = () => {
         </div>
       )}
 
-     
-<div className="max-w-[1390px] z-50 rounded-2xl mx-auto w-full pt-6">
-  <PackageTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-</div>
 
 
      {/* Increased width container from 7xl to 1440px */}

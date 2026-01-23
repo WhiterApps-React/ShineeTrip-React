@@ -30,8 +30,8 @@ export const PackageGallery = ({ heroImage, title, onOpenGallery, imageCategorie
   const totalPhotos = imageCategories?.reduce((sum, cat) => sum + (cat.images?.length || 0), 0) || 0;
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-[450px] md:h-[500px]">
+   <div className="max-w-[1400px] mx-auto px-8 sm:px-6 lg:px-8 py-6">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-[450px] md:h-[600px]">
         
         {/* 1. Main Hero Image - Left Side */}
         <div className="md:col-span-4 relative rounded-3xl overflow-hidden group shadow-lg">
@@ -44,7 +44,7 @@ export const PackageGallery = ({ heroImage, title, onOpenGallery, imageCategorie
   onClick={onOpenGallery}
   className="absolute bottom-6 right-6 bg-[#C9A961] text-white px-6 py-2.5 rounded-xl font-bold text-sm shadow-2xl hover:bg-[#b39552] transition-all flex items-center gap-2 whitespace-nowrap z-10 active:scale-95"
 >
-  <ImageIcon size={18} /> View {totalPhotos} Photos
+  <ImageIcon size={18} /> View Gallery
 </button>
 
         </div>
