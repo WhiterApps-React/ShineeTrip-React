@@ -56,7 +56,7 @@ const EventEnquiryPage = () => {
         desc: formData.desc,
         venue_id: Number(venueId) // Get from URL
       };
-
+        
       const response = await fetch(`${API_BASE_URL}/event-enquiry`, {
         method: "POST",
         headers: headers,

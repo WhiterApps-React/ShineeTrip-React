@@ -1,14 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Search, MapPin, Star, ChevronDown, Filter } from "lucide-react";
+import { Search, MapPin, Star, ChevronDown } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 
-// --- Types based on Swagger Schema ---
-interface Amenity {
-  id: number;
-  name: string;
-  img_link: string;
-}
-
+// --- Types matched to your JSON structure ---
 interface Venue {
   id: number;
   name: string;
@@ -16,13 +10,13 @@ interface Venue {
   images: string[];
   desc: string;
   location: string;
-  min_price: number;
-  budget_range: string; // "Mid-Range" | "Premium" etc.
-  venue_type: string;   // "Hotel" | "Resort"
+  min_price: string | number; // JSON has it as string "20000"
+  budget_range: string;
+  venue_type: string;
   min_guest_capacity: number;
   max_guest_capacity: number;
   luxury: boolean;
-  amenities: Amenity[];
+  suitability: string[];
 }
 
 interface FilterOptions {
@@ -34,21 +28,25 @@ interface FilterOptions {
 const API_BASE_URL = "http://46.62.160.188:3000";
 
 const EventVenuesPage = () => {
-  const { id } = useParams(); // Capture Event Type ID from previous page if needed
+  const { id } = useParams(); 
   const navigate = useNavigate();
 
   // State
   const [venues, setVenues] = useState<Venue[]>([]);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ locations: [], budget_ranges: [], venue_types: [] });
+  const [categoryName, setCategoryName] = useState("");
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ 
+    locations: [], 
+    budget_ranges: [], 
+    venue_types: [] 
+  });
   const [loading, setLoading] = useState(true);
   
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedLocation, setSelectedLocation] = useState("");
   const [selectedBudget, setSelectedBudget] = useState("");
-  
 
-  // --- Fetch Filter Options (Dropdowns) ---
+  // --- Fetch Filter Options ---
   useEffect(() => {
     const fetchFilters = async () => {
       try {
@@ -62,7 +60,7 @@ const EventVenuesPage = () => {
     fetchFilters();
   }, []);
 
-  // --- Fetch Venues (With Filters) ---
+  // --- Fetch Venues (Corrected for Nested JSON) ---
   useEffect(() => {
     const fetchVenues = async () => {
       setLoading(true);
@@ -71,25 +69,32 @@ const EventVenuesPage = () => {
         const headers: HeadersInit = { "Content-Type": "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        // Build Query URL
-          const queryParams = new URLSearchParams();
-          console.log()
-        if (selectedLocation) queryParams.append("location", selectedLocation);
-        if (selectedBudget) queryParams.append("budget_range", selectedBudget);
-        
-        // Note: Swagger endpoint is /event-venue
-        const url = `${API_BASE_URL}/event-venue?${queryParams.toString()}`;
-        
+        const url = `${API_BASE_URL}/event-type/${id}`;
         const response = await fetch(url, { headers });
         const data = await response.json();
-          console.log(data); 
-        // Client-side search filtering (if API doesn't support 'q' param)
-        let filteredData = data;
+
+        // FIX: Extract venues from the parent object { name, desc, venues: [] }
+        setCategoryName(data.name);
+        const venuesList = data.venues || [];
+          
+        let filteredData = venuesList;
+
+        // Search Filter
         if (searchQuery) {
-            filteredData = data.filter((v: Venue) => 
+            filteredData = filteredData.filter((v: Venue) => 
                 v.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                 v.location.toLowerCase().includes(searchQuery.toLowerCase())
             );
+        }
+
+        // Location Filter
+        if (selectedLocation) {
+            filteredData = filteredData.filter((v: Venue) => v.location === selectedLocation);
+        }
+
+        // Budget Filter
+        if (selectedBudget) {
+            filteredData = filteredData.filter((v: Venue) => v.budget_range === selectedBudget);
         }
 
         setVenues(filteredData);
@@ -100,37 +105,32 @@ const EventVenuesPage = () => {
       }
     };
 
-    // Debounce search slightly
     const timer = setTimeout(() => {
         fetchVenues();
     }, 500);
 
     return () => clearTimeout(timer);
-  }, [selectedLocation, selectedBudget, searchQuery]); // Re-run when filters change
+  }, [selectedLocation, selectedBudget, searchQuery, id]);
 
   return (
-    <div className="min-h-screen bg-[#F9F9F9] font-opensans  pb-20">
+    <div className="min-h-screen bg-[#F9F9F9] font-opensans pb-20">
       
       {/* --- SEARCH & FILTER BAR SECTION --- */}
-      <div className="  py-10 px-4">
-        <div className="container mt-35 mx-auto max-w-6xl">
-           
-           {/* Search Input Container */}
+      <div className="py-10 px-4">
+        <div className="container mt-20 mx-auto max-w-6xl">
            <div className="bg-white border border-gray-200 rounded-full shadow-md flex items-center p-2 max-w-4xl mx-auto h-16">
               
-              {/* Search Text Input */}
               <div className="flex items-center flex-1 px-4 border-r border-gray-200">
                 <Search className="text-gray-400 w-5 h-5 mr-3" />
                 <input 
                     type="text"
-                    placeholder="Search Events, Categories, Location..."
+                    placeholder="Search Venues, Locations..."
                     className="w-full outline-none text-gray-700 placeholder-gray-400 text-sm md:text-base"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
 
-              {/* Location Dropdown */}
               <div className="relative hidden md:flex items-center px-6 min-w-[200px] cursor-pointer group">
                   <MapPin className="text-[#D2A256] w-5 h-5 mr-2" />
                   <select 
@@ -151,13 +151,10 @@ const EventVenuesPage = () => {
 
       {/* --- MAIN CONTENT --- */}
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 mt-12 max-w-7xl">
-        
-        {/* Title */}
         <h2 className="text-center text-3xl font-bold text-[#CA9C43] mb-10 tracking-wide">
-            Select Your Perfect Venue
+            {categoryName || "Select Your Perfect Venue"}
         </h2>
 
-        {/* Loading State */}
         {loading ? (
             <div className="flex justify-center items-center h-64">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#D2A256]"></div>
@@ -167,7 +164,6 @@ const EventVenuesPage = () => {
                 {venues.length === 0 ? (
                     <div className="text-center text-gray-500 py-10">No venues found matching your criteria.</div>
                 ) : (
-                    /* --- VENUE GRID --- */
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
                         {venues.map((venue) => (
                             <VenueCard key={venue.id} venue={venue} />
@@ -176,43 +172,30 @@ const EventVenuesPage = () => {
                 )}
             </>
         )}
-
       </div>
     </div>
   );
 };
 
 // --- HELPER: Venue Card Component ---
-// --- HELPER: Venue Card Component ---
 const VenueCard = ({ venue }: { venue: Venue }) => {
-   
     const navigate = useNavigate(); 
     
-    // Format Price Logic (e.g., 800000 -> 8L)
-    const formatPrice = (price: number) => {
-        if (price >= 100000) {
-            return `₹ ${(price / 100000).toFixed(1).replace('.0', '')}L`;
-        } else if (price >= 1000) {
-            return `₹ ${(price / 1000).toFixed(1).replace('.0', '')}k`;
-        }
-        return `₹ ${price}`;
+    const formatPrice = (price: string | number) => {
+        const numPrice = typeof price === 'string' ? parseInt(price) : price;
+        if (numPrice >= 100000) return `₹ ${(numPrice / 100000).toFixed(1)}L`;
+        if (numPrice >= 1000) return `₹ ${(numPrice / 1000).toFixed(1)}k`;
+        return `₹ ${numPrice}`;
     };
-
-    const rating = 4.5; 
-    const reviews = 112; 
 
     return (
         <div className="bg-white rounded-[2rem] shadow-xl overflow-hidden border border-gray-100 flex flex-col group hover:shadow-2xl transition-all duration-300">
-            
-            {/* Image Section */}
             <div className="relative h-64 w-full overflow-hidden">
                 <img 
                     src={venue.cover_img || "https://via.placeholder.com/600x400?text=Venue"} 
                     alt={venue.name} 
                     className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
                 />
-                
-                {/* Luxury Badge */}
                 {venue.luxury && (
                     <div className="absolute top-4 right-4 bg-[#CA9C43] text-white text-xs font-bold px-3 py-1 rounded-md uppercase tracking-wider shadow-md">
                         Luxury
@@ -220,33 +203,30 @@ const VenueCard = ({ venue }: { venue: Venue }) => {
                 )}
             </div>
 
-            {/* Content Section */}
             <div className="p-6 md:p-8 flex-1 flex flex-col bg-gray-50/50">
-                
-                {/* Header: Name & Rating */}
                 <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-2xl font-bold text-gray-900 leading-tight w-3/4">
+                    <h3 className="text-2xl font-bold text-gray-900 leading-tight">
                         {venue.name}
                     </h3>
                 </div>
 
-                {/* Rating Row */}
                 <div className="flex items-center gap-2 mb-4">
                      <div className="flex text-[#D2A256]">
-                        {[...Array(4)].map((_, i) => <Star key={i} size={16} fill="currentColor" />)}
-                        <Star size={16} fill="currentColor" className="opacity-50" />
+                        {[...Array(5)].map((_, i) => <Star key={i} size={16} fill={i < 4 ? "currentColor" : "none"} className={i < 4 ? "" : "text-gray-300"} />)}
                      </div>
-                     <span className="font-bold text-gray-800">{rating}</span>
-                     <span className="text-gray-500 text-sm">({reviews} reviews)</span>
+                     <span className="font-bold text-gray-800">4.5</span>
+                     <span className="text-gray-500 text-sm">(112 reviews)</span>
                 </div>
 
-                {/* Location */}
-                <div className="flex items-center text-gray-600 mb-6">
+                <div className="flex items-center text-gray-600 mb-2">
                     <MapPin size={18} className="mr-2 text-gray-400" />
-                    <span className="font-medium">{venue.location}</span>
+                    <span className="font-medium capitalize">{venue.location}</span>
+                </div>
+                
+                <div className="text-xs text-gray-400 font-bold uppercase tracking-widest mb-6">
+                    {venue.venue_type} • {venue.max_guest_capacity} Guests Max
                 </div>
 
-                {/* Footer: Price & Button */}
                 <div className="mt-auto flex items-center justify-between pt-4 border-t border-gray-200">
                     <div>
                         <p className="text-gray-500 text-xs font-semibold uppercase tracking-wide">Starting from</p>
@@ -256,17 +236,13 @@ const VenueCard = ({ venue }: { venue: Venue }) => {
                     </div>
 
                     <button 
-                        className="px-8 py-3 rounded-xl text-white font-bold text-sm shadow-lg transition-transform hover:scale-105 active:scale-95"
-                        style={{
-                            background: 'linear-gradient(90deg, #CA9C43 0%, #916E2B 100%)',
-                        }}
-                        // ✅ AB YE SAHI CHALEGA
                         onClick={() => navigate(`/venue-details/${venue.id}`)}
+                        className="px-8 py-3 rounded-xl text-white font-bold text-sm shadow-lg transition-transform hover:scale-105 active:scale-95"
+                        style={{ background: 'linear-gradient(90deg, #CA9C43 0%, #916E2B 100%)' }}
                     >
                         Select Venue
                     </button>
                 </div>
-
             </div>
         </div>
     );
