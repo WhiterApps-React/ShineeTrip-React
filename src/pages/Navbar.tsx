@@ -64,31 +64,43 @@ export const Navbar = () => {
 
 
 
-  // Check if user is logged in
   useEffect(() => {
-    const token = sessionStorage.getItem("shineetrip_token");
-    const name = sessionStorage.getItem("shineetrip_name");
+    
 
-    // Check if token exists and is not a junk value
-    if (token && token !== "undefined" && token !== "null" && token.length > 20) {
-      setIsLoggedIn(true);
-      if (name) {
-        setUserInitial(name.charAt(0).toUpperCase());
+    const checkLoginStatus = () => {
+      const token = sessionStorage.getItem("shineetrip_token");
+      const name = sessionStorage.getItem("shineetrip_name");
+      const email = sessionStorage.getItem("shineetrip_email");
+
+      // Valid token check
+      if (token && token !== "undefined" && token !== "null" && token.length > 20) {
+        setIsLoggedIn(true);
+        
+        // Initial set karo (Name > Email > Default "U")
+        if (name) {
+          setUserInitial(name.charAt(0).toUpperCase());
+        } else if (email) {
+          setUserInitial(email.charAt(0).toUpperCase());
+        } else {
+          setUserInitial("U");
+        }
+      } else {
+        setIsLoggedIn(false);
       }
-    } else {
-      // Agar token galat hai toh clear kardo
-      setIsLoggedIn(false);
-      sessionStorage.removeItem("shineetrip_token");
-    }
-
-    // Storage listener for synchronization
-    const handleStorageChange = () => {
-      const newToken = sessionStorage.getItem("shineetrip_token");
-      setIsLoggedIn(!!newToken);
     };
 
-    window.addEventListener("storage", handleStorageChange);
-    return () => window.removeEventListener("storage", handleStorageChange);
+    checkLoginStatus();
+
+
+    window.addEventListener("session-restored", checkLoginStatus);
+
+    window.addEventListener("storage", checkLoginStatus);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("session-restored", checkLoginStatus);
+      window.removeEventListener("storage", checkLoginStatus);
+    };
   }, []);
 
   const scrollToSection = (id: string) => {
@@ -152,7 +164,7 @@ export const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed w-full bg-white backdrop-blur-md z-90 shadow-sm font-opensans">
+      <nav className="fixed w-full bg-white backdrop-blur-md z-70 shadow-sm font-opensans">
         {/* Top Bar - Hidden on Landing Page */}
         {!isLandingPage && (
           <div className="w-full bg-[#263238] text-white py-2 px-4 sm:px-6 lg:px-8 hidden md:flex justify-between items-center text-sm font-medium">

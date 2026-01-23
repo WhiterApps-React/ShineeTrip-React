@@ -27,41 +27,66 @@ import EventConfirmationPage from "./pages/Events/EventConfirmationPage";
 
 
 // --- AUTH OBSERVER COMPONENT ---
-// --- AUTH OBSERVER COMPONENT (FIXED) ---
+// Baki imports same rahenge...
+
 const AuthObserver = () => {
   const auth = getAuth();
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
-      if (user) { 
-       
-        
+      if (user) {
         try {
-          console.log("🔄 User detected, syncing token...");
-          // Token generate karo
-          const newToken = await user.getIdToken(true);
-          
-        
-          sessionStorage.setItem("shineetrip_token", newToken);
+          console.log("🔄 User detected (Tab Reopened), restoring session...");
+
+          // 1. Token nikal ke wapas session me daalo
+          const token = await user.getIdToken(true);
+          sessionStorage.setItem("shineetrip_token", token);
           sessionStorage.setItem("shineetrip_uid", user.uid);
           
-          console.log("✅ Session Restored!");
+          if(user.email) sessionStorage.setItem("shineetrip_email", user.email);
+          if(user.displayName) sessionStorage.setItem("shineetrip_name", user.displayName);
+
+          // 2. IMPORTANT: Agar DB ID missing hai (Tab close hone se udd gayi thi), toh wapas fetch karo
+          if (!sessionStorage.getItem("shineetrip_db_customer_id")) {
+             try {
+                // Tumhare existing API logic ka use karke ID layenge
+                const res = await fetch(`http://46.62.160.188:3000/customers/0?email=${user.email}`, {
+                   headers: { Authorization: `Bearer ${token}` }
+                });
+                
+                if (res.ok) {
+                   const data = await res.json();
+                   const customer = Array.isArray(data) ? data[0] : data;
+                   if (customer?.id) {
+                      sessionStorage.setItem("shineetrip_db_customer_id", String(customer.id));
+                      console.log("✅ DB Customer ID Restored:", customer.id);
+                   }
+                }
+             } catch (err) {
+                console.error("Failed to restore customer ID", err);
+             }
+          }
+
+          // 3. Navbar ko signal bhejo ki "Data aa gaya hai, update ho jaao"
+          window.dispatchEvent(new Event("session-restored"));
+
         } catch (error) {
-          console.error("❌ Token sync failed:", error);
+          console.error("❌ Session restore failed:", error);
         }
       } else {
-      
-        console.log("🔒 No user found. Clearing storage.");
+        // User logout hai
         sessionStorage.clear();
-        localStorage.clear();
+        // Logout ka signal bhejo
+        window.dispatchEvent(new Event("session-restored"));
       }
     });
 
     return () => unsubscribe();
   }, [auth]);
 
-  return null; 
+  return null;
 };
+
 
 const App: React.FC = () => {
   return (
