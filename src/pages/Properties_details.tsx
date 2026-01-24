@@ -257,6 +257,7 @@ export default function RoomBookingPage() {
                 }
 
                 const data = await response.json();
+                console.log(data); 
                 setHotelData(data);
                 setLoading(false);
             } catch (err) {

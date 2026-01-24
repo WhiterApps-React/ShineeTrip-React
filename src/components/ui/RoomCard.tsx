@@ -88,8 +88,8 @@ const RoomCard = ({ room, hotelImages, services, onMoreInfoClick, onBookNowClick
     // -------------------------------
 
     // Price calculations
-    const basePrice = parseFloat(price.retail_price);
-    const taxPrice = parseFloat(price.retail_tax_price);
+    const basePrice = parseFloat(price.retail_tax_price);
+    const taxPrice = parseFloat(price.retail_price);
     // Assuming retail_tax_price is the tax amount itself based on typical UI patterns
     const taxAmount = taxPrice;
 
