@@ -276,7 +276,7 @@ const HotelListingPage: React.FC = () => {
       const data = responseData.data || [];
       const meta = responseData.meta || {};
       console.log("META FROM API:", meta); // FIX 1: Map function is now generating an array of Promises for parallel fetching
-
+      console.log(data);
       const hotelPromises = (Array.isArray(data) ? data : []).map(
         async (item: any) => {
           const hotel = item;
@@ -285,7 +285,7 @@ const HotelListingPage: React.FC = () => {
               ? hotel.roomTypes[0]
               : null;
           const roomDetails = roomType?.price;
-
+          
           if (!roomDetails) return null; // --- Rating Logic Start ---
           let calculatedRating = 0;
           let calculatedCount = 0;
@@ -334,8 +334,8 @@ const HotelListingPage: React.FC = () => {
               "Gym",
               "Restaurant",
             ],
-            price: parseFloat(roomDetails.retail_price || 8999),
-            originalPrice: parseFloat(roomDetails?.totalPricePerNight || 8999),
+            price: parseFloat(roomDetails.retail_tax_price || 8999),
+            originalPrice: parseFloat(roomDetails?.retail_tax_price || 8999),
             taxes: parseFloat(roomDetails?.taxAmount || 144),
             description: hotel.short_description || hotel.description || "",
           };
@@ -416,7 +416,7 @@ const HotelListingPage: React.FC = () => {
       const responseData = await response.json();
       const data = responseData.data || [];
       const meta = responseData.meta || {};
-
+  
 
       const hotelPromises = (Array.isArray(data) ? data : []).map(
         async (item: any) => {
