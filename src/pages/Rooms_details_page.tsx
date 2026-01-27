@@ -46,8 +46,10 @@ export function RoomDetailsModal({
   const [checkOut, setCheckOut] = useState(searchParams.get("checkOut") || "");
   const [adults, setAdults] = useState(parseInt(searchParams.get("adults") || "1"));
   const [children, setChildren] = useState(parseInt(searchParams.get("children") || "0"));
-  const [rooms, setRooms] = useState(parseInt(searchParams.get("rooms") || "1"));
   const [loading, setLoading] = useState(false);
+  const [roomsRequired, setRoomsRequired] = useState(
+  parseInt(searchParams.get("rooms") || "1")
+);
   // ✅ State for Dynamic Amenities
   const [dynamicAmenities, setDynamicAmenities] = useState<string[]>([]);
 
@@ -199,17 +201,27 @@ export function RoomDetailsModal({
 
 
   const handleCheckAvailability = async () => {
+  const customerIdRaw = sessionStorage.getItem("shineetrip_db_customer_id");
 
+if (!customerIdRaw || isNaN(Number(customerIdRaw))) {
+  alert("Please login again. Customer session expired.");
+  return;
+}
+
+const customerId = Number(customerIdRaw);
     setLoading(true);
     try {
       const payload = {
-        propertyId: Number(propertyId),
-        roomTypeId: Number(roomData?.id),
-        adults: adults,
-        children: children,
-        checkIn: checkIn,
-        checkOut: checkOut,
-      };
+  propertyId: Number(propertyId),
+  roomTypeId: Number(roomData?.id),
+  adults,
+  children,
+  roomsRequired, // ✅ ADDED
+  checkIn,
+        checkOut,
+   customerId
+  
+};
 
       const res = await fetch("http://46.62.160.188:3000/order/check-availability", {
         method: "POST",
@@ -470,22 +482,40 @@ export function RoomDetailsModal({
                     className="w-full border border-gray-300 rounded-lg px-3 py-3 text-sm"
                   />
 
-                  <div className="grid grid-cols-2 gap-2">
-                    <select
-                      value={adults}
-                      onChange={(e) => setAdults(Number(e.target.value))}
-                      className="border border-gray-300 rounded-lg p-2 text-sm"
-                    >
-                      {[1, 2, 3].map(n => <option key={n} value={n}>{n} Adult{n > 1 ? 's' : ''}</option>)}
-                    </select>
-                    <select
-                      value={children}
-                      onChange={(e) => setChildren(Number(e.target.value))}
-                      className="border border-gray-300 rounded-lg p-2 text-sm"
-                    >
-                      {[0, 1, 2].map(n => <option key={n} value={n}>{n} Child{n !== 1 ? 'ren' : ''}</option>)}
-                    </select>
-                  </div>
+                 <div className="grid grid-cols-3 gap-2">
+  <select
+    value={adults}
+    onChange={(e) => setAdults(Number(e.target.value))}
+    className="border border-gray-300 rounded-lg p-2 text-sm"
+  >
+    {[1, 2, 3].map(n => (
+      <option key={n} value={n}>{n} Adult{n > 1 ? "s" : ""}</option>
+    ))}
+  </select>
+
+  <select
+    value={children}
+    onChange={(e) => setChildren(Number(e.target.value))}
+    className="border border-gray-300 rounded-lg p-2 text-sm"
+  >
+    {[0, 1, 2].map(n => (
+      <option key={n} value={n}>{n} Child{n !== 1 ? "ren" : ""}</option>
+    ))}
+  </select>
+
+  {/* ✅ NEW: Rooms Required */}
+  <select
+    value={roomsRequired}
+    onChange={(e) => setRoomsRequired(Number(e.target.value))}
+    className="border border-gray-300 rounded-lg p-2 text-sm"
+  >
+    {[1, 2, 3, 4].map(n => (
+      <option key={n} value={n}>
+        {n} Room{n > 1 ? "s" : ""}
+      </option>
+    ))}
+  </select>
+</div>
 
                   {/* Button triggers the logic */}
                   <button
