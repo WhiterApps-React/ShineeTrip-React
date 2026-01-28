@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -443,12 +443,38 @@ const handleDownloadPDF = (order: Order, room: OrderRoomDetail) => {
         setTimeout(() => { printWindow.print(); }, 700);
     }
 };
+
+const filterEventBookings = (events: any[], filter: string) => {
+  const now = new Date();
+
+  return events.filter(ev => {
+    const eventDate = new Date(ev.event.date_time);
+    const status = ev.status.toLowerCase();
+
+    if (filter === 'all') return true;
+
+    if (filter === 'confirmed') {
+      return status.includes('confirmed') || status.includes('complete');
+    }
+
+    if (filter === 'upcoming') {
+      return eventDate > now && !status.includes('cancel');
+    }
+
+    if (filter === 'expired') {
+      return eventDate < now || status.includes('expired');
+    }
+
+    return true;
+  });
+};
 const MyBookingsPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
-    const [bookingType, setBookingType] = useState<'hotel' | 'package'>('hotel');
+    const [bookingType, setBookingType] = useState<'hotel' | 'package' | 'event'>('hotel');
     const [orders, setOrders] = useState<Order[]>([]);
     const [packageOrders, setPackageOrders] = useState<Order[]>([]);
+    const [eventOrders, setEventOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('all');
     const [selectedBooking, setSelectedBooking] = useState<{ order: Order, room: OrderRoomDetail } | null>(null);
@@ -474,45 +500,88 @@ const MyBookingsPage: React.FC = () => {
         setIsModalOpen(true);
     };
 
-    const fetchAllData = useCallback(async () => {
-        if (!customerDbId || !token) { setLoading(false); return; }
-        setLoading(true);
-        try {
-            const headers = { "Authorization": `Bearer ${token}` };
-            const [hotelRes, pkgRes] = await Promise.all([
-                fetch(`${API_BASE}/order?customerId=${customerDbId}`, { headers }),
-                fetch(`${API_BASE}/holiday-package-orders?customerId=${customerDbId}`, { headers })
-            ]);
+ const fetchAllData = useCallback(async () => {
+    if (!customerDbId || !token) {
+        setLoading(false);
+        return;
+    }
 
-            const hData = await hotelRes.json();
-            const pData = await pkgRes.json();
+    setLoading(true);
 
-            const hotelOrdersArray = Array.isArray(hData.data) ? hData.data : (Array.isArray(hData) ? hData : []);
+    try {
+        const headers = { Authorization: `Bearer ${token}` };
 
-            const packageOrdersArray = Array.isArray(pData.data) ? pData.data : (Array.isArray(pData) ? pData : []);
+        const [hotelRes, pkgRes, eventRes] = await Promise.all([
+            fetch(`${API_BASE}/order?customerId=${customerDbId}`, { headers }),
+            fetch(`${API_BASE}/holiday-package-orders?customerId=${customerDbId}`, { headers }),
+            fetch(`${API_BASE}/bookings?customerId=${customerDbId}`, { headers }) // ✅ EVENTS
+        ]);
 
-            setOrders(hotelOrdersArray.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-            setPackageOrders(packageOrdersArray);
+        const hData = await hotelRes.json();
+        const pData = await pkgRes.json();
+        const eData = await eventRes.json();
 
-        } catch (err) {
-            console.error("Fetch Error:", err);
-        } finally {
-            setLoading(false);
-        }
-    }, [customerDbId, token, API_BASE]);
+        // 🏨 HOTEL ORDERS
+        const hotelOrdersArray = Array.isArray(hData?.data)
+            ? hData.data
+            : Array.isArray(hData)
+                ? hData
+                : [];
+
+        // 📦 PACKAGE ORDERS
+        const packageOrdersArray = Array.isArray(pData?.data)
+            ? pData.data
+            : Array.isArray(pData)
+                ? pData
+                : [];
+
+        // 🎟️ EVENT ORDERS (VERY IMPORTANT NORMALIZATION)
+        const eventOrdersArray = Array.isArray(eData?.data?.rows)
+            ? eData.data.rows
+            : Array.isArray(eData?.data)
+                ? eData.data
+                : [];
+
+        setOrders(
+            hotelOrdersArray.sort(
+                (a: any, b: any) =>
+                    new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+            )
+        );
+        console.log(eventOrdersArray); 
+        setPackageOrders(packageOrdersArray);
+        setEventOrders(eventOrdersArray);
+
+    } catch (err) {
+        console.error("Fetch Error:", err);
+    } finally {
+        setLoading(false); // ✅ ALWAYS STOPS LOADING
+    }
+}, [customerDbId, token , API_BASE]);
 
     useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
-    const getFilteredData = () => {
-        const currentList = bookingType === 'hotel' ? orders : packageOrders;
-        return currentList.filter(order => {
-            if (filterStatus === 'all') return true;
-            const s = order.status.toLowerCase();
-            if (filterStatus === 'confirmed') return s.includes('complete') || s.includes('received');
-            if (filterStatus === 'awaiting payment') return s.includes('awaiting');
-            return s.includes(filterStatus.toLowerCase());
-        });
-    };
+    const filteredOrders = useMemo(() => {
+  if (bookingType === 'event') return [];
+
+  const list = bookingType === 'hotel' ? orders : packageOrders;
+
+  return list.filter(order => {
+    if (filterStatus === 'all') return true;
+
+    const s = order.status.toLowerCase();
+    if (filterStatus === 'confirmed')
+      return s.includes('complete') || s.includes('received');
+    if (filterStatus === 'awaiting payment')
+      return s.includes('awaiting');
+
+    return s.includes(filterStatus.toLowerCase());
+  });
+}, [bookingType, orders, packageOrders, filterStatus]);
+
+const filteredEventOrders = useMemo(() => {
+  return filterEventBookings(eventOrders, filterStatus);
+}, [eventOrders, filterStatus]);
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -542,104 +611,277 @@ const MyBookingsPage: React.FC = () => {
                     <div className="lg:col-span-3 space-y-6">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <h1 className="text-3xl font-extrabold flex items-center gap-2">My Bookings <ShoppingBag className="w-7 h-7 text-[#D2A256]" /></h1>
-                            <div className="flex p-1 bg-white shadow-sm rounded-2xl border border-gray-200 w-full max-w-[360px]">
-                                <button onClick={() => setBookingType('hotel')} className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all ${bookingType === 'hotel' ? 'bg-[#D2A256] text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}>HOTEL BOOKINGS</button>
-                                <button onClick={() => setBookingType('package')} className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all ${bookingType === 'package' ? 'bg-[#D2A256] text-white shadow-md' : 'text-gray-400 hover:bg-gray-50'}`}>PACKAGE BOOKINGS</button>
-                            </div>
+                          <div className="flex p-1 bg-white shadow-sm rounded-2xl border border-gray-200 w-full max-w-[420px]">
+  <button
+    onClick={() => setBookingType('hotel')}
+    className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all ${
+      bookingType === 'hotel'
+        ? 'bg-[#D2A256] text-white shadow-md'
+        : 'text-gray-400 hover:bg-gray-50'
+    }`}
+  >
+    HOTEL BOOKINGS
+  </button>
+
+  <button
+    onClick={() => setBookingType('package')}
+    className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all ${
+      bookingType === 'package'
+        ? 'bg-[#D2A256] text-white shadow-md'
+        : 'text-gray-400 hover:bg-gray-50'
+    }`}
+  >
+    PACKAGE BOOKINGS
+  </button>
+
+  <button
+    onClick={() => setBookingType('event')}
+    className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all ${
+      bookingType === 'event'
+        ? 'bg-[#D2A256] text-white shadow-md'
+        : 'text-gray-400 hover:bg-gray-50'
+    }`}
+  >
+    EVENT BOOKINGS
+  </button>
+</div>
                         </div>
 
                         {/* Filters */}
-                        <div className="flex items-center bg-white p-4 rounded-xl shadow-sm border gap-3 overflow-x-auto">
-                            {['all', 'awaiting payment', 'confirmed', 'cancelled'].map(status => (
-                                <button key={status} onClick={() => setFilterStatus(status)} className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all ${filterStatus === status ? 'bg-[#D2A256] text-white' : 'bg-gray-50 text-gray-500'}`}>{status.toUpperCase()}</button>
-                            ))}
-                            <Search className="w-5 h-5 text-gray-300 ml-auto hidden sm:block" />
-                        </div>
+                       {/* Filters */}
+<div className="flex items-center bg-white p-4 rounded-xl shadow-sm border gap-3 overflow-x-auto">
+  {(bookingType === 'event'
+    ? ['all', 'confirmed', 'upcoming', 'expired']
+    : ['all', 'awaiting payment', 'confirmed', 'cancelled']
+  ).map(status => (
+    <button
+      key={status}
+      onClick={() => setFilterStatus(status)}
+      className={`px-4 py-2 rounded-lg text-xs font-bold border transition-all ${
+        filterStatus === status
+          ? 'bg-[#D2A256] text-white'
+          : 'bg-gray-50 text-gray-500'
+      }`}
+    >
+      {status.toUpperCase()}
+    </button>
+  ))}
+
+  <Search className="w-5 h-5 text-gray-300 ml-auto hidden sm:block" />
+</div>
 
                         {/* Booking Listing */}
-                        <div className="space-y-6">
-                            {getFilteredData().length > 0 ? getFilteredData().map(order => (
-                                <div key={order.id} className="transition-all animate-in fade-in slide-in-from-bottom-2">
-                                    {bookingType === 'hotel' && order.orderRooms?.map(room => (
-                                        <div key={room.id} className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <BookingStatusPill status={order.status} />
-                                                <span className='text-gray-400 text-sm'>• Out: {formatDayAndDate(room.checkOut)}</span>
-                                            </div>
-                                            <div className="flex gap-5 border-b pb-5">
-                                                <img src={
-                                                    room.property?.images?.[0]?.image ||
-                                                    room.roomType?.images?.[0]?.image ||
-                                                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80" // ✅ Premium Fallback Image
-                                                } className="w-28 h-28 object-cover rounded-xl border" />
-                                                <div className="flex-1">
-                                                    <h3 className="text-xl font-bold">{room.property?.name}</h3>
-                                                    <p className="text-sm text-gray-500">{room.property?.city}</p>
-                                                    <div className="mt-3 text-sm font-bold text-[#D2A256]">
-                                                        {formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}
-                                                        <p className="mt-1 text-gray-900 font-black">
-                                                            Amount: {order.currency} {(order.grandTotal || order.totalPrice || 0).toLocaleString()}
-                                                        </p>
-                                                    </div>                             <div className="mt-3 text-sm"><p>Room: <span className='font-bold'>{room.roomType?.room_type}</span></p></div>
-                                                </div>
-                                            </div>
-                                            <div className='pt-4 flex gap-3'>
-                                                {/* ✅ VIEW DETAILS BUTTON RESTORED */}
-                                                <button onClick={() => openDetails(order, room)} className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100">View Details</button>
-                                                <button onClick={() => setSelectedInvoice(order)} className="flex-1 border border-gray-200 py-2.5 rounded-lg text-xs font-black uppercase text-gray-500">Invoice</button>
-                                                <button onClick={() => navigate(`/room-booking/${room.property.id}`)} className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase">Book Again</button>
-                                            </div>
-                                        </div>
-                                    ))}
+                     <div className="space-y-6">
 
-                                    {/* PACKAGE VIEW */}
-                                    {bookingType === 'package' && (
-                                        <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                                <span className="text-sm font-bold text-gray-700">{order.status}</span>
-                                                <span className='text-gray-400 text-sm'>• ID: #{order.id}</span>
-                                            </div>
+  {/* ================= HOTEL + PACKAGE ================= */}
+  {bookingType !== 'event' && (
+    filteredOrders.length > 0 ? (
+      filteredOrders.map(order => (
+        <div
+          key={order.id}
+          className="transition-all animate-in fade-in slide-in-from-bottom-2"
+        >
 
-                                            <div className="flex gap-6 border-b pb-5">
-                                                <img src={order.holidayPackage?.hero_image} className="w-28 h-28 object-cover rounded-xl border bg-gray-100" />
-                                                <div className="flex-1">
-                                                    <h3 className="text-xl font-black text-gray-900">{order.holidayPackage?.title}</h3>
-                                                    <p className="text-xs text-gray-500 flex items-center gap-1 font-bold mt-1 uppercase tracking-tighter">
-                                                        <MapPin size={12} className="text-[#D2A256]" /> {order.holidayPackage?.included_cities?.join(" • ")}
-                                                    </p>
-                                                    <div className="mt-4 flex flex-wrap gap-4 text-xs font-bold">
-                                                        <div className="flex items-center gap-1.5"><Calendar size={14} className="text-gray-400" /> {formatShortDate(order.startDate)} - {formatShortDate(order.endDate)}</div>
-                                                        <div className="flex items-center gap-1.5"><Users size={14} className="text-gray-400" /> {order.adults} Persons</div>
-                                                    </div>
-                                                </div>
-                                            </div>
+          {/* HOTEL */}
+          {bookingType === 'hotel' && order.orderRooms?.map(room => (
+            <div
+              key={room.id}
+              className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4"
+            >
+              <div className="flex items-center gap-2 mb-4">
+                <BookingStatusPill status={order.status} />
+                <span className="text-gray-400 text-sm">
+                  • Out: {formatDayAndDate(room.checkOut)}
+                </span>
+              </div>
 
-                                            {/* ✅ UPDATED BUTTONS FOR PACKAGE */}
-                                            <div className='pt-4 flex gap-3'>
+              <div className="flex gap-5 border-b pb-5">
+                <img
+                  src={
+                    room.property?.images?.[0]?.image ||
+                    room.roomType?.images?.[0]?.image ||
+                    "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80"
+                  }
+                  className="w-28 h-28 object-cover rounded-xl border"
+                />
 
-                                                <button
-                                                    onClick={() => openPackageDetails(order)}
-                                                    className="flex-1 border border-gray-400 text-gray-900 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-100 transition-all"
-                                                >
-                                                    View Details
-                                                </button>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold">{room.property?.name}</h3>
+                  <p className="text-sm text-gray-500">{room.property?.city}</p>
 
-                                                {/* Book Again - Redirect to the package detail page */}
-                                                <button
-                                                    onClick={() => navigate(`/package-detail/${order.holidayPackage?.id}`)}
-                                                    className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-md hover:bg-[#b38842] transition-all"
-                                                >
-                                                    Book Again
-                                                </button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            )) : (
-                                <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed"><ShoppingBag className="w-12 h-12 text-gray-200 mx-auto mb-4" /><p className="text-gray-400 font-bold uppercase text-[10px]">No {bookingType} bookings found.</p></div>
-                            )}
-                        </div>
+                  <div className="mt-3 text-sm font-bold text-[#D2A256]">
+                    {formatShortDate(room.checkIn)} - {formatShortDate(room.checkOut)}
+                    <p className="mt-1 text-gray-900 font-black">
+                      Amount: {order.currency}{' '}
+                      {(order.grandTotal || order.totalPrice || 0).toLocaleString()}
+                    </p>
+                  </div>
+
+                  <div className="mt-3 text-sm">
+                    Room: <span className="font-bold">{room.roomType?.room_type}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  onClick={() => openDetails(order, room)}
+                  className="flex-1 border border-gray-400 px-4 py-2 rounded-lg text-sm font-semibold"
+                >
+                  View Details
+                </button>
+
+                <button
+                  onClick={() => setSelectedInvoice(order)}
+                  className="flex-1 border border-gray-200 py-2.5 rounded-lg text-xs font-black uppercase text-gray-500"
+                >
+                  Invoice
+                </button>
+
+                <button
+                  onClick={() => navigate(`/room-booking/${room.property.id}`)}
+                  className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase"
+                >
+                  Book Again
+                </button>
+              </div>
+            </div>
+          ))}
+
+          {/* PACKAGE */}
+          {bookingType === 'package' && (
+            <div className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4">
+              <div className="flex items-center gap-2 mb-4">
+                <CheckCircle className="w-4 h-4 text-green-500" />
+                <span className="text-sm font-bold text-gray-700">{order.status}</span>
+                <span className="text-gray-400 text-sm">• ID: #{order.id}</span>
+              </div>
+
+              <div className="flex gap-6 border-b pb-5">
+                <img
+                  src={order.holidayPackage?.hero_image}
+                  className="w-28 h-28 object-cover rounded-xl border"
+                />
+
+                <div className="flex-1">
+                  <h3 className="text-xl font-black">{order.holidayPackage?.title}</h3>
+
+                  <p className="text-xs text-gray-500 flex items-center gap-1 font-bold uppercase">
+                    <MapPin size={12} className="text-[#D2A256]" />
+                    {order.holidayPackage?.included_cities?.join(" • ")}
+                  </p>
+
+                  <div className="mt-4 flex gap-4 text-xs font-bold">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar size={14} />
+                      {formatShortDate(order.startDate)} - {formatShortDate(order.endDate)}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <Users size={14} />
+                      {order.adults} Persons
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3">
+                <button
+                  onClick={() => openPackageDetails(order)}
+                  className="flex-1 border border-gray-400 px-4 py-2 rounded-lg text-sm font-semibold"
+                >
+                  View Details
+                </button>
+
+                <button
+                  onClick={() => navigate(`/package-detail/${order.holidayPackage?.id}`)}
+                  className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase"
+                >
+                  Book Again
+                </button>
+              </div>
+            </div>
+          )}
+
+        </div>
+      ))
+    ) : (
+      <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed">
+        <ShoppingBag className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+        <p className="text-gray-400 font-bold uppercase text-[10px]">
+          No {bookingType} bookings found.
+        </p>
+      </div>
+    )
+  )}
+
+  {/* ================= EVENTS ================= */}
+  {bookingType === 'event' && (
+    filteredEventOrders.length > 0 ? (
+      filteredEventOrders.map(eventBooking => {
+        const event = eventBooking.event;
+
+        return (
+          <div
+            key={eventBooking.id}
+            className="bg-white rounded-xl shadow-md border border-gray-200 p-6 mb-4"
+          >
+            <div className="flex items-center gap-2 mb-4">
+              <BookingStatusPill status={eventBooking.status} />
+              <span className="text-gray-400 text-sm">
+                • {formatDayAndDate(event.date_time)}
+              </span>
+            </div>
+
+            <div className="flex gap-5 border-b pb-5">
+              <img
+                src={event.cover_img}
+                className="w-28 h-28 object-cover rounded-xl border"
+              />
+
+              <div className="flex-1">
+                <h3 className="text-xl font-bold">{event.title}</h3>
+                <p className="text-sm text-gray-500 flex items-center gap-1">
+                  <MapPin size={14} /> {event.addr}
+                </p>
+
+                <div className="mt-3 text-sm font-bold text-[#D2A256]">
+                  Tickets: {eventBooking.ticket_qty}
+                  <p className="mt-1 text-gray-900 font-black">
+                    Amount: {eventBooking.currency} {eventBooking.total_amount}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-4 flex gap-3">
+              <button
+                onClick={() => navigate(`/org-event-detail/${event.id}`)}
+                className="flex-1 border border-gray-400 px-4 py-2 rounded-lg text-sm font-semibold"
+              >
+               View Ticket
+              </button>
+
+              <button
+                onClick={() => navigate(`/org-event-detail/${event.id}`)}
+                className="flex-1 bg-[#D2A256] text-white py-2.5 rounded-lg text-xs font-black uppercase"
+              >
+                Buy Again
+              </button>
+            </div>
+          </div>
+        );
+      })
+    ) : (
+      <div className="text-center py-24 bg-white rounded-2xl border-2 border-dashed">
+        <Calendar className="w-12 h-12 text-gray-200 mx-auto mb-4" />
+        <p className="text-gray-400 font-bold uppercase text-[10px]">
+          No event bookings found.
+        </p>
+      </div>
+    )
+  )}
+
+</div>
                     </div>
                 </div>
             </div>
