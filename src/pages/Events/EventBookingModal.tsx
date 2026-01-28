@@ -16,9 +16,18 @@ interface EventBookingModalProps {
   isOpen: boolean;
   onClose: () => void;
   event: any;
+  selectedTicket: {
+    type: string;
+    price: number;
+  } | null;
 }
 
-const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) => {
+const EventBookingModal = ({
+  isOpen,
+  onClose,
+  event,
+  selectedTicket,
+}: EventBookingModalProps) => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -36,15 +45,14 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
   });
 
   // Parse Ticket Price
-  useEffect(() => {
-    if (event && event.price && event.price.length > 0) {
-      const parts = event.price[0].split(':');
-      setTicketType({
-        name: parts[0] || "Standard Ticket",
-        price: parts[1] ? parseInt(parts[1]) : 0
-      });
-    }
-  }, [event]);
+ useEffect(() => {
+  if (selectedTicket) {
+    setTicketType({
+      name: selectedTicket.type,
+      price: selectedTicket.price,
+    });
+  }
+}, [selectedTicket]);
 
   // Load Razorpay Script Dynamically
   useEffect(() => {
@@ -324,7 +332,7 @@ const EventBookingModal = ({ isOpen, onClose, event }: EventBookingModalProps) =
                 <p className="text-gray-500 text-xs">{attendee.email}</p>
             </div>
             <div className="bg-[#0056D2] text-white px-3 py-1 rounded font-bold text-sm">
-                ₹{ticketType.price}
+                ₹{ticketType.price} x {bookingData.ticket_qty} 
             </div>
         </div>
       </div>

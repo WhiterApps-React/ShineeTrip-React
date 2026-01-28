@@ -35,7 +35,11 @@ const OrgEventDetailsPage = () => {
   const [event, setEvent] = useState<OrgEventDetail | null>(null);
   const [loading, setLoading] = useState(true);
   
-  // ✅ FIX 1: Modal State Add kiya hai
+    // ✅ FIX 1: Modal State Add kiya hai
+    const [selectedTicket, setSelectedTicket] = useState<{
+  type: string;
+  price: number;
+} | null>(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
 
   useEffect(() => {
@@ -82,21 +86,22 @@ const OrgEventDetailsPage = () => {
     <div className="min-h-screen bg-[#F4F4F4] font-opensans pb-20 pt-28 px-4 sm:px-6 lg:px-8">
 
       {/* ✅ FIX 2: Modal ko sahi jagah place kiya hai */}
-      {isBookingOpen && (
-        <EventBookingModal 
-            isOpen={isBookingOpen} 
-            onClose={() => setIsBookingOpen(false)} 
-            event={event} 
-        />
-      )}
+   {isBookingOpen && (
+  <EventBookingModal
+    isOpen={isBookingOpen}
+    onClose={() => setIsBookingOpen(false)}
+    event={event}
+    selectedTicket={selectedTicket}   // ✅ NEW
+  />
+)}
       
       {/* Back Button */}
       <div className="max-w-7xl mx-auto mb-6">
         <button 
             onClick={() => navigate(-1)}
-            className="flex items-center text-gray-500 hover:text-[#CA9C43] transition-colors font-medium"
+            className="flex items-center text-gray-500 hover:text-[#CA9C43] transition-colors font-medium mt-12"
         >
-            <ArrowLeft size={20} className="mr-2" />
+            <ArrowLeft size={20} className="mr-2 " />
             Back
         </button>
       </div>
@@ -206,8 +211,8 @@ const OrgEventDetailsPage = () => {
                 <div className="flex flex-wrap gap-3">
                     {event.tags && event.tags.length > 0 ? (
                         event.tags.map((tag, idx) => (
-                            <span key={idx} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-full text-sm font-medium">
-                                #{tag}
+                            <span key={idx} className="px-4 py-2 bg-white text-gray-900 rounded-full text-sm font-medium">
+                                {tag}
                             </span>
                         ))
                     ) : (
@@ -224,22 +229,42 @@ const OrgEventDetailsPage = () => {
                 <h3 className="text-xl font-bold text-[#1A1A1A] mb-6 border-b border-gray-100 pb-4">
                     Ticket Information
                 </h3>
+<div className="space-y-4 mb-8">
+  {tickets.length > 0 ? (
+    tickets.map((t, i) => {
+      const isSelected =
+        selectedTicket?.type === t.type &&
+        selectedTicket?.price === t.price;
 
-                <div className="space-y-4 mb-8">
-                    {tickets.length > 0 ? (
-                        tickets.map((t, i) => (
-                            <div key={i} className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <div className="flex items-center gap-3">
-                                    <Tag size={16} className="text-[#CA9C43]" />
-                                    <span className="font-medium text-gray-700">{t.type}</span>
-                                </div>
-                                <span className="font-bold text-gray-900">₹ {t.price}</span>
-                            </div>
-                        ))
-                    ) : (
-                         <div className="text-center text-gray-500">Free Entry</div>
-                    )}
-                </div>
+      return (
+        <button
+          key={i}
+          onClick={() => setSelectedTicket(t)}
+          className={`
+            w-full flex justify-between items-center p-4 rounded-xl
+            border transition-all
+            ${isSelected
+              ? "border-[#CA9C43] bg-[#CA9C43]/10 shadow-md"
+              : "border-gray-200 bg-gray-50 hover:border-[#CA9C43]/60"}
+          `}
+        >
+          <div className="flex items-center gap-3">
+            <Tag size={16} className="text-[#CA9C43]" />
+            <span className="font-medium text-gray-700">
+              {t.type}
+            </span>
+          </div>
+
+          <span className="font-bold text-gray-900">
+            ₹ {t.price}
+          </span>
+        </button>
+      );
+    })
+  ) : (
+    <div className="text-center text-gray-500">Free Entry</div>
+  )}
+</div>
 
                 {/* ✅ FIX 3: Button Click Action Updated */}
                 <button 
@@ -247,14 +272,21 @@ const OrgEventDetailsPage = () => {
                     style={{
                         background: 'linear-gradient(90deg, #7A5C22 0%, #5A4214 100%)',
                     }}
-                    onClick={() => {
-                        const token = sessionStorage.getItem("shineetrip_token");
-                        if (!token) {
-                            alert("Please login to buy tickets");
-                            return;
-                        }
-                        setIsBookingOpen(true);
-                    }}
+                  onClick={() => {
+  const token = sessionStorage.getItem("shineetrip_token");
+
+  if (!token) {
+    alert("Please login to buy tickets");
+    return;
+  }
+
+  if (tickets.length > 0 && !selectedTicket) {
+    alert("Please select a ticket type");
+    return;
+  }
+
+  setIsBookingOpen(true);
+}}
                 >
                     <Tag size={20} fill="currentColor" className="text-white/80" />
                     Buy Tickets
