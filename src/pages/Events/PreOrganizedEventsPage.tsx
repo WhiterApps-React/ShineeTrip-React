@@ -361,11 +361,22 @@ const FilterContent = () => (
         </div>
 
         <div className="flex-1">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {events.slice(0, visibleCount).map(event => (
-              <OrgEventCard key={event.id} event={event} />
-            ))}
-          </div>
+          {events.length === 0 ? (
+  <div className="w-full flex flex-col items-center justify-center py-24 text-center">
+    <h3 className="text-2xl font-bold text-gray-700 mb-2">
+      No events available at the moment
+    </h3>
+    <p className="text-gray-500 max-w-md">
+      Try adjusting your filters or search for something else.
+    </p>
+  </div>
+) : (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+    {events.slice(0, visibleCount).map(event => (
+      <OrgEventCard key={event.id} event={event} />
+    ))}
+  </div>
+)}
 
           {events.length > visibleCount && (
             <div className="mt-12 flex justify-center">
