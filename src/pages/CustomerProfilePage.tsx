@@ -17,7 +17,7 @@ import {
   Book,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
+import { toast, Toaster } from 'react-hot-toast';
 /* ===================== TYPES ===================== */
 
 interface CustomerData {
@@ -180,11 +180,14 @@ const CustomerProfilePage: React.FC = () => {
       setImagePreview(null);
       setShowPhotoModal(false);
       setIsEditMode(false);
-      alert("Profile updated successfully!");
+      toast.success("Profile updated successfully");
 
     } catch (err) {
       console.error("Profile update error:", err);
-      setError(err instanceof Error ? err.message : 'Failed to update profile.');
+        setError(err instanceof Error ? err.message : 'Failed to update profile.');
+        toast.error(
+  err instanceof Error ? err.message : "Failed to update profile"
+);
     } finally {
       setLoading(false);
     }
@@ -205,7 +208,17 @@ const CustomerProfilePage: React.FC = () => {
   /* ===================== UI ===================== */
 
   return (
-    <div className="min-h-screen bg-gray-50 pt-24 pb-16">
+      <div className="min-h-screen bg-gray-50 pt-24 pb-16">
+          <Toaster
+  position="top-right"
+  toastOptions={{
+    duration: 3000,
+    style: {
+      borderRadius: '12px',
+      fontWeight: 500,
+    },
+  }}
+/>
       <div className="max-w-7xl mx-auto px-6 mt-16 grid grid-cols-1 lg:grid-cols-12 gap-8">
 
         {/* ================= SIDEBAR ================= */}
