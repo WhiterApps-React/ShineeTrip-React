@@ -96,7 +96,7 @@ const CustomerProfilePage: React.FC = () => {
         last_name: data.last_name || '',
         email: data.email || '',
         phone: data.phone || '',
-        dob: data.dob || '',
+        dob: data.dob ? data.dob.split('T')[0] : '',
         address: data.address || '',
       });
     } finally {
@@ -111,6 +111,14 @@ const CustomerProfilePage: React.FC = () => {
   const logout = () => {
     sessionStorage.clear();
     navigate('/');
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormState(prev => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const generateLetterAvatar = (name: string) =>
@@ -138,7 +146,7 @@ const CustomerProfilePage: React.FC = () => {
       // Append text fields
       if (formState.first_name) formData.append('first_name', formState.first_name);
       if (formState.last_name) formData.append('last_name', formState.last_name);
-      if (formState.email) formData.append('email', formState.email);
+      // Removed email append as instructed
       if (formState.phone) formData.append('phone', formState.phone);
       if (formState.address) formData.append('address', formState.address);
 
@@ -240,7 +248,7 @@ const CustomerProfilePage: React.FC = () => {
               className="bg-black text-white px-6 py-3 rounded-full flex items-center gap-2"
             >
               <Edit3 size={16} />
-              Edit photo
+              Edit Profile
             </button>
           </div>
           {/* ================= ABOUT ME ================= */}
@@ -380,27 +388,121 @@ const CustomerProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Photo Modal */}
+      {/* Edit Profile Modal */}
       {showPhotoModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-md bg-white/40">
-          <div className="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl border border-gray-200">
-            <h3 className="text-lg font-semibold mb-4">Edit Profile Photo</h3>
-            <div className="mb-4 flex justify-center">
-              {imagePreview ? (
-                <img src={imagePreview} alt="Preview" className="w-40 aspect-square rounded-full object-cover" />
-              ) : (
-                <img src={finalImageUrl} alt="Current" className="w-40 aspect-square rounded-full object-cover" />
-              )}
+          <div className="bg-white rounded-2xl p-8 max-w-lg w-full shadow-2xl border border-gray-200">
+            <h3 className="text-xl font-extrabold mb-6 text-gray-900">
+              Edit Profile
+            </h3>
+
+            {/* Avatar Preview */}
+            <div className="flex justify-center mb-6">
+              <div className="w-36 aspect-square rounded-full overflow-hidden border-4 border-[#D2A256]">
+                <img
+                  src={imagePreview || finalImageUrl}
+                  alt="Preview"
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageSelect}
-              className="mb-4"
-            />
-            {error && <p className="text-red-600 mb-2">{error}</p>}
-            <div className="flex justify-end gap-4">
+
+            {/* Upload */}
+            <div className="mb-6">
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Profile Photo
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="w-full text-sm"
+              />
+            </div>
+
+            {/* Form */}
+            <form className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  First Name
+                </label>
+                <input
+                  name="first_name"
+                  value={formState.first_name || ''}
+                  onChange={handleFormChange}
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  Last Name
+                </label>
+                <input
+                  name="last_name"
+                  value={formState.last_name || ''}
+                  onChange={handleFormChange}
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  Email (read only)
+                </label>
+                <input
+                  value={formState.email || ''}
+                  disabled
+                  className="w-full border rounded-lg px-3 py-2 mt-1 bg-gray-100 text-gray-500 cursor-not-allowed"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  Phone
+                </label>
+                <input
+                  name="phone"
+                  value={formState.phone || ''}
+                  onChange={handleFormChange}
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  name="dob"
+                  value={formState.dob || ''}
+                  onChange={handleFormChange}
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="text-xs font-semibold text-gray-500 uppercase">
+                  Address
+                </label>
+                <input
+                  name="address"
+                  value={formState.address || ''}
+                  onChange={handleFormChange}
+                  className="w-full border rounded-lg px-3 py-2 mt-1"
+                />
+              </div>
+
+            </form>
+
+            {error && <p className="text-red-600 mt-4">{error}</p>}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-4 mt-8">
               <button
+                type="button"
                 onClick={() => {
                   setShowPhotoModal(false);
                   setSelectedImage(null);
@@ -409,16 +511,16 @@ const CustomerProfilePage: React.FC = () => {
                   setIsEditMode(false);
                 }}
                 className="px-5 py-2.5 rounded-lg font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 transition"
-                type="button"
               >
                 Cancel
               </button>
+
               <button
+                type="button"
                 onClick={handleSaveProfile}
                 className="px-5 py-2.5 rounded-lg font-semibold text-white bg-[#D2A256] hover:bg-[#b3893a] transition shadow-md"
-                type="button"
               >
-                Save
+                Save Changes
               </button>
             </div>
           </div>
