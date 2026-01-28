@@ -54,29 +54,36 @@ const AboutPage = () => {
       <div className="max-w-7xl mx-auto py-8 px-6">
         <div className="grid grid-cols-12 gap-8">
           {/* Sidebar */}
-          <div className="col-span-3">
-            <Card>
-              <CardContent className="p-0">
-                <div className="bg-slate-800 text-white px-6 py-4">
-                  <h2 className="text-xl font-semibold">Profile</h2>
-                </div>
-                <div className="py-2">
-                  {menuItems.map((item, index) => (
-                    <button
-                      key={index}
-                      className={`w-full flex items-center gap-3 px-6 py-3 text-left transition-colors ${item.active
-                          ? 'bg-yellow-500 text-white'
-                          : 'text-gray-700 hover:bg-gray-100'
-                        }`}
-                    >
-                      {item.icon}
-                      <span className="text-sm">{item.label}</span>
-                    </button>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+         <div className="col-span-3">
+  <Card className="border rounded-2xl">
+    <CardContent className="p-0">
+
+      {/* Header */}
+      <div className="px-5 py-4 border-b">
+        <h2 className="text-lg font-bold text-gray-900">Profile</h2>
+      </div>
+
+      {/* Menu */}
+      <div className="p-3 space-y-2">
+        {menuItems.map((item, index) => (
+          <button
+            key={index}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all
+              ${
+                item.active
+                  ? 'bg-black text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+          >
+            {item.icon}
+            <span className="text-sm font-medium">{item.label}</span>
+          </button>
+        ))}
+      </div>
+
+    </CardContent>
+  </Card>
+</div>
 
           {/* Main Content Area */}
           <div className="col-span-9">

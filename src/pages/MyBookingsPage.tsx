@@ -8,7 +8,8 @@ import {
     Phone,
     Users,
     MapPin,
-    Calendar
+    Calendar,
+    LogOut
 } from 'lucide-react';
 import { format } from 'date-fns';
 import InvoicePDF from '@/components/ui/InvoicePDF';
@@ -587,6 +588,11 @@ const [selectedEventBooking, setSelectedEventBooking] = useState<any>(null);
 const filteredEventOrders = useMemo(() => {
   return filterEventBookings(eventOrders, filterStatus);
 }, [eventOrders, filterStatus]);
+  
+   const logout = () => {
+    sessionStorage.clear();
+    navigate('/');
+  };
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -603,13 +609,27 @@ const filteredEventOrders = useMemo(() => {
                 <div className="max-w-7xl mt-16 mx-auto px-6 grid grid-cols-1 lg:grid-cols-4 gap-8">
                     {/* Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-xl shadow-sm border p-6 sticky top-32">
-                            <h3 className="text-xl font-bold mb-4 border-b pb-2">Profile</h3>
-                            <div className="space-y-1">
-                                <ProfileNavItem icon={User} label="About me" onClick={() => navigate('/profile')} />
-                                <ProfileNavItem icon={ShoppingBag} label="My booking" active={true} onClick={() => { }} />
-                            </div>
-                        </div>
+                 <div className="bg-white border rounded-2xl p-6 shadow-sm">
+  <h3 className="text-lg font-bold text-gray-900 mb-4">Profile</h3>
+
+  {/* About me — inactive */}
+  <button
+    onClick={() => navigate('/profile')}
+    className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100"
+  >
+    <User className="w-4 h-4" />
+    About me
+  </button>
+
+  {/* My bookings — ACTIVE */}
+  <button
+    onClick={() => navigate('/mybooking')}
+    className="w-full mt-2 flex items-center gap-3 px-3 py-2 rounded-lg bg-black text-white"
+  >
+    <Calendar className="w-4 h-4" />
+    My bookings
+  </button>
+</div>
                     </div>
 
                     {/* Main Content */}
