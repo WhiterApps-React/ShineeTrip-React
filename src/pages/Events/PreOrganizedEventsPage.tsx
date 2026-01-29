@@ -431,13 +431,19 @@ const FilterContent = () => (
 /* ================= CARD ================= */
 const OrgEventCard = ({ event }: { event: OrgEvent }) => {
   const navigate = useNavigate();
-  const date = new Date(event.date_time);
+  const date = new Date((event as any).date || event.date_time);
 
   const getPrice = () => {
-    if (!event.price.length) return "Free";
-    const min = Math.min(...event.price.map(p => Number(p.split(":")[1])));
-    return min === 0 ? "Free" : `INR ${min}`;
-  };
+  const tickets = (event as any)?.tickets;
+
+  if (!tickets || tickets.length === 0) return "Free";
+
+  const minPrice = Math.min(
+    ...tickets.map((t: any) => Number(t.price))
+  );
+
+  return minPrice === 0 ? "Free" : `INR ${minPrice}`;
+};
 
   return (
     <div className="bg-white p-3 rounded-[2rem] shadow hover:shadow-xl relative h-[320px] flex flex-col">
