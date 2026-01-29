@@ -11,20 +11,27 @@ interface OrgEventDetail {
   id: number;
   title: string;
   cover_img: string;
-  date_time: string;
-  lat: number;
-  long: number;
+  date: string;          // ✅ FIX
+  time: string | null;   // ✅ FIX
+  lat: string;           // ✅ FIX
+  long: string;          // ✅ FIX
   h_name: string;
   h_contact: string;
   h_follow: string;
   desc: string;
   tags: string[];
   addr: string;
-  price: string[]; 
   category: string;
-  formate: string;
-  max_capacity: number;
-  current_booked: number;
+  format: string;
+
+  tickets: {
+    id: number;
+    name: string;
+    price: string;
+    total_tickets: number;
+    booked_tickets: number;
+    is_active: boolean;
+  }[];
 }
 
 const API_BASE_URL = "http://46.62.160.188:3000";
@@ -36,7 +43,8 @@ const OrgEventDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   
     // ✅ FIX 1: Modal State Add kiya hai
-    const [selectedTicket, setSelectedTicket] = useState<{
+  const [selectedTicket, setSelectedTicket] = useState<{
+      id : number , 
   type: string;
   price: number;
 } | null>(null);
@@ -74,14 +82,18 @@ const OrgEventDetailsPage = () => {
   if (!event) return <div className="text-center py-20 pt-32">Event not found</div>;
 
   // --- Helpers ---
-  const eventDate = new Date(event.date_time);
+  const eventDate = new Date(event.date);
   const dateStr = eventDate.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-  const timeStr = eventDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  const timeStr = event.time
+  ? event.time
+  : "Time not specified";
 
-  const tickets = event.price?.map(p => {
-    const parts = p.split(':');
-    return { type: parts[0], price: parts[1] ? parseInt(parts[1]) : 0 };
-  }) || [];
+  const tickets =
+    event.tickets?.filter(t => t.is_active).map(t => ({
+    id : t.id , 
+    type: t.name,
+    price: Number(t.price),
+  })) || [];
 
   return (
     <div className="min-h-screen bg-[#F4F4F4] font-opensans pb-20 pt-28 px-4 sm:px-6 lg:px-8">
@@ -258,9 +270,9 @@ const OrgEventDetailsPage = () => {
   {tickets.length > 0 ? (
     tickets.map((t, i) => {
       const isSelected =
-        selectedTicket?.type === t.type &&
-        selectedTicket?.price === t.price;
-
+        selectedTicket?.id === t.id &&
+selectedTicket?.type === t.type &&
+selectedTicket?.price === t.price;
       return (
         <button
           key={i}

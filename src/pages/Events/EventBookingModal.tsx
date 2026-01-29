@@ -2,15 +2,14 @@ import React, { useState, useEffect } from "react";
 import { X, Minus, Plus, ChevronRight, Lock, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-// Define Razorpay on Window
 declare global {
-    interface Window {
-        Razorpay: any;
-    }
+  interface Window {
+    Razorpay: any;
+  }
 }
 
 const API_BASE_URL = "http://46.62.160.188:3000";
-const RAZORPAY_KEY = 'rzp_test_Ri1Lg8tbqZnUaT'; // Your Test Key
+const RAZORPAY_KEY = "rzp_test_Ri1Lg8tbqZnUaT";
 
 interface EventBookingModalProps {
   isOpen: boolean;
@@ -19,6 +18,7 @@ interface EventBookingModalProps {
   selectedTicket: {
     type: string;
     price: number;
+    id?: number; // 👈 IMPORTANT
   } | null;
 }
 
@@ -29,116 +29,127 @@ const EventBookingModal = ({
   selectedTicket,
 }: EventBookingModalProps) => {
   const navigate = useNavigate();
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  
-  // Data States
+
   const [quantity, setQuantity] = useState(1);
   const [ticketType, setTicketType] = useState({ name: "Standard Ticket", price: 0 });
-  const [bookingData, setBookingData] = useState<any>(null); // Stores locked booking ID
-  
+  const [bookingData, setBookingData] = useState<any>(null);
+
   const [attendee, setAttendee] = useState({
     fullName: "",
     email: "",
-    phone: ""
+    phone: "",
   });
 
-  // Parse Ticket Price
- useEffect(() => {
-  if (selectedTicket) {
-    setTicketType({
-      name: selectedTicket.type,
-      price: selectedTicket.price,
-    });
-  }
-}, [selectedTicket]);
+  /* ===================== EFFECTS ===================== */
 
-  // Load Razorpay Script Dynamically
+  useEffect(() => {
+    if (selectedTicket) {
+      setTicketType({
+        name: selectedTicket.type,
+        price: selectedTicket.price,
+      });
+    }
+  }, [selectedTicket]);
+
   useEffect(() => {
     const script = document.createElement("script");
     script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     document.body.appendChild(script);
     return () => {
-        document.body.removeChild(script);
-    }
+      document.body.removeChild(script);
+    };
   }, []);
 
   if (!isOpen) return null;
 
-  // --- ACTIONS ---
+  /* ===================== FIXED LOCK API ===================== */
 
-  // Step 2 -> 3: Lock Tickets
   const handleLockTickets = async () => {
     setLoading(true);
     setErrorMsg("");
+
     try {
       const token = sessionStorage.getItem("shineetrip_token");
-      const userIdStr = sessionStorage.getItem("shineetrip_db_customer_id"); 
+      const customerIdStr = sessionStorage.getItem("shineetrip_db_customer_id");
+
+      if (!token || !customerIdStr || !selectedTicket?.id) {
+        console.log(selectedTicket?.id); 
+        throw new Error("Missing booking details");
+      }
       
-      // Fallback ID for testing if UID is missing (Replace 5 with actual logic)
-      const userId = userIdStr ? parseInt(userIdStr) : 5; 
 
       const payload = {
-        eventId: event.id,
-        userId: userId,
-        qty: quantity
+        event_id: Number(event.id),
+        event_ticket_id: Number(selectedTicket.id), // ✅ REQUIRED
+        customer_id: Number(customerIdStr),
+        ticket_qty: Number(quantity),
       };
+      console.log(payload); 
 
       const res = await fetch(`${API_BASE_URL}/bookings/lock`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
 
       const data = await res.json();
-      console.log(data); 
-      if (!res.ok) throw new Error(data.message || "Failed to lock tickets");
-      
-      setBookingData(data); // Store Booking ID
-      setStep(3); // Go to Summary
-    } catch (error: any) {
-      console.error(error);
-      setErrorMsg(error.message || "Could not lock tickets.");
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to lock tickets");
+      }
+
+      setBookingData(data);
+      setStep(3);
+    } catch (err: any) {
+      setErrorMsg(err.message || "Could not lock tickets");
     } finally {
       setLoading(false);
     }
   };
 
-  // Step 3: Payment
+  /* ===================== PAYMENT ===================== */
+
   const handlePayment = async () => {
+    if (!bookingData?.id) return;
+
     setLoading(true);
     setErrorMsg("");
+
     try {
       const token = sessionStorage.getItem("shineetrip_token");
-      
-      // 1. Initiate Payment to get Order ID
-      const initRes = await fetch(`${API_BASE_URL}/bookings/${bookingData.id}/payment/initiate`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        },
-        body: JSON.stringify({ paymentMethod: "online" })
-      });
+
+      const initRes = await fetch(
+        `${API_BASE_URL}/bookings/${bookingData.id}/payment/initiate`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ paymentMethod: "online" }),
+        }
+      );
 
       const orderData = await initRes.json();
-      if (!initRes.ok) throw new Error(orderData.message || "Payment initiation failed");
+      if (!initRes.ok) throw new Error(orderData.message);
 
-      // 2. Open Razorpay
       const options = {
         key: RAZORPAY_KEY,
-        amount: bookingData.total_amount * 100, // Amount in paise
+        amount: Number(bookingData.total_amount) * 100,
         currency: "INR",
         name: "Shinee Trip Events",
         description: `Booking for ${event.title}`,
-        order_id: orderData.razorpayOrderId, 
+        order_id: orderData.razorpayOrderId,
         handler: async (response: any) => {
-            await verifyPayment(response);
+          await verifyPayment(response);
         },
         prefill: {
           name: attendee.fullName,
@@ -146,48 +157,42 @@ const EventBookingModal = ({
           contact: attendee.phone,
         },
         theme: { color: "#AB7E29" },
-        modal: { ondismiss: () => setLoading(false) }
+        modal: { ondismiss: () => setLoading(false) },
       };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-
-    } catch (error: any) {
-      console.error("Payment Error", error);
-      setErrorMsg(error.message || "Payment failed to start");
+      new window.Razorpay(options).open();
+    } catch (err: any) {
+      setErrorMsg(err.message || "Payment failed");
       setLoading(false);
     }
   };
 
-  // Verify Payment
   const verifyPayment = async (rzpRes: any) => {
-      const token = sessionStorage.getItem("shineetrip_token");
-      try {
-          const verifyRes = await fetch(`${API_BASE_URL}/bookings/payment/success`, {
-              method: 'POST',
-              headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                  razorpayOrderId: rzpRes.razorpay_order_id,
-                  razorpayPaymentId: rzpRes.razorpay_payment_id,
-                  razorpaySignature: rzpRes.razorpay_signature
-              }),
-          });
+    const token = sessionStorage.getItem("shineetrip_token");
 
-          if (verifyRes.ok) {
-              alert("Booking Confirmed Successfully!");
-              onClose();
-              navigate("/mybooking"); // Redirect to My Bookings
-          } else {
-              throw new Error("Verification failed");
-          }
-      } catch (error) {
-          setErrorMsg("Payment successful but verification failed.");
-      } finally {
-          setLoading(false);
-      }
+    try {
+      const res = await fetch(`${API_BASE_URL}/bookings/payment/success`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          razorpayOrderId: rzpRes.razorpay_order_id,
+          razorpayPaymentId: rzpRes.razorpay_payment_id,
+          razorpaySignature: rzpRes.razorpay_signature,
+        }),
+      });
+
+      if (!res.ok) throw new Error();
+
+      onClose();
+      navigate("/mybooking");
+    } catch {
+      setErrorMsg("Payment successful but verification failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   // --- UI STEPS ---
