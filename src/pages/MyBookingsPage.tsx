@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import toast, { Toaster } from 'react-hot-toast';
 import { useSearchParams } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -287,14 +288,14 @@ const BookingDetailModal = ({ isOpen, onClose, data }: { isOpen: boolean, onClos
 };
 
 
-const RatingModal = ({ 
-    isOpen, 
-    onClose, 
-    propertyId 
-}: { 
-    isOpen: boolean; 
-    onClose: () => void; 
-    propertyId: number | null 
+const RatingModal = ({
+    isOpen,
+    onClose,
+    propertyId
+}: {
+    isOpen: boolean;
+    onClose: () => void;
+    propertyId: number | null
 }) => {
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
@@ -306,6 +307,8 @@ const RatingModal = ({
         summary: '',
         comment: ''
     });
+    // Add image state after formData
+    const [images, setImages] = useState<File[]>([]);
 
     if (!isOpen || !propertyId) return null;
 
@@ -316,25 +319,37 @@ const RatingModal = ({
         const token = sessionStorage.getItem('shineetrip_token');
 
         try {
+            // Use FormData instead of JSON
+            const fd = new FormData();
+
+            fd.append('propertyId', String(propertyId));
+            fd.append('customerId', String(customerId));
+
+            Object.entries(formData).forEach(([key, value]) => {
+              fd.append(key, String(value));
+            });
+
+            // images[] array for backend
+            images.forEach((img) => {
+              fd.append('images', img);
+            });
+
             const response = await fetch('http://46.62.160.188:3000/ratings', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    propertyId,
-                    customerId: Number(customerId),
-                })
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+              },
+              body: fd
             });
 
             if (response.ok) {
-                alert("Review submitted successfully!");
+                toast.success("Review submitted successfully!");
+                setImages([]); // reset images after successful submission
                 onClose();
             }
         } catch (error) {
             console.error("Error posting review:", error);
+            toast.error("Failed to submit review. Please try again.");
         } finally {
             setLoading(false);
         }
@@ -363,7 +378,7 @@ const RatingModal = ({
                     <h2 className="text-lg font-black uppercase tracking-tight">Rate Your Experience</h2>
                     <button type="button" onClick={onClose}><XCircle /></button>
                 </div>
-                
+
                 <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                     <div className="grid grid-cols-1 gap-2">
                         <StarRating label="Overall Rating" value={formData.overallRating} name="overallRating" />
@@ -373,23 +388,51 @@ const RatingModal = ({
                         <StarRating label="Food" value={formData.food} name="food" />
                     </div>
 
-                    <input 
-                        className="w-full border rounded-xl p-3 text-sm font-medium focus:ring-2 ring-[#D2A256] outline-none" 
+                    <input
+                        className="w-full border rounded-xl p-3 text-sm font-medium focus:ring-2 ring-[#D2A256] outline-none"
                         placeholder="Short Summary (e.g. Amazing Stay!)"
-                        onChange={(e) => setFormData({...formData, summary: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, summary: e.target.value })}
                         required
                     />
-                    <textarea 
-                        className="w-full border rounded-xl p-3 text-sm font-medium h-24 focus:ring-2 ring-[#D2A256] outline-none" 
+                    <textarea
+                        className="w-full border rounded-xl p-3 text-sm font-medium h-24 focus:ring-2 ring-[#D2A256] outline-none"
                         placeholder="Tell us more about your stay..."
-                        onChange={(e) => setFormData({...formData, comment: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, comment: e.target.value })}
                         required
                     />
+                    {/* Image upload UI */}
+                    <div className="space-y-2">
+                      <label className="text-xs font-bold text-gray-500 uppercase">
+                        Upload Images (optional)
+                      </label>
+
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => {
+                          if (!e.target.files) return;
+                          setImages(Array.from(e.target.files));
+                        }}
+                        className="block w-full text-sm text-gray-500
+                          file:mr-4 file:py-2 file:px-4
+                          file:rounded-lg file:border-0
+                          file:text-xs file:font-bold
+                          file:bg-yellow-50 file:text-[#D2A256]
+                          hover:file:bg-yellow-100"
+                      />
+
+                      {images.length > 0 && (
+                        <p className="text-xs text-gray-400 font-semibold">
+                          {images.length} image(s) selected
+                        </p>
+                      )}
+                    </div>
                 </div>
 
                 <div className="p-6 border-t bg-gray-50">
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={loading}
                         className="w-full bg-[#D2A256] text-white py-4 rounded-2xl font-black uppercase tracking-widest hover:bg-[#b88d45] disabled:opacity-50"
                     >
@@ -695,6 +738,7 @@ const [activePropertyId, setActivePropertyId] = useState<number | null>(null);
 
     } catch (err) {
         console.error("Fetch Error:", err);
+        toast.error("Failed to load bookings. Please refresh.");
     } finally {
         setLoading(false); // ✅ ALWAYS STOPS LOADING
     }
@@ -738,6 +782,7 @@ const filteredEventOrders = useMemo(() => {
 
     return (
         <div className="min-h-screen bg-gray-50 pt-24 pb-12">
+            <Toaster position="top-right" toastOptions={{ duration: 3000 }} />
             <style dangerouslySetInnerHTML={{ __html: `@media print { .no-print-main { display: none !important; } .print-only-invoice { display: block !important; position: absolute; top: 0; left: 0; width: 100%; z-index: 9999; } }` }} />
 
             <div className={`no-print-main ${selectedInvoice ? 'hidden' : ''}`}>
