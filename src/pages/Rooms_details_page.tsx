@@ -335,7 +335,8 @@ export function RoomDetailsModal({
           <button className="p-2 border rounded-lg transition-colors flex justify-center gap-2 items-center"><Flag className="w-5 h-5 " /><span>Report this hotel</span></button>
         </div>
 
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(90vh - 80px)" }}>
+        <div className="overflow-y-auto" style={{ maxHeight: "calc(90vh - 80px)"  , msOverflowStyle: 'none',  /* IE and Edge */
+    scrollbarWidth: 'none'} }>
           {/* Gallery */}
           {/* Gallery: Non-Uniform Grid Layout */}
           {/* Gallery: Non-Uniform Grid */}
