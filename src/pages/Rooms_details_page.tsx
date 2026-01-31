@@ -109,7 +109,7 @@ const RestaurantCard = ({ rest }: { rest: any }) => {
 
       {/* --- FULL PAGE CAROUSEL MODAL --- */}
       <Dialog open={isCarouselOpen} onOpenChange={setIsCarouselOpen}>
-        <DialogContent className="max-w-none w-screen h-screen m-0 p-0 bg-black/95 border-none rounded-none z-[10000] flex items-center justify-center">
+        <DialogContent className="min-w-[100vw] w-screen h-screen m-0 p-0] bg-black/90 border-none rounded-none z-[10000] flex items-center justify-center">
           {/* Close Button */}
           <button
             onClick={() => setIsCarouselOpen(false)}
@@ -127,10 +127,10 @@ const RestaurantCard = ({ rest }: { rest: any }) => {
           </button>
 
           {/* Image Container */}
-          <div className="w-full h-full flex items-center justify-center p-4 md:p-12 select-none">
+          <div className="w-[50vw] h-[50vh] flex items-center justify-center p-4 md:p-12 select-none">
             <img
               src={localGallery[carouselIndex]}
-              className="max-h-full max-w-full object-contain shadow-2xl transition-all duration-500"
+              className="w-[50vw] h-[50vh] object-contain shadow-2xl transition-all duration-500"
               alt="Full view"
             />
           </div>
