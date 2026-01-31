@@ -541,6 +541,81 @@ export default function RoomBookingPage() {
                     )}
                 </div>
 
+
+
+
+
+                {/* LOCATION & NEARBY ATTRACTIONS CARD */}
+<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-10">
+  <h3 className="text-lg font-bold text-gray-900 mb-4">
+    Location & Nearby Attractions
+  </h3>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* MAP */}
+    <div className="w-full h-[280px] rounded-lg overflow-hidden border">
+      <iframe
+        title="hotel-location-map"
+        width="100%"
+        height="100%"
+        loading="lazy"
+        referrerPolicy="no-referrer-when-downgrade"
+        src={`https://www.openstreetmap.org/export/embed.html?bbox=${Number(hotelData.long) - 0.01}%2C${Number(hotelData.lat) - 0.01}%2C${Number(hotelData.long) + 0.01}%2C${Number(hotelData.lat) + 0.01}&layer=mapnik&marker=${hotelData.lat}%2C${hotelData.long}`}
+      />
+    </div>
+
+    {/* NEARBY ATTRACTIONS */}
+    <div>
+      <h4 className="font-semibold text-gray-900 mb-3">
+        Nearby Attractions
+      </h4>
+
+      {hotelData?.nearbyAttractions?.length > 0 ? (
+        <ul className="list-disc pl-5 space-y-2 text-gray-700 text-sm">
+          {hotelData.nearbyAttractions.map(
+            (place: string, index: number) => (
+              <li key={index}>{place}</li>
+            )
+          )}
+        </ul>
+      ) : (
+        <p className="text-gray-500 text-sm">
+          No nearby attractions available.
+        </p>
+      )}
+    </div>
+  </div>
+
+  {/* FOOTER CONTACT INFO */}
+  <div className="mt-6 pt-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-gray-700">
+    <div>
+      <span className="font-semibold">Email:</span>{" "}
+      {hotelData.email || "N/A"}
+    </div>
+
+    <div>
+      <span className="font-semibold">Phone:</span>{" "}
+      {hotelData.phone || "N/A"}
+    </div>
+
+    <div>
+      <span className="font-semibold">Website:</span>{" "}
+      {hotelData.websiteUrl ? (
+        <a
+          href={hotelData.websiteUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-600 hover:underline"
+        >
+          {hotelData.websiteUrl}
+        </a>
+      ) : (
+        "N/A"
+      )}
+    </div>
+  </div>
+</div>
+
                 {/* GUEST FAVORITE REVIEWS SECTION */}
                 {hotelIdNumber && <HotelReviews hotelId={hotelIdNumber} />}
 
