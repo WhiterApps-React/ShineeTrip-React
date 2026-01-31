@@ -21,7 +21,7 @@ export const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isLandingPage = location.pathname === "/";
-
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
 
   useEffect(() => {
     const path = location.pathname.toLowerCase();
@@ -64,44 +64,55 @@ export const Navbar = () => {
 
 
 
-  useEffect(() => {
-    
+// 1. Add profileImage state at the top with other states
+const [profileImage, setProfileImage] = useState<string | null>(null);
 
-    const checkLoginStatus = () => {
-      const token = sessionStorage.getItem("shineetrip_token");
-      const name = sessionStorage.getItem("shineetrip_name");
-      const email = sessionStorage.getItem("shineetrip_email");
+// 2. Updated checkLoginStatus inside your useEffect
+useEffect(() => {
+  const checkLoginStatus = async () => {
+    const token = sessionStorage.getItem("shineetrip_token");
+    const name = sessionStorage.getItem("shineetrip_name");
+    const email = sessionStorage.getItem("shineetrip_email");
+    const customerDbId = sessionStorage.getItem("shineetrip_db_customer_id"); // Assuming uid is your customerDbId
 
-      // Valid token check
-      if (token && token !== "undefined" && token !== "null" && token.length > 20) {
-        setIsLoggedIn(true);
-        
-        // Initial set karo (Name > Email > Default "U")
-        if (name) {
-          setUserInitial(name.charAt(0).toUpperCase());
-        } else if (email) {
-          setUserInitial(email.charAt(0).toUpperCase());
-        } else {
-          setUserInitial("U");
+    if (token && token !== "undefined" && token !== "null" && token.length > 20) {
+      setIsLoggedIn(true);
+      
+      // Set Initial fallback
+      if (name) setUserInitial(name.charAt(0).toUpperCase());
+      else if (email) setUserInitial(email.charAt(0).toUpperCase());
+      else setUserInitial("D");
+
+      // --- NEW API CALL SECTION ---
+      if (customerDbId) {
+        try {
+          const response = await fetch(`http://46.62.160.188:3000/customers/${customerDbId}`, {
+            headers: {
+              'Authorization': `Bearer ${token}` // Add this if your API requires auth
+            }
+          });
+          if (response.ok) {
+            const data = await response.json();
+            console.log(data); 
+            // Assuming the API returns an object with profile_image field
+            if (data.profile_image) {
+              setProfileImage(data.profile_image);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching profile:", error);
         }
-      } else {
-        setIsLoggedIn(false);
       }
-    };
+      // ----------------------------
+    } else {
+      setIsLoggedIn(false);
+      setProfileImage(null);
+    }
+  };
 
-    checkLoginStatus();
-
-
-    window.addEventListener("session-restored", checkLoginStatus);
-
-    window.addEventListener("storage", checkLoginStatus);
-
-    // Cleanup
-    return () => {
-      window.removeEventListener("session-restored", checkLoginStatus);
-      window.removeEventListener("storage", checkLoginStatus);
-    };
-  }, []);
+  checkLoginStatus();
+  // ... rest of your event listeners
+}, [location.pathname]); // Added location.pathname to refresh on navigation if needed
 
   const scrollToSection = (id: string) => {
     const element = document.getElementById(id);
@@ -340,17 +351,27 @@ export const Navbar = () => {
             <div className="hidden md:flex items-center flex-shrink-0 gap-3">
               {isLoggedIn ? (
                 <>
-                  {/* User Avatar */}
-                  <div
-                    onClick={() => navigate('/about')}
-                    className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl cursor-pointer"
-                    style={{
-                      background: 'linear-gradient(180.95deg, #AB7E29 0.87%, #EFD08D 217.04%)',
-                      boxShadow: '0px 2px 6px 2px rgba(0, 0, 0, 0.15)',
-                    }}
-                  >
-                    {userInitial}
-                  </div>
+                
+                {/* User Avatar */}
+<div
+  onClick={() => navigate('/about')}
+  className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-xl cursor-pointer overflow-hidden"
+  style={{
+    background: 'linear-gradient(180.95deg, #AB7E29 0.87%, #EFD08D 217.04%)',
+    boxShadow: '0px 2px 6px 2px rgba(0, 0, 0, 0.15)',
+  }}
+>
+  {profileImage ? (
+    <img 
+      src={profileImage} 
+      alt="Profile" 
+      className="w-full h-full object-cover" 
+      onError={() => setProfileImage(null)} // Fallback to initial if image fails to load
+    />
+  ) : (
+    userInitial
+  )}
+</div>
 
                   {/* Menu Icon with Dropdown */}
                   <div className="relative">
