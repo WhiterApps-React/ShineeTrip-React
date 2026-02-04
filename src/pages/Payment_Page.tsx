@@ -103,6 +103,7 @@ const BookingPage: React.FC = () => {
 
             if (response.ok) {
                 const data = await response.json();
+                console.log("Catalog Price Rules Response:", data);
                 // Most APIs wrap results in a 'data' key or return the array directly
                 // Update this based on your exact API response structure
                 const rules = Array.isArray(data) ? data : (data.data || []);
@@ -128,12 +129,13 @@ const BookingPage: React.FC = () => {
 
     const retailPriceStr = searchParams.get('retailPrice') || '0';
     const taxPriceStr = searchParams.get('taxPrice') || '0';
-    const grandTotalStr = searchParams.get('grandTotal') || '0';
+    const grandTotalStr = searchParams.get('discountedGrandTotal') || '0';
     const roomName = searchParams.get('roomName') || 'Deluxe Room';
     const checkInStr = searchParams.get('checkIn') || '';
     const checkOutStr = searchParams.get('checkOut') || '';
     const roomId = searchParams.get('roomId') || '';
     const rooms = searchParams.get('rooms') || '1';
+    const disAmount = searchParams.get('discountAmount') || '0';
 
     const nights = (() => {
         try {
@@ -150,6 +152,7 @@ const BookingPage: React.FC = () => {
     const retailPrice = parseFloat(retailPriceStr);
     const taxPrice = parseFloat(taxPriceStr);
     const grandTotal = parseFloat(grandTotalStr);
+    const discountAmount = parseFloat(disAmount);
 
     const token = sessionStorage.getItem('shineetrip_token');
     const customerIdStr = sessionStorage.getItem('shineetrip_db_customer_id') || '1'; // Using db customer ID
@@ -467,7 +470,7 @@ const BookingPage: React.FC = () => {
                     setPaymentMessage('Payment window timed out or connection lost. Please try again.');
                     setIsProcessing(false);
                 }
-            }, 60000);
+            }, 6000);
 
 
         } catch (error) {
@@ -1306,42 +1309,42 @@ const BookingPage: React.FC = () => {
                                 <h3 className="font-bold text-gray-900 mb-5 text-base">Coupon Code</h3>
 
                                 <div className="space-y-4">
-                                    {catalogPrices.length > 0 ? (
+                                    {/* {catalogPrices.length > 0 ? (
                                         catalogPrices.map((rule, index) => {
                                             // Calculate display percentage (0.1 -> 10%)
                                             const percentageText = rule.reduction_type === "percentage"
                                                 ? `${(parseFloat(rule.reduction) * 100).toFixed(0)}% OFF`
-                                                : `${rule.currency?.symbol || '₹'}${rule.reduction} OFF`;
+                                                : `${rule.currency?.symbol || '₹'}${rule.reduction} OFF`; */}
 
-                                            return (
-                                                <label key={rule.id || index} className="flex items-start gap-3 cursor-pointer group relative">
-                                                    <div className="mt-1">
+                                            {/* return ( */}
+                                                <label  className="flex items-start gap-3 cursor-pointer group relative">
+                                                    {/* <div className="mt-1">
                                                         <input type="radio" name="coupon" className="peer sr-only" />
                                                         <div className="w-4 h-4 rounded-full border border-gray-300 peer-checked:border-[#4585b9] peer-checked:bg-[#4c8ae7] transition-all"></div>
-                                                    </div>
+                                                    </div> */}
 
                                                     <div className="flex-1">
                                                         <div className="flex justify-between w-full">
                                                             {/* Top Line: Name and Base Price */}
-                                                            <span className="font-bold text-gray-800 text-sm uppercase">
-                                                                {rule.group?.name || "Discount"}
+                                                            <span className="font-bold text-gray-800 text-[18px]  uppercase">
+                                                                {discountAmount|| "Discount"}
                                                             </span>
-                                                            <span className="font-bold text-gray-900 text-sm">
+                                                            {/* <span className="font-bold text-gray-900 text-sm">
                                                                 ₹{rule.base_price}
-                                                            </span>
+                                                            </span> */}
                                                         </div>
 
                                                         {/* Second Line: Percentage/Reduction info */}
-                                                        <p className="text-xs text-gray-400 font-medium mt-1 group-hover:text-green-700 transition-colors">
-                                                            Discount of {percentageText} will be applied
+                                                        <p className="text-[16px] text-green-700 font-medium mt-1 group-hover:text-green-700 transition-colors">
+                                                            Discount  applied
                                                         </p>
                                                     </div>
                                                 </label>
-                                            );
-                                        })
-                                    ) : (
-                                        <p className="text-sm text-gray-400 italic">No coupons available.</p>
-                                    )}
+                                            {/* ); */}
+                                        {/* })
+                                    // ) : (
+                                    //     <p className="text-sm text-gray-400 italic">No coupons available.</p>
+                                    // )} */}
                                 </div>
 
                                 {/* Manual Entry Field */}

@@ -463,7 +463,7 @@ export default function RoomBookingPage() {
                     {/* Header Section with Bottom Border */}
                     <div className="flex flex-col md:flex-row justify-between items-center p-6 md:px-8 md:py-5 border-b border-gray-100 bg-gray-50/30">
                         {/* LEFT SIDE: Heading */}
-                        <h2 className="text-[20px] md:text-[22px] font-bold text-gray-900 tracking-tight">
+                        <h2 className="text-[22px] md:text-[22px] font-bold text-gray-900 tracking-tight">
                             Review your booking
                         </h2>
 
