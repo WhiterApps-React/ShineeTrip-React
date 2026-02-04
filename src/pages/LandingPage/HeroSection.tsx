@@ -40,6 +40,7 @@ export default function HeroSection() {
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
+  const [keywords, setKeywords] = useState("");
   const [errorPopup, setErrorPopup] = useState<string>("");
 
   // Login Popup State
@@ -265,77 +266,64 @@ export default function HeroSection() {
       return;
     }
 
-    // 2. Location Presence Check
+
     if (!location.trim()) {
-      setErrorPopup("Please enter a location.");
+      setErrorPopup("Please enter a destination or hotel name.");
       return;
     }
 
-    // if (searchTab === "Holiday Packages") {
-    //   const cityOnly = location.split(",")[0].trim();
-    //   const query = new URLSearchParams({
-    //     city: cityOnly,
-    //     departureDate: checkIn || new Date().toISOString().split("T")[0],
-    //   }).toString();
-    //   navigate(`/holiday-packages?${query}`); // Corrected route for packages
-    //   return;
-    // }
-
-    // 3. Location Validity Check (using current available locations)
-    const userInput = location.trim().toLowerCase();
-
-    const isValid = availableLocations.some(loc => {
-      const lowerLoc = loc.toLowerCase();
-      const cityOnly = loc.split(",")[0].trim().toLowerCase();
-
-      return (
-        lowerLoc === userInput ||
-        lowerLoc.includes(userInput) ||
-        cityOnly === userInput ||
-        cityOnly.includes(userInput) ||
-        userInput.includes(cityOnly) ||
-        userInput.includes(loc.split(",")[1]?.trim().toLowerCase())
-      );
-    });
-
-    if (!isValid) {
-      setErrorPopup("Location not found. Please select from the suggestions.");
-      return;
-    }
-
-    // 4. Date Validation Check
+    // 3. Date Validation (Ye same rahega)
     let finalCheckIn = checkIn || getFutureDateString(1);
     let finalCheckOut = checkOut || getFutureDateString(2);
-
     const today = new Date().toISOString().split("T")[0];
 
     if (checkIn && checkOut) {
-
       if (checkIn < today || checkOut < today || checkIn >= checkOut) {
         setErrorPopup("Please select valid dates. Check-out must be after Check-in.");
         return;
       }
     } else if (checkIn || checkOut) {
-
       setErrorPopup("Please enter both Check-in and Check-out dates.");
       return;
     }
 
+    // --- MAIN LOGIC CHANGE HERE ---
+    
+    const userInput = location.trim(); 
+    const userInputLower = userInput.toLowerCase();
 
-    const cityOnly = location.split(",")[0].trim();
+    const isMatchingLocation = availableLocations.some(loc => {
+      const lowerLoc = loc.toLowerCase();
+      const cityOnly = loc.split(",")[0].trim().toLowerCase();
+      
 
-    const query = new URLSearchParams({
-      location: cityOnly,
+      return (
+        lowerLoc === userInputLower || 
+        cityOnly === userInputLower
+      );
+    });
+
+    // Base Params (Dates & Pax)
+    const queryParams: any = {
       checkIn: finalCheckIn,
       checkOut: finalCheckOut,
       adults: adults.toString(),
       children: children.toString(),
       rooms: rooms.toString(),
-    }).toString();
+    };
 
+    if (isMatchingLocation) {
+      const cityOnly = userInput.split(",")[0].trim();
+      queryParams.location = cityOnly;
+    } else {
+
+      queryParams.location = ""; 
+      queryParams.keywords = userInput;
+    }
+
+    const query = new URLSearchParams(queryParams).toString();
     navigate(`/hotellists?${query}`);
   };
-
 
   const handleButtonClick = () => {
     const token = sessionStorage.getItem("shineetrip_token");
@@ -779,8 +767,8 @@ export default function HeroSection() {
             </div>
 
             {/* Tabs */}
-            <div className="flex justify-center mb-4   relative z-10">
-              <div className="flex  gap-8 overflow-x-auto no-scrollbar pb-1">
+            <div className="flex justify-center mb-4 overflow-x-auto no-scrollbar border-amber-400  relative z-10">
+              <div className="flex  gap-8  overflow-x-auto no-scrollbar pb-1">
                 {categories.map((cat) => (
                   <button
                     key={cat.id}

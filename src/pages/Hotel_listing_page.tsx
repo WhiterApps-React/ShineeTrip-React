@@ -856,7 +856,7 @@ const HotelListingPage: React.FC = () => {
           {/* INNER WRAPPER → equal spacing + alignment */}
           <div className="flex items-center gap-6 flex-wrap justify-center">
             {/* 1. Sort Label (Desktop Only) */}
-            <div className="hidden sm:flex items-center gap-2 text-gray-900 font-[700] text-sm">
+            <div className="hidden sm:flex items-center gap-2 text-gray-900 font-opensans text-[18px]">
               <SlidersHorizontal className="w-4 h-4 text-[#D2A256]" />
               <span>Sort By:</span>
             </div>
@@ -954,7 +954,7 @@ const HotelListingPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50 font-opensans pt-[116px]">
       {SearchBar}     {" "}
-      <div className="max-w-7xl mx-auto px-6 py-6">
+      <div className="max-w-7xl mx-auto px-6 -mt-12 py-4">
         {/* Results Header */}       {" "}
         <div className="mb-6">
           {" "}
@@ -1199,13 +1199,16 @@ const HotelListingPage: React.FC = () => {
         {/* Load More Button */}       {" "}
         <div className="flex justify-center mt-10">
           {" "}
-          {hasSearched && hotels.length > 0 && hasMore && !loading && (
-            <button
-              onClick={handleLoadMore}
-              className="bg-gray-900 text-white px-8 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
-            >
-              Load More            {" "}
-            </button>
+          {hasSearched && hotels.length > 10 && hasMore && !loading && (
+<div className="flex justify-center">
+  <button
+    onClick={handleLoadMore}
+    className="bg-gray-900 text-white px-5 py-3 rounded-full font-medium hover:bg-gray-800 transition-colors"
+  >
+    Load More
+  </button>
+</div>
+
           )}
           {" "}
           {loading && page > 1 && (

@@ -53,6 +53,7 @@ const HolidayPackages = () => {
         });
 
         const result: any = await response.json();
+        console.log("Fetched Packages:", result);
         let finalData = result.data || result || [];
 
         // Client Side Filtering Logic

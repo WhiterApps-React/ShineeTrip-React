@@ -420,12 +420,14 @@ export function RoomDetailsModal({
         body: JSON.stringify(payload),
       });
       const responseData = await res.json();
+      console.log("response", responseData);
       if (res.ok) {
         const queryParams = new URLSearchParams({
           location: searchParams.get("location") || "", checkIn, checkOut, adults: adults.toString(),
           children: children.toString(), rooms: responseData.roomsRequired || "1", propertyId: propertyId || "",
           roomId: roomData?.id?.toString() || "", roomName: roomData?.room_type || roomName,
-          retailPrice: responseData?.pricePerNight || "0", taxPrice: responseData?.taxTotal || "0", grandTotal: responseData?.grandTotal || "0"
+          retailPrice: responseData?.pricePerNight || "0", taxPrice: responseData?.taxTotal || "0", discountedGrandTotal: responseData?.discountedGrandTotal || "0" , 
+          discountAmount: responseData?.discountAmount || "0"
         });
         navigate(`/booking?${queryParams.toString()}`, { state: { availabilityResponse: responseData } });
       } else { alert(responseData.message || "Availability check failed"); }
