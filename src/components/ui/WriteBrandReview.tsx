@@ -14,7 +14,6 @@ interface CustomerData {
   address?: string;
 }
 
-// ✅ New Prop added to handle closing
 interface WriteBrandReviewProps {
   onSuccess?: () => void; 
 }
@@ -30,9 +29,10 @@ const WriteBrandReview: React.FC<WriteBrandReviewProps> = ({ onSuccess }) => {
   const [submitting, setSubmitting] = useState<boolean>(false);
   const ERROR_TOAST_ID = "review-error";
 
+  // Session storage se data le rahe hain
   const token = sessionStorage.getItem("shineetrip_token");
   const cuImg = sessionStorage.getItem("shineetrip_profile_image");
-  const customerDbId = sessionStorage.getItem("shineetrip_db_customer_id");
+  const customerDbId = sessionStorage.getItem("shineetrip_db_customer_id"); // Yeh ID use hogi
 
   const MAX_TITLE = 15;
   const MAX_LOCATION = 10;
@@ -68,7 +68,8 @@ const WriteBrandReview: React.FC<WriteBrandReviewProps> = ({ onSuccess }) => {
       return;
     }
 
-    if (!token || !cuName) {
+    // ✅ Yahan check add kiya hai ki customerDbId exist karta hai ya nahi
+    if (!token || !cuName || !customerDbId) {
       toast.error("User information missing. Please login again.");
       return;
     }
@@ -86,6 +87,7 @@ const WriteBrandReview: React.FC<WriteBrandReviewProps> = ({ onSuccess }) => {
           rating,
           title,
           review,
+          customerId: Number(customerDbId), // ✅ SWAGGER CHANGE: ID ko number mein convert karke bheja hai
           cu_name: cuName,
           cu_addr: cuAddr,
           cu_img: cuImg,
@@ -94,20 +96,17 @@ const WriteBrandReview: React.FC<WriteBrandReviewProps> = ({ onSuccess }) => {
 
       if (!response.ok) throw new Error("Submission failed");
 
-      // ✅ Success Message
       toast.success("Thank you! Your review is submitted");
 
-      // Reset fields
       setRating(0);
       setTitle("");
       setReview("");
 
-      // ✅ 1.5 Second ka wait taaki user Toast padh sake, fir close/reload
       setTimeout(() => {
         if (onSuccess) {
-          onSuccess(); // Modal band karega
+          onSuccess(); 
         } else {
-          window.location.reload(); // Agar prop nahi diya to reload karega
+          window.location.reload(); 
         }
       }, 1500);
 
@@ -136,8 +135,6 @@ const WriteBrandReview: React.FC<WriteBrandReviewProps> = ({ onSuccess }) => {
   return (
     <>
       <Toaster />
-
-      {/* ✅ Change: max-w-md (approx 450px) kar diya jo 'sm' se thoda bada hai */}
       <div className="w-full max-w-md mx-auto bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
         
         <div className="bg-gradient-to-r from-gray-50 to-white p-5 border-b border-gray-100 text-center">
@@ -145,7 +142,6 @@ const WriteBrandReview: React.FC<WriteBrandReviewProps> = ({ onSuccess }) => {
           <p className="text-sm text-gray-500 mt-1">We value your feedback</p>
         </div>
 
-        {/* ✅ Change: Padding p-6 kar di taaki height thodi badh jaye */}
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
           
           <div className="flex flex-col items-center justify-center space-y-2">
@@ -153,7 +149,7 @@ const WriteBrandReview: React.FC<WriteBrandReviewProps> = ({ onSuccess }) => {
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star
                   key={star}
-                  size={32} // Stars thode bade kiye
+                  size={32} 
                   onMouseEnter={() => setHoverRating(star)}
                   onClick={() => setRating(star)}
                   className={`cursor-pointer transition-all duration-200 transform hover:scale-110 ${
@@ -224,7 +220,7 @@ const WriteBrandReview: React.FC<WriteBrandReviewProps> = ({ onSuccess }) => {
                   placeholder="Share your experience..."
                   value={review}
                   onChange={handleReviewChange}
-                  rows={4} // Thoda height badhaya
+                  rows={4} 
                   className="w-full pl-10 pr-3 py-2.5 text-sm rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:ring-1 focus:ring-[#C9A86A] transition-all outline-none resize-none"
                 />
               </div>
