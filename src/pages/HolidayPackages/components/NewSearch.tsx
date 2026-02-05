@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, MapPin, Calendar, Users } from "lucide-react";
+import { Search, MapPin, Calendar, Users, Minus, Plus } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { LoginModal } from "../../Login/Loginpage";
 
@@ -223,16 +223,26 @@ export const NewSearch = ({
                   {persons} Guests
                 </span>
 
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => persons > 1 && setPersons(persons - 1)}
-                    className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-400 text-gray-500 hover:text-[#C9A961] hover:border-[#C9A961] transition-colors text-xs"
-                  >—</button>
-                  <button
-                    onClick={() => setPersons(persons + 1)}
-                    className="w-5 h-5 flex items-center justify-center rounded-full border border-gray-400 text-gray-500 hover:text-[#C9A961] hover:border-[#C9A961] transition-colors text-xs"
-                  >+</button>
-                </div>
+<div className="flex items-center gap-1">
+  <button
+    onClick={() => persons > 1 && setPersons(persons - 1)}
+    className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-400 text-gray-500 hover:text-[#C9A961] hover:border-[#C9A961] transition-colors"
+  >
+    <Minus size={18} />
+  </button>
+
+  <span className="text-sm font-semibold text-gray-800 w-6 text-center">
+    {persons}
+  </span>
+
+  <button
+    onClick={() => setPersons(persons + 1)}
+    className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-400 text-gray-500 hover:text-[#C9A961] hover:border-[#C9A961] transition-colors"
+  >
+    <Plus size={18} />
+  </button>
+</div>
+
               </div>
             </div>
 

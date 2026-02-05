@@ -184,7 +184,7 @@ const EventsPage = () => {
               <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">Choose Event & Venue</h3>
               <p className="text-gray-600 text-sm">Select your event type and destination.</p>
             </div>
-            <div className="hidden md:block absolute left-[22%] top-[30%]"><ArrowRight className="text-[#C9A961] w-12 h-12" /></div>
+            <div className="hidden md:block absolute left-[28%] top-[20%]"><ArrowRight className="text-[#C9A961] w-12 h-12" /></div>
 
             <div className="flex flex-col items-center text-center max-w-xs z-10 mt-8 md:mt-0">
               <div className="w-24 h-24 rounded-full bg-white border-4 border-[#E5E7EB] flex items-center justify-center mb-4 shadow-sm">
@@ -193,7 +193,7 @@ const EventsPage = () => {
               <h3 className="text-xl font-bold text-[#1A1A1A] mb-2">Share Requirements</h3>
               <p className="text-gray-600 text-sm">Tell us your needs & preferences.</p>
             </div>
-            <div className="hidden md:block absolute right-[22%] top-[30%]"><ArrowRight className="text-[#C9A961] w-12 h-12" /></div>
+            <div className="hidden md:block absolute right-[28%] top-[20%]"><ArrowRight className="text-[#C9A961] w-12 h-12" /></div>
 
             <div className="flex flex-col items-center text-center max-w-xs z-10 mt-8 md:mt-0">
               <div className="w-24 h-24 rounded-full bg-white border-4 border-[#E5E7EB] flex items-center justify-center mb-4 shadow-sm">

@@ -250,7 +250,7 @@ const BookingOrderSummary: React.FC<BookingOrderSummaryProps> = ({
 
       {/* Policies Modal (HTML Content) */}
       {showPolicyModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center px-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-90 flex items-center justify-center px-4 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowPolicyModal(false)} />
           <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl p-6 max-h-[80vh] overflow-y-auto">
             <button onClick={() => setShowPolicyModal(false)} className="absolute top-4 right-4 text-gray-400 hover:text-gray-800">

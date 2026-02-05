@@ -19,8 +19,6 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
     return (val || 0).toLocaleString();
   };
 
-  // ✅ LOGIC FIX: Smart Calculation for Days & Nights
-  // Agar API se direct data nahi aaya, to Itinerary ki length se calculate karega
   const daysCount = Number(data.days) || (data.itinerary?.days?.length) || 0;
   const nightsCount = Number(data.nights) || (daysCount > 0 ? daysCount - 1 : 0);
 
@@ -43,11 +41,11 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
   return (
     <div onClick={() => setShowPricePopup(true)} className="relative bg-white rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-gray-100 font-opensans flex flex-col h-full group">
 
-      {/* Content Wrapper */}
-      <div className={`transition-all duration-300 ${(showPricePopup || showDetailsPopup) ? "opacity-10 scale-[0.98]" : "opacity-100 scale-100"}`}>
+      {/* ✅ FIX: Content Wrapper ko 'h-full flex flex-col' diya taaki ye poori height le */}
+      <div className={`h-full flex flex-col transition-all duration-300 ${(showPricePopup || showDetailsPopup) ? "opacity-10 scale-[0.98]" : "opacity-100 scale-100"}`}>
 
         {/* Image Section */}
-        <div className="relative h-64 overflow-hidden">
+        <div className="relative h-64 shrink-0 overflow-hidden">
           <img
             src={data.hero_image || "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?q=80&w=1000"}
             alt={data.title}
@@ -58,23 +56,20 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
           />
         </div>
 
-        {/* Card Body */}
+        {/* Card Body - 'grow' ab sahi se kaam karega kyunki parent ke paas height hai */}
         <div className="p-6 flex flex-col grow">
           <div className="flex justify-between items-start gap-4 mb-4">
-            {/* Updated font size */}
             <h3 className="font-bold text-[20px] text-gray-900 leading-tight font-opensans">{data.title}</h3>
-            {/* Updated font size & Logic */}
             <span className="bg-[#E3F2FD] text-[#3A96DA] text-[14px] font-bold px-3 py-1.5 rounded-xl border border-[#B3D9F2] shrink-0 font-opensans">
               {nightsCount}N / {daysCount}D
             </span>
           </div>
 
-          {/* Inclusions (Limited to 3) */}
+          {/* Inclusions */}
           <div className="flex flex-wrap gap-2 mb-6">
             {data.inclusions?.slice(0, maxInclusions).map((item: string, idx: number) => (
               <div key={idx} className="flex items-center gap-2 bg-[#F8F9FA] px-3 py-1.5 rounded-lg">
                 <Briefcase size={14} className="text-gray-400" />
-                {/* Updated font size */}
                 <span className="text-[14px] text-gray-600 font-medium font-opensans">{item}</span>
               </div>
             ))}
@@ -88,17 +83,15 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
             )}
           </div>
 
-          {/* Highlights (Limited to 4) */}
+          {/* Highlights */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-3">
-              {/* Updated font size */}
               <p className="text-[16px] font-bold text-gray-800 font-opensans">Highlights</p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               {data.highlights?.slice(0, maxHighlights).map((highlight: string, idx: number) => (
                 <div key={idx} className="flex items-center gap-3 border border-gray-50 bg-white px-4 py-3 rounded-xl shadow-sm">
                   <Briefcase size={16} className="text-gray-800 shrink-0" />
-                  {/* Updated font size */}
                   <span className="text-[14px] text-[#4CAF50] font-semibold truncate font-opensans">{highlight}</span>
                 </div>
               ))}
@@ -113,7 +106,7 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
             )}
           </div>
 
-          {/* Price Section */}
+          {/* ✅ Price Section - mt-auto will push this to bottom */}
           <div className="mt-auto pt-4 flex justify-between items-end border-t border-gray-50">
             <div className="flex flex-col">
               <span className="text-[12px] text-gray-400 font-bold uppercase tracking-tight font-opensans">No Cost EMI at</span>
@@ -137,7 +130,7 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
         <div className="absolute inset-0 bg-gray-600/10 z-10 pointer-events-none" />
       )}
 
-      {/* ================= DETAILS POPUP (View More) ================= */}
+      {/* Details Popup */}
       {showDetailsPopup && (
         <div className="absolute inset-0 z-30 bg-white p-6 flex flex-col animate-in fade-in slide-in-from-bottom-5 duration-300">
           <div className="flex justify-between items-center mb-6">
@@ -182,7 +175,7 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
         </div>
       )}
 
-      {/* ================= PRICE POPUP (Existing) ================= */}
+      {/* Price Popup */}
       {showPricePopup && (
         <div className="absolute left-0 right-0 bottom-0 pb-10 z-20 bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom-5 duration-300 border-t overflow-hidden">
           <div className="flex justify-between items-center py-6 bg-blue-300/20 px-6 mb-6">
@@ -190,7 +183,6 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
             <button onClick={(e) => { e.stopPropagation(); setShowPricePopup(false) }}><X size={20} className="text-gray-400" /></button>
           </div>
           <div className="px-6 space-y-3">
-
             <div
               onClick={() => handleNavigate('flight')}
               className="border border-gray-200 rounded-2xl p-4 flex justify-between items-center cursor-pointer hover:bg-blue-50 transition-colors"
@@ -212,7 +204,6 @@ export const PackageCard = ({ data, persons, currentCity, currentDate }: Package
               </div>
               <ChevronRight size={24} className="text-[#2EB159]" />
             </div>
-
           </div>
         </div>
       )}

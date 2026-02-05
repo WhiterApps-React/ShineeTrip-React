@@ -242,7 +242,6 @@ useEffect(() => {
                 />
               </button>
 
-
               <button
                 onClick={() => handleNavClick("Flights")}
                 className={`relative flex items-center gap-2 font-opensans font-medium
@@ -257,9 +256,7 @@ useEffect(() => {
                     fill="currentColor"
                   />
                 </svg>
-
                 Flights
-
                 <span
                   className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961]
     transform scale-x-0 origin-left transition-transform duration-300
@@ -290,7 +287,7 @@ useEffect(() => {
                 <span
                   className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961] 
   transform scale-x-0 origin-left transition-transform duration-300
-  group-hover:scale-x-100 ${activeTab === "Flights" ? "scale-x-100" : ""
+  group-hover:scale-x-100 ${activeTab === "Trains" ? "scale-x-100" : ""
                     }`}
                 />
 
@@ -315,7 +312,7 @@ useEffect(() => {
                 <span
                   className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961] 
   transform scale-x-0 origin-left transition-transform duration-300
-  group-hover:scale-x-100 ${activeTab === "Flights" ? "scale-x-100" : ""
+  group-hover:scale-x-100 ${activeTab === "Holiday Packages" ? "scale-x-100" : ""
                     }`}
                 />
 
@@ -340,7 +337,7 @@ useEffect(() => {
                 <span
                   className={`absolute left-0 -bottom-2 h-[2px] w-full bg-[#C9A961] 
   transform scale-x-0 origin-left transition-transform duration-300
-  group-hover:scale-x-100 ${activeTab === "Flights" ? "scale-x-100" : ""
+  group-hover:scale-x-100 ${activeTab === "Events" ? "scale-x-100" : ""
                     }`}
                 />
 

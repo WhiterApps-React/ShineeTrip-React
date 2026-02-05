@@ -59,14 +59,14 @@ export const PricingSidebar = ({ priceData, calculatedSummary, defaultOption = '
       <div className="flex p-1.5 bg-gray-50 rounded-2xl mb-6 border border-gray-100">
         <button
           onClick={() => setSelection('flight')}
-          className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all tracking-tighter ${selection === 'flight' ? 'bg-white shadow-sm text-[#C9A961]' : 'text-gray-400 hover:text-gray-600'
+          className={`flex-1 py-2.5 text-[16px] font-opensans rounded-xl transition-all tracking-tighter ${selection === 'flight' ? 'bg-white shadow-sm text-[#C9A961]' : 'text-gray-400 hover:text-gray-600'
             }`}
         >
           WITH FLIGHT
         </button>
         <button
           onClick={() => setSelection('land')}
-          className={`flex-1 py-2.5 text-[10px] font-black rounded-xl transition-all tracking-tighter ${selection === 'land' ? 'bg-white shadow-sm text-[#C9A961]' : 'text-gray-400 hover:text-gray-600'
+          className={`flex-1 py-2.5 text-[16px] font-opensans rounded-xl transition-all tracking-tighter ${selection === 'land' ? 'bg-white shadow-sm text-[#C9A961]' : 'text-gray-400 hover:text-gray-600'
             }`}
         >
           WITHOUT FLIGHT
@@ -89,7 +89,7 @@ export const PricingSidebar = ({ priceData, calculatedSummary, defaultOption = '
             { state: { type: selection } }
           );
         }}
-        className="w-full bg-[#C9A961] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#b39552] shadow-lg shadow-yellow-100 transition-all mb-6 uppercase tracking-wide active:scale-95"
+        className="w-full bg-[#C9A961] text-white py-4 rounded-2xl font-opensans text-lg hover:bg-[#b39552] shadow-lg shadow-yellow-100 transition-all mb-6 uppercase tracking-wide active:scale-95"
       >
         PAY & Book Now
       </button>

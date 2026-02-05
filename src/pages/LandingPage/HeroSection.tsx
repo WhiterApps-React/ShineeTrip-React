@@ -767,8 +767,8 @@ export default function HeroSection() {
             </div>
 
             {/* Tabs */}
-            <div className="flex justify-center mb-4 overflow-x-auto no-scrollbar border-amber-400  relative z-10">
-              <div className="flex  gap-8  overflow-x-auto no-scrollbar pb-1">
+            <div className="flex justify-center mb-4  border-amber-400  relative z-10">
+              <div className="flex  gap-8   pb-1">
                 {categories.map((cat) => (
                   <button
                     key={cat.id}
@@ -794,7 +794,17 @@ export default function HeroSection() {
             {/* Carousel Controls */}
             <div className="relative">
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-                {visibleDestinations.map((dest: any, i: number) => (
+              {visibleDestinations.length === 0 ? (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-gray-500 text-lg font-medium">
+                    No destinations available for this category.
+                  </p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Please select another category.
+                  </p>
+                </div>
+              ) : (
+                visibleDestinations.map((dest: any, i: number) => (
                   <div
                     key={i}
                     className="group cursor-pointer"
@@ -807,10 +817,14 @@ export default function HeroSection() {
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
                       />
                     </div>
-                    <h3 className="text-center text-gray-900 text-xl font-bold">{dest.name}</h3>
+                    <h3 className="text-center text-gray-900 text-xl font-bold">
+                      {dest.name}
+                    </h3>
                   </div>
-                ))}
-              </div>
+                ))
+              )}
+             </div>
+
 
               {/* Navigation Buttons */}
               <div className="flex justify-center gap-4 mt-3">

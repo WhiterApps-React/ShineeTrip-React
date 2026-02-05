@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Search, MapPin, Calendar, Users, X } from "lucide-react";
+import { Search, MapPin, Calendar, Users, X, Minus, Plus } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { LoginModal } from "../../Login/Loginpage";
 
@@ -202,16 +202,24 @@ export const HolidaySearch = ({
                 {/* Changed font size to 18px and font-opensans */}
                 <span className="text-[18px] font-opensans font-bold text-gray-400 uppercase tracking-tight">Number of Persons</span>
                 <div className="flex items-center gap-4 mt-0.5">
-                  <button
-                    onClick={() => persons > 1 && setPersons(persons - 1)}
-                    className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors"
-                  >—</button>
-                  {/* Changed font size to 18px and font-opensans */}
-                  <span className="text-[18px] font-opensans font-black text-gray-800 w-4 text-center">{persons}</span>
-                  <button
-                    onClick={() => setPersons(persons + 1)}
-                    className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors"
-                  >+</button>
+<button
+  onClick={() => persons > 1 && setPersons(persons - 1)}
+  className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors"
+>
+  <Minus size={16} />
+</button>
+
+<span className="text-[18px] font-opensans font-black text-gray-800 w-6 text-center">
+  {persons}
+</span>
+
+<button
+  onClick={() => setPersons(persons + 1)}
+  className="w-6 h-6 flex items-center justify-center rounded-full border border-gray-300 text-gray-500 hover:bg-gray-100 transition-colors"
+>
+  <Plus size={16} />
+</button>
+
                 </div>
               </div>
             </div>

@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { Phone, Mail, MapPin, Send } from "lucide-react"
+import { Phone, Mail, MapPin, Send, X } from "lucide-react"
 import toast, { Toaster } from 'react-hot-toast'
 import WriteBrandReview from "@/components/ui/WriteBrandReview"
 
@@ -327,31 +327,38 @@ export default function ContactForm() {
         </div>
       </section>
       {/* Review Modal */}
-      {isReviewOpen && (
-        <div
-          className="fixed inset-0   z-50 flex items-center justify-center px-4"
-        >
-          {/* Modal Container */}
-          <div
-            className="relative border border-black w-full max-w-3xl bg-white rounded-2xl shadow-2xl
-                    max-h-[90vh] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close Button */}
-            <button
-              className="absolute top-4 right-4 text-gray-500 hover:text-black text-2xl z-20"
-              onClick={() => setIsReviewOpen(false)}
-            >
-              ✕
-            </button>
+{isReviewOpen && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+    
+    {/* Backdrop (Dark overlay with blur) */}
+    <div 
+      className="absolute inset-0 bg-black/10 backdrop-blur-sm transition-opacity"
+      onClick={() => setIsReviewOpen(false)}
+    />
 
-            {/* Scrollable Content */}
-            <div className="overflow-y-auto max-h-[90vh]">
-              <WriteBrandReview />
-            </div>
-          </div>
-        </div>
-      )}
+    {/* Modal Container */}
+    <div
+      className="relative w-full max-w-sm bg-white rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+      onClick={(e) => e.stopPropagation()}
+    >
+      {/* Close Button - Clean & Modern */}
+      <button
+        className="absolute top-3 right-3 p-1.5 rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors z-20"
+        onClick={() => setIsReviewOpen(false)}
+      >
+        <X size={20} />
+      </button>
+
+      {/* Content Area */}
+      {/* max-h set kiya hai taaki choti screens par scroll ho sake */}
+      <div className="max-h-[90vh] overflow-y-auto custom-scrollbar">
+        {/* Tumhara Form Component */}
+        <WriteBrandReview />
+      </div>
+      
+    </div>
+  </div>
+)}
 
 
     </>

@@ -161,7 +161,7 @@ const HolidayPackages = () => {
           <div className="flex items-center gap-6 flex-wrap justify-center">
             <div className="hidden sm:flex items-center gap-2 text-gray-900 font-[700] text-sm">
               <SlidersHorizontal className="w-4 h-4 text-[#D2A256]" />
-              <span>Sort By:</span>
+              <span className="text-[18px] font-opensans">Sort By:</span>
             </div>
 
             <div className="flex gap-4 flex-wrap justify-center">
